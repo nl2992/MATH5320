@@ -86,7 +86,14 @@ def run_backtest(
     end_idx = len(dates) - horizon_days
 
     if end_idx <= start_idx:
-        return pd.DataFrame(columns=["date", "var_forecast", "realized_loss", "exception"])
+        empty = pd.DataFrame(columns=["date", "var_forecast", "realized_loss", "exception"])
+        empty.attrs["reason"] = (
+            f"Backtest window empty: need at least "
+            f"{lookback_days + horizon_days + 1} trading days of history, "
+            f"got {len(dates) + 1}. Reduce lookback_days or horizon_days, "
+            f"or load more history."
+        )
+        return empty
 
     for i in range(start_idx, end_idx):
         t_date = dates[i]

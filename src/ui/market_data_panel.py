@@ -9,7 +9,12 @@ from datetime import date, timedelta
 import pandas as pd
 import streamlit as st
 
-from src.data.market_data import download_adjusted_close, load_price_history_csv
+from src.data.market_data import (
+    BENCHMARK_TICKERS,
+    download_adjusted_close,
+    download_adjusted_close_cached,
+    load_price_history_csv,
+)
 from src.data.validation import validate_price_dataframe
 
 
@@ -28,6 +33,17 @@ def render_market_data_panel(portfolio_tickers: list[str]) -> pd.DataFrame | Non
         Loaded price DataFrame, or None if not yet loaded.
     """
     st.subheader("Market Data Source")
+
+    # Show currently loaded data (if any) so the user always knows what's in play.
+    existing = st.session_state.get("prices")
+    if existing is not None:
+        st.caption(
+            f"📦 Currently loaded: **{len(existing.columns)}** tickers, "
+            f"**{len(existing)}** rows "
+            f"({existing.index[0].date()} → {existing.index[-1].date()}) — "
+            f"{', '.join(existing.columns[:8])}"
+            + (" …" if len(existing.columns) > 8 else "")
+        )
 
     source = st.radio(
         "Data source",
@@ -74,6 +90,10 @@ def _render_yfinance_panel(portfolio_tickers: list[str]) -> pd.DataFrame | None:
             "Tickers (space-separated)",
             value=default_tickers,
             key="yf_tickers",
+            help=(
+                "Space-separated Yahoo Finance symbols. Benchmarks available: "
+                + ", ".join(BENCHMARK_TICKERS.values())
+            ),
         )
     with col2:
         start_date = st.date_input(
@@ -88,20 +108,47 @@ def _render_yfinance_panel(portfolio_tickers: list[str]) -> pd.DataFrame | None:
             key="yf_end",
         )
 
+    col_opts1, col_opts2 = st.columns([1, 1])
+    with col_opts1:
+        use_cache = st.checkbox(
+            "Use local cache",
+            value=True,
+            key="yf_use_cache",
+            help="Parquet cache at .cache/prices/ — keeps reruns fast.",
+        )
+    with col_opts2:
+        include_benchmarks = st.checkbox(
+            "Auto-append benchmarks (^GSPC, ^TNX)",
+            value=False,
+            key="yf_include_benchmarks",
+            help="Handy for credit/regulatory tabs — pulls S&P 500 and 10Y rate proxy.",
+        )
+
     if st.button("Download from Yahoo Finance", key="yf_download"):
         tickers = list(dict.fromkeys(
             t.strip().upper() for t in tickers_input.split() if t.strip()
         ))
+        if include_benchmarks:
+            for bt in ("^GSPC", "^TNX"):
+                if bt not in tickers:
+                    tickers.append(bt)
         if not tickers:
             st.error("Please enter at least one ticker.")
             return None
         with st.spinner("Downloading price data…"):
             try:
-                prices = download_adjusted_close(
-                    tickers=tickers,
-                    start=str(start_date),
-                    end=str(end_date),
-                )
+                if use_cache:
+                    prices = download_adjusted_close_cached(
+                        tickers=tickers,
+                        start=str(start_date),
+                        end=str(end_date),
+                    )
+                else:
+                    prices = download_adjusted_close(
+                        tickers=tickers,
+                        start=str(start_date),
+                        end=str(end_date),
+                    )
                 st.session_state["prices"] = prices
             except Exception as exc:
                 st.error(f"Download failed: {exc}")
