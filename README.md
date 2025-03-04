@@ -87,10 +87,69 @@ streamlit run app.py
 
 ## Running Tests
 
-```bash
-# Unit tests (19 tests, no network required)
-python -m pytest tests/test_backend.py -v
+All commands below are run from the project root.
 
-# Integration test (downloads real market data)
-python tests/integration_test.py
+### Full unit-test suite (no network)
+
+```bash
+python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py
 ```
+
+### With coverage report
+
+```bash
+python -m pytest tests/ --cov=src --cov-report=term-missing \
+  --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py
+```
+
+Target: 100% statement coverage across `src/`.
+
+### Individual test files
+
+```bash
+python -m pytest tests/test_backend.py -v            # Core engine + service layer
+python -m pytest tests/test_course_validation.py -v  # PDF validation-sheet fixtures
+python -m pytest tests/test_charts.py -v             # Plotly chart helpers
+python -m pytest tests/test_ui_panels.py -v          # Streamlit UI panels (AppTest)
+python -m pytest tests/test_credit.py -v             # hazard / Merton / CDS / CVA
+python -m pytest tests/test_regulatory.py -v         # RWA / capital / DFAST
+python -m pytest tests/test_lognormal.py -v          # Exact GBM VaR / ES
+python -m pytest tests/test_market_data.py -v        # CSV loader + yfinance wrappers
+python -m pytest tests/test_config_and_validation.py -v
+python -m pytest tests/test_credit_service.py -v
+python -m pytest tests/test_coverage_gaps.py -v
+```
+
+### Running a single class or test
+
+```bash
+python -m pytest tests/test_course_validation.py::TestLN02_HomeworkIV -v
+python -m pytest tests/test_course_validation.py::TestMR01_HomeworkVII_QvsP::test_pd_Q -v
+```
+
+### Network integration tests
+
+```bash
+python tests/integration_test.py                  # End-to-end with real market data
+python tests/integration_test_formula_sheet.py    # Full formula-sheet integration
+```
+
+### Useful pytest flags
+
+| Flag | Effect |
+|---|---|
+| `-v` | Verbose (one line per test) |
+| `-x` | Stop at first failure |
+| `-k "merton"` | Only tests matching the keyword |
+| `--lf` | Re-run only last failures |
+| `-s` | Don't capture stdout (useful for debugging prints) |
+
+### Course validation fixtures
+
+`tests/test_course_validation.py` encodes the course-supplied fixtures from
+`risk_engine_validation_test_sheet.pdf` (LN01–LN04, HZ01–HZ04, MR01–MR02,
+CDS01–CDS04, CVA01–CVA05, REG01–REG02, plus non-numeric monotonicity /
+methodology checks). Numerical goldens are compared at ~10% relative tolerance.
+
+The two AAPL/CAT acceptance tests (ACC01, ACC02) skip cleanly unless
+`data/AAPL-bloomberg.csv` and `data/CAT-bloomberg.csv` are present.
