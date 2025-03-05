@@ -3,9 +3,8 @@ test_course_validation.py
 Course-supplied validation fixtures (risk_engine_validation_test_sheet.pdf).
 
 The PDF lists closed-form goldens for lognormal/hazard/Merton/CDS/CVA/regulatory
-at 1e-10 absolute tolerance, plus AAPL/CAT acceptance regressions. Per the
-instructor's direction, numerical agreement up to ~10% relative is acceptable
-(`pytest.approx(..., rel=0.10)`).
+plus AAPL/CAT acceptance regressions. Numerical agreement is checked at
+1% relative tolerance (`pytest.approx(..., rel=0.01)`).
 
 Critical convention from the PDF:
     The canonical parameter is `m` = mean log-return per unit horizon.
@@ -49,7 +48,7 @@ from src.risk.lognormal import (
 )
 from src.risk.regulatory import capital_ratio, risk_weighted_assets
 
-REL = 0.10  # Course instructor permits ~10% tolerance.
+REL = 0.01  # 1% relative tolerance.
 
 
 # ──────────────────────────────────────────────────────────────────────────────
