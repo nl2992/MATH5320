@@ -46,3 +46,31 @@ def build_overlapping_horizon_log_returns(
     if horizon_days < 1:
         raise ValueError("horizon_days must be >= 1.")
     return log_returns.rolling(horizon_days).sum().dropna()
+
+
+def build_overlapping_horizon_absolute_returns(
+    prices: pd.DataFrame,
+    horizon: int,
+) -> pd.DataFrame:
+    """
+    Build overlapping h-day dollar changes.
+
+    dollar_change_t^(h) = S_t − S_{t-h}
+
+    Indexed by the ending date.
+
+    Parameters
+    ----------
+    prices : pd.DataFrame
+        Price levels (not returns).
+    horizon : int
+        Horizon h in trading days.
+
+    Returns
+    -------
+    pd.DataFrame
+        Overlapping h-day dollar changes (NaN rows dropped).
+    """
+    if horizon < 1:
+        raise ValueError("horizon must be >= 1.")
+    return (prices - prices.shift(horizon)).dropna()

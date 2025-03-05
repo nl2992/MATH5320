@@ -145,6 +145,7 @@ def test_ewma_cov_positive_definite(sample_prices):
 # ── Historical VaR/ES tests ────────────────────────────────────────────────────
 
 def test_historical_var_es_positive(sample_prices, simple_portfolio):
+    # Use matching confidences so ES >= VaR holds (ES averages the tail beyond VaR).
     result = historical_var_es(
         portfolio=simple_portfolio,
         prices=sample_prices,
@@ -152,7 +153,7 @@ def test_historical_var_es_positive(sample_prices, simple_portfolio):
         lookback_days=252,
         horizon_days=1,
         var_confidence=0.99,
-        es_confidence=0.975,
+        es_confidence=0.99,
     )
     assert result["var"] > 0
     assert result["es"] >= result["var"]
