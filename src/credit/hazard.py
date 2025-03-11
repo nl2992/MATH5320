@@ -142,3 +142,48 @@ def credit_spread(T: float, LGD: float, s_T: float) -> float:
             "LGD · (1 − s(T)) must be < 1 for the spread to be finite."
         )
     return -math.log(inside) / T
+
+
+def hazard_at_piecewise(t: float, grid, hazards) -> float:
+    """λ(t) under piecewise-constant hazard — returns the hazard rate active at t."""
+    grid = np.asarray(grid, dtype=float)
+    hazards = np.asarray(hazards, dtype=float)
+    if grid[0] != 0.0:
+        raise ValueError("grid must start at 0.")
+    if np.any(np.diff(grid) <= 0):
+        raise ValueError("grid must be strictly increasing.")
+    if len(hazards) != len(grid) - 1:
+        raise ValueError(
+            f"len(hazards) must be len(grid) − 1 (got {len(hazards)} vs {len(grid) - 1})."
+        )
+    if np.any(hazards < 0):
+        raise ValueError("hazards must be non-negative.")
+    if t < 0:
+        raise ValueError(f"t must be non-negative (got {t}).")
+    # Return last hazard for extrapolation past the final knot
+    if t > grid[-1]:
+        return float(hazards[-1])
+    for i in range(len(hazards)):
+        if t <= grid[i + 1]:
+            return float(hazards[i])
+    return float(hazards[-1])
+
+
+def cumhazard_piecewise(t: float, grid, hazards) -> float:
+    """Λ(t) = ∫₀ᵗ λ(u) du — cumulative hazard."""
+    s = survival_piecewise(t, grid, hazards)
+    return -math.log(s)
+
+
+def density_piecewise(t: float, grid, hazards) -> float:
+    """p(t) = λ(t) · s(t) — instantaneous default density."""
+    lam = hazard_at_piecewise(t, grid, hazards)
+    s = survival_piecewise(t, grid, hazards)
+    return lam * s
+
+
+def interval_default_prob_piecewise(t1: float, t2: float, grid, hazards) -> float:
+    """P(t₁ < τ ≤ t₂) = s(t₁) − s(t₂)."""
+    s1 = survival_piecewise(t1, grid, hazards)
+    s2 = survival_piecewise(t2, grid, hazards)
+    return s1 - s2

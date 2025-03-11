@@ -123,6 +123,79 @@ def cds_par_spread(
     return numerator / denominator
 
 
+def cds_par_spread_constant_full_closed_form(
+    T: float,
+    freq: float,
+    r: float,
+    lam: float,
+    R: float,
+    accrual: bool = True,
+) -> float:
+    """
+    Exact CDS par spread under constant hazard with discrete premium payments.
+
+    Protection leg (exact integral):
+        (1−R) · lam / (r+lam) · (1 − exp(−(r+lam)·T))
+
+    Premium leg (exact sum):
+        dt · Σ_{i=1}^{n} exp(−(r+lam)·t_i)  where dt=1/freq, t_i = i*dt
+
+    Accrual term (exact per-period integral of (u−t_{i-1})·lam·exp(−(r+lam)u)):
+        For each period [t_prev, t_i] with dt = t_i − t_prev, q = r+lam:
+        lam · exp(−q·t_prev) · [(1−exp(−q·dt))/q² − dt·exp(−q·dt)/q]
+
+    Note: approximation cds_par_spread_constant_hazard() gives ~180 bps;
+    this function gives ~184.55 bps for lam=3%, R=40%, T=5, freq=1.
+    Do not force them to match.
+    """
+    if lam < 0:
+        raise ValueError(f"lambda must be non-negative (got {lam}).")
+    if not (0.0 <= R <= 1.0):
+        raise ValueError(f"R must be in [0, 1] (got {R}).")
+    if T <= 0:
+        raise ValueError(f"T must be positive (got {T}).")
+    if freq <= 0:
+        raise ValueError(f"freq must be positive (got {freq}).")
+
+    n = int(round(T * freq))
+    dt = 1.0 / freq
+    q = r + lam
+
+    # Protection leg
+    if q == 0.0:
+        protection = (1.0 - R) * lam * T
+    else:
+        protection = (1.0 - R) * lam / q * (1.0 - math.exp(-q * T))
+
+    # Premium leg
+    premium = 0.0
+    for i in range(1, n + 1):
+        t_i = i * dt
+        premium += dt * math.exp(-q * t_i)
+
+    # Accrual term
+    accrual_val = 0.0
+    if accrual:
+        for i in range(1, n + 1):
+            t_prev = (i - 1) * dt
+            t_i = i * dt
+            seg_dt = t_i - t_prev
+            if q == 0.0:
+                # integral of lam*(u - t_prev)*du from t_prev to t_i = lam * seg_dt^2/2
+                accrual_val += lam * seg_dt ** 2 / 2.0
+            else:
+                exp_q_prev = math.exp(-q * t_prev)
+                exp_q_dt = math.exp(-q * seg_dt)
+                accrual_val += lam * exp_q_prev * (
+                    (1.0 - exp_q_dt) / (q ** 2) - seg_dt * exp_q_dt / q
+                )
+
+    denominator = premium + accrual_val
+    if denominator <= 0:
+        raise ValueError("CDS premium-leg denominator is non-positive.")
+    return protection / denominator
+
+
 def cds_spread_curve(
     tenors: Sequence[float],
     lam: float,
