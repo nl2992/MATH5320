@@ -161,3 +161,86 @@ def epe_profile_from_mc(
         arr = arr[:, None]
     exposure = np.maximum(arr - V0, 0.0)
     return exposure.mean(axis=0)
+
+
+def positive_exposure(values: np.ndarray) -> np.ndarray:
+    """max(V, 0) element-wise."""
+    return np.maximum(np.asarray(values, dtype=float), 0.0)
+
+
+def epe(exposure_paths: np.ndarray) -> np.ndarray:
+    """
+    Expected positive exposure.
+    exposure_paths shape: (n_scenarios, n_times) or (n_scenarios,).
+    Returns mean(max(exposure, 0)) along axis 0 → shape (n_times,) or scalar.
+    """
+    arr = np.asarray(exposure_paths, dtype=float)
+    if arr.ndim == 1:
+        return float(np.mean(np.maximum(arr, 0.0)))
+    return np.mean(np.maximum(arr, 0.0), axis=0)
+
+
+def cva_discounted(
+    exposures: Sequence[float],
+    marginal_default_probs: Sequence[float],
+    discount_factors: Sequence[float],
+    R: float,
+) -> float:
+    """
+    Discounted discrete CVA.
+
+        CVA = (1 − R) Σ_i D_i · E_i · p_i
+
+    Parameters
+    ----------
+    exposures : EPE at each time bucket (non-negative).
+    marginal_default_probs : per-interval marginal PD.
+    discount_factors : risk-free discount factor D(t_i) = exp(−r·t_i).
+    R : recovery rate in [0, 1].
+    """
+    exp_arr = np.asarray(exposures, dtype=float)
+    pd_arr  = np.asarray(marginal_default_probs, dtype=float)
+    df_arr  = np.asarray(discount_factors, dtype=float)
+    if not (len(exp_arr) == len(pd_arr) == len(df_arr)):
+        raise ValueError("exposures, marginal_default_probs, discount_factors must have the same length.")
+    if np.any(exp_arr < 0):
+        raise ValueError("exposures must be non-negative.")
+    if np.any(pd_arr < 0) or pd_arr.sum() > 1.0 + 1e-9:
+        raise ValueError("marginal_default_probs must be non-negative and sum to ≤ 1.")
+    if np.any(df_arr <= 0) or np.any(df_arr > 1.0):
+        raise ValueError("discount_factors must be in (0, 1].")
+    if not (0.0 <= R <= 1.0):
+        raise ValueError(f"R must be in [0, 1] (got {R}).")
+    return float((1.0 - R) * (df_arr * exp_arr * pd_arr).sum())
+
+
+def cva_continuous_constant_exposure(
+    K: float,
+    lam: float,
+    T: float,
+    R: float,
+    r: float = 0.0,
+) -> float:
+    """
+    Closed-form CVA for constant exposure K under constant hazard lam.
+
+    r = 0:
+        CVA = (1−R) · K · (1 − exp(−lam·T))
+    r > 0:
+        CVA = (1−R) · K · lam/(r+lam) · (1 − exp(−(r+lam)·T))
+    """
+    if K < 0:
+        raise ValueError(f"K must be non-negative (got {K}).")
+    if lam < 0:
+        raise ValueError(f"lam must be non-negative (got {lam}).")
+    if T <= 0:
+        raise ValueError(f"T must be positive (got {T}).")
+    if not (0.0 <= R <= 1.0):
+        raise ValueError(f"R must be in [0, 1] (got {R}).")
+    if r < 0:
+        raise ValueError(f"r must be non-negative (got {r}).")
+    lgd = 1.0 - R
+    if r == 0.0:
+        return float(lgd * K * (1.0 - math.exp(-lam * T)))
+    q = r + lam
+    return float(lgd * K * lam / q * (1.0 - math.exp(-q * T)))
