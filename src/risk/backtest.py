@@ -282,3 +282,254 @@ def kupiec_test(
         "n_observations": N,
         "n_exceptions": x,
     }
+
+# ── Christoffersen Independence + Conditional Coverage Tests ──────────────────
+
+def christoffersen_test(
+    exceptions: "np.ndarray | list[int]",
+) -> dict:
+    """
+    Christoffersen (1998) independence test for VaR exception clustering.
+
+    Tests whether consecutive exceptions are i.i.d. Bernoulli, i.e. that
+    exceptions are not clustered in time.
+
+    The test statistic LR_ind ~ χ²(1) under H0 (independent exceptions).
+    The combined conditional-coverage statistic LR_cc = LR_uc + LR_ind ~ χ²(2).
+
+    Parameters
+    ----------
+    exceptions : array-like of 0/1
+        Sequence of exception indicators from the backtest.
+
+    Returns
+    -------
+    dict with keys:
+        n00, n01, n10, n11  : int  — transition counts
+        pi_01, pi_11        : float — conditional exception rates
+        pi_hat              : float — unconditional exception rate
+        lr_ind              : float — independence LR statistic ~ χ²(1)
+        p_value_ind         : float — p-value for independence test
+        reject_independence : bool  — True if H0 rejected at 5%
+    """
+    exc = np.asarray(exceptions, dtype=int)
+    n = len(exc)
+    if n < 2:
+        return {
+            "n00": 0, "n01": 0, "n10": 0, "n11": 0,
+            "pi_01": np.nan, "pi_11": np.nan, "pi_hat": np.nan,
+            "lr_ind": np.nan,
+            "p_value_ind": np.nan,
+            "reject_independence": False,
+        }
+
+    # Count transitions: I_{t-1}=i  →  I_t=j
+    n00 = int(((exc[:-1] == 0) & (exc[1:] == 0)).sum())
+    n01 = int(((exc[:-1] == 0) & (exc[1:] == 1)).sum())
+    n10 = int(((exc[:-1] == 1) & (exc[1:] == 0)).sum())
+    n11 = int(((exc[:-1] == 1) & (exc[1:] == 1)).sum())
+
+    eps = 1e-10
+
+    # Conditional exception rates
+    pi_01 = n01 / (n00 + n01) if (n00 + n01) > 0 else 0.0
+    pi_11 = n11 / (n10 + n11) if (n10 + n11) > 0 else 0.0
+    pi_hat = (n01 + n11) / (n00 + n01 + n10 + n11)
+
+    def _safe_log(x):
+        return np.log(np.clip(x, eps, 1 - eps))
+
+    # L_A: alternative (heterogeneous transition matrix)
+    log_la = (
+        n00 * _safe_log(1 - pi_01)
+        + n01 * _safe_log(pi_01)
+        + n10 * _safe_log(1 - pi_11)
+        + n11 * _safe_log(pi_11)
+    )
+    # L_0: null (independent, single-parameter pi_hat)
+    log_l0 = (
+        (n00 + n10) * _safe_log(1 - pi_hat)
+        + (n01 + n11) * _safe_log(pi_hat)
+    )
+
+    lr_ind = float(max(-2.0 * (log_l0 - log_la), 0.0))
+    p_value_ind = float(chi2.sf(lr_ind, df=1))
+
+    return {
+        "n00": n00, "n01": n01, "n10": n10, "n11": n11,
+        "pi_01": pi_01,
+        "pi_11": pi_11,
+        "pi_hat": pi_hat,
+        "lr_ind": lr_ind,
+        "p_value_ind": p_value_ind,
+        "reject_independence": p_value_ind < 0.05,
+    }
+
+
+def conditional_coverage_test(
+    n_observations: int,
+    n_exceptions: int,
+    var_confidence: float,
+    exceptions: "np.ndarray | list[int]",
+) -> dict:
+    """
+    Christoffersen (1998) conditional-coverage test.
+
+    Combines the Kupiec unconditional-coverage test (LR_uc ~ χ²(1)) and the
+    independence test (LR_ind ~ χ²(1)) into a joint test:
+        LR_cc = LR_uc + LR_ind ~ χ²(2)
+
+    Returns a dict merging the Kupiec and Christoffersen results, plus:
+        lr_cc        : float — combined statistic
+        p_value_cc   : float — p-value under χ²(2)
+        reject_cc    : bool  — True if H0 rejected at 5%
+    """
+    kupiec = kupiec_test(n_observations, n_exceptions, var_confidence)
+    christo = christoffersen_test(exceptions)
+
+    lr_uc = kupiec.get("lr_stat", np.nan)
+    lr_ind = christo.get("lr_ind", np.nan)
+
+    if np.isnan(lr_uc) or np.isnan(lr_ind):
+        lr_cc = np.nan
+        p_value_cc = np.nan
+        reject_cc = False
+    else:
+        lr_cc = float(lr_uc + lr_ind)
+        p_value_cc = float(chi2.sf(lr_cc, df=2))
+        reject_cc = p_value_cc < 0.05
+
+    return {
+        **kupiec,
+        **{k: v for k, v in christo.items() if k not in kupiec},
+        "lr_cc": lr_cc,
+        "p_value_cc": p_value_cc,
+        "reject_cc": reject_cc,
+    }
+
+
+# ── Basel Traffic-Light Classification ────────────────────────────────────────
+
+def basel_traffic_light(n_exceptions: int) -> dict:
+    """
+    Basel II/III traffic-light classification of VaR model quality.
+
+    Based on the number of exceptions in a 250-day window:
+        0–4  : GREEN  — model likely adequate
+        5–9  : YELLOW — model under scrutiny; capital multiplier raised
+        10+  : RED    — model rejected; internal model approval revoked
+
+    The capital multiplier m_c is given by the Basel table:
+        GREEN  : m_c = 3.00
+        YELLOW : m_c ranges from 3.40 (5 exceptions) to 3.85 (9 exceptions)
+        RED    : m_c = 4.00
+
+    Parameters
+    ----------
+    n_exceptions : int
+        Number of VaR exceptions in the 250-day observation window.
+
+    Returns
+    -------
+    dict with keys:
+        n_exceptions      : int
+        zone              : str  — "GREEN", "YELLOW", or "RED"
+        capital_multiplier: float
+        description       : str
+    """
+    _yellow_multipliers = {
+        5: 3.40, 6: 3.50, 7: 3.65, 8: 3.75, 9: 3.85,
+    }
+
+    if n_exceptions < 0:
+        raise ValueError(f"n_exceptions must be non-negative (got {n_exceptions}).")
+
+    if n_exceptions <= 4:
+        zone = "GREEN"
+        multiplier = 3.00
+        description = "Model acceptable; no capital add-on."
+    elif n_exceptions <= 9:
+        zone = "YELLOW"
+        multiplier = _yellow_multipliers[n_exceptions]
+        description = "Model under scrutiny; capital multiplier increased."
+    else:
+        zone = "RED"
+        multiplier = 4.00
+        description = "Model rejected; internal model approval revoked."
+
+    return {
+        "n_exceptions": n_exceptions,
+        "zone": zone,
+        "capital_multiplier": multiplier,
+        "description": description,
+    }
+
+
+# ── Exception Severity Diagnostics ───────────────────────────────────────────
+
+def exception_severity(backtest_df: pd.DataFrame) -> dict:
+    """
+    Compute summary statistics for VaR exceptions.
+
+    Parameters
+    ----------
+    backtest_df : pd.DataFrame
+        Output of ``run_backtest`` with columns:
+        ``var_forecast``, ``realized_loss``, ``exception``.
+
+    Returns
+    -------
+    dict with keys:
+        n_observations          : int
+        n_exceptions            : int
+        exception_rate          : float  — observed / expected ratio
+        expected_exceptions     : float  — always = n_obs * (1 - conf) but
+                                           conf is inferred from mean VaR
+                                           sign pattern; here raw count
+        exception_gap           : float  — mean (loss − VaR) across exceptions
+        average_exception_loss  : float  — mean realized_loss on exception days
+        max_exception_loss      : float  — worst realized loss on exception days
+        mean_loss_given_exception: float — average_exception_loss (alias)
+    """
+    if backtest_df.empty:
+        return {
+            "n_observations": 0,
+            "n_exceptions": 0,
+            "exception_rate": np.nan,
+            "exception_gap": np.nan,
+            "average_exception_loss": np.nan,
+            "max_exception_loss": np.nan,
+            "mean_loss_given_exception": np.nan,
+        }
+
+    n_obs = len(backtest_df)
+    exc_rows = backtest_df[backtest_df["exception"] == 1]
+    n_exc = len(exc_rows)
+
+    exception_rate = n_exc / n_obs if n_obs > 0 else np.nan
+
+    if n_exc == 0:
+        return {
+            "n_observations": n_obs,
+            "n_exceptions": 0,
+            "exception_rate": 0.0,
+            "exception_gap": np.nan,
+            "average_exception_loss": np.nan,
+            "max_exception_loss": np.nan,
+            "mean_loss_given_exception": np.nan,
+        }
+
+    excess_losses = exc_rows["realized_loss"] - exc_rows["var_forecast"]
+    exception_gap = float(excess_losses.mean())
+    avg_exc_loss = float(exc_rows["realized_loss"].mean())
+    max_exc_loss = float(exc_rows["realized_loss"].max())
+
+    return {
+        "n_observations": n_obs,
+        "n_exceptions": n_exc,
+        "exception_rate": exception_rate,
+        "exception_gap": exception_gap,
+        "average_exception_loss": avg_exc_loss,
+        "max_exception_loss": max_exc_loss,
+        "mean_loss_given_exception": avg_exc_loss,
+    }
