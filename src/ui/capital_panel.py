@@ -9,11 +9,14 @@ from datetime import date
 import pandas as pd
 import streamlit as st
 
+import plotly.graph_objects as go
+
 from src.schemas import Portfolio
 from src.services.regulatory_service import (
     compute_rwa_and_ratio,
     run_custom_stress,
     run_dfast,
+    run_dfast_capital_path,
 )
 
 
@@ -168,6 +171,116 @@ def render_capital_panel(
             )
         except Exception as exc:
             st.error(f"DFAST failed: {exc}")
+
+    # ── DFAST capital path projection ─────────────────────────────────────────
+    st.divider()
+    st.markdown("### C · DFAST capital path projection")
+    st.caption(
+        "9-quarter capital path under baseline / adverse / severely-adverse "
+        "DFAST scenarios using the quarter-by-quarter CapitalState model (§12). "
+        "8% hurdle line shown in red."
+    )
+
+    col_c1, col_c2, col_c3 = st.columns(3)
+    with col_c1:
+        path_t1 = st.number_input(
+            "Starting Tier-1 capital ($)",
+            min_value=0.01,
+            value=float(equity),
+            step=max(float(equity) * 0.1, 1.0),
+            format="%.2f",
+            key="cap_path_t1",
+        )
+    with col_c2:
+        path_rwa = st.number_input(
+            "Starting RWA ($)",
+            min_value=0.01,
+            value=float(max(summary.get("rwa", equity * 10), 0.01)),
+            step=max(float(max(summary.get("rwa", equity * 10), 0.01)) * 0.1, 1.0),
+            format="%.2f",
+            key="cap_path_rwa",
+        )
+    with col_c3:
+        path_assets = st.number_input(
+            "Total assets ($, optional)",
+            min_value=0.0,
+            value=0.0,
+            format="%.2f",
+            key="cap_path_assets",
+            help="Used for leverage ratio only. Set 0 to omit.",
+        )
+
+    if st.button("Run capital path projection", key="cap_path_run"):
+        try:
+            path_results = run_dfast_capital_path(
+                tier1_capital=float(path_t1),
+                rwa=float(path_rwa),
+                assets=float(path_assets),
+            )
+
+            # Summary table
+            summary_rows = []
+            for name, r in path_results.items():
+                summary_rows.append(
+                    {
+                        "Scenario": name.replace("_", " ").title(),
+                        "Min ratio": r["min_ratio"],
+                        "Ending ratio": r["ending_ratio"],
+                        "Ending T1 capital": r["ending_capital"],
+                        "PASS": "✅" if r["passes"] else "❌",
+                    }
+                )
+            st.dataframe(
+                pd.DataFrame(summary_rows).style.format(
+                    {
+                        "Min ratio": "{:.4%}",
+                        "Ending ratio": "{:.4%}",
+                        "Ending T1 capital": "{:,.2f}",
+                    }
+                ),
+                hide_index=True,
+                use_container_width=True,
+            )
+
+            # Capital ratio path chart
+            fig = go.Figure()
+            colors = {
+                "baseline": "steelblue",
+                "adverse": "orange",
+                "severely_adverse": "crimson",
+            }
+            for name, r in path_results.items():
+                quarters = [p["quarter"] for p in r["path"]]
+                ratios = [p["capital_ratio"] for p in r["path"]]
+                label = name.replace("_", " ").title()
+                fig.add_trace(
+                    go.Scatter(
+                        x=quarters,
+                        y=[ra * 100 for ra in ratios],
+                        mode="lines+markers",
+                        name=label,
+                        line={"color": colors.get(name, "gray"), "width": 2},
+                    )
+                )
+            fig.add_hline(
+                y=8.0,
+                line_dash="dash",
+                line_color="red",
+                annotation_text="8% hurdle",
+                annotation_position="bottom right",
+            )
+            fig.update_layout(
+                title="9-Quarter Capital Ratio Path by DFAST Scenario",
+                xaxis_title="Quarter",
+                yaxis_title="Capital ratio (%)",
+                yaxis_ticksuffix="%",
+                height=380,
+                legend_title="Scenario",
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
+        except Exception as exc:
+            st.error(f"Capital path projection failed: {exc}")
 
     # ── Custom stress ─────────────────────────────────────────────────────────
     with st.expander("Custom stress scenario"):
