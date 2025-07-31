@@ -158,4 +158,4 @@ The two AAPL/CAT acceptance tests (ACC01, ACC02) skip cleanly unless
 
 The complete final project report is available here:
 
-[Final Project Report](report/FINAL_REPORT.md)
+[Final Project Report](https://github.com/nl2992/MATH5320/blob/main/FINAL_REPORT.ipynb)
