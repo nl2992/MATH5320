@@ -1,0 +1,20 @@
+/opt/anaconda3/lib/python3.12/site-packages/pandas/core/computation/expressions.py:22: UserWarning: Pandas requires version '2.10.2' or newer of 'numexpr' (version '2.8.7' currently installed).
+  from pandas.core.computation.check import NUMEXPR_INSTALLED
+/opt/anaconda3/lib/python3.12/site-packages/pandas/core/arrays/masked.py:56: UserWarning: Pandas requires version '1.4.2' or newer of 'bottleneck' (version '1.3.7' currently installed).
+  from pandas.core import (
+======================================================================
+MATH5320 Formula-Sheet Integration Test
+======================================================================
+
+[1] download_adjusted_close_cached(AAPL, MSFT, ^GSPC, ^TNX) · 3y
+    Shape: (751, 4), columns: ['AAPL', 'MSFT', '^GSPC', '^TNX']
+
+[2] fetch_risk_free_rate(today)
+    r = 4.3640%
+
+[3] Stock+option portfolio → RiskEngineService.run_all()
+    historical   VaR=1,757.98  ES=1,687.03
+Traceback (most recent call last):
+  File "/Users/nigelli/Desktop/Columbia MAFN/26Spring/MATH5320/Project/MATH5320/tests/integration_test_formula_sheet.py", line 100, in <module>
+    assert e >= v - 1e-6, f"{model} ES < VaR"
+AssertionError: historical ES < VaR
