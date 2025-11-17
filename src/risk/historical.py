@@ -39,6 +39,9 @@ def historical_var_es(
     var_confidence: float,
     es_confidence: float,
     shock_type: str = "log",
+    option_vol_shock_mode: str = "fixed",
+    option_vol_shock_beta: float = 1.0,
+    option_vol_shock_floor: float = 0.05,
 ) -> dict:
     """
     Compute Historical VaR and ES.
@@ -82,7 +85,16 @@ def historical_var_es(
         scenario_ret = horizon_ret.tail(lookback_days)
         available = [u for u in underlyings if u in scenario_ret.columns]
         scenario_ret = scenario_ret[available]
-        losses = _compute_losses_absolute(portfolio, spots_0, scenario_ret, pricing_date, V0)
+        losses = _compute_losses_absolute(
+            portfolio,
+            spots_0,
+            scenario_ret,
+            pricing_date,
+            V0,
+            option_vol_shock_mode=option_vol_shock_mode,
+            option_vol_shock_beta=option_vol_shock_beta,
+            option_vol_shock_floor=option_vol_shock_floor,
+        )
     else:
         # Default: log returns
         log_ret = compute_log_returns(prices)
@@ -90,7 +102,16 @@ def historical_var_es(
         scenario_ret = horizon_ret.tail(lookback_days)
         available = [u for u in underlyings if u in scenario_ret.columns]
         scenario_ret = scenario_ret[available]
-        losses = _compute_losses(portfolio, spots_0, scenario_ret, pricing_date, V0)
+        losses = _compute_losses(
+            portfolio,
+            spots_0,
+            scenario_ret,
+            pricing_date,
+            V0,
+            option_vol_shock_mode=option_vol_shock_mode,
+            option_vol_shock_beta=option_vol_shock_beta,
+            option_vol_shock_floor=option_vol_shock_floor,
+        )
 
     var = float(np.quantile(losses, var_confidence))
     es_threshold = float(np.quantile(losses, es_confidence))
@@ -104,6 +125,7 @@ def historical_var_es(
         "es_confidence": es_confidence,
         "losses": losses,
         "n_scenarios": len(losses),
+        "option_vol_shock_mode": option_vol_shock_mode,
     }
 
 
@@ -113,17 +135,30 @@ def _compute_losses_absolute(
     scenario_dollar_changes: pd.DataFrame,
     pricing_date: date,
     V0: float,
+    option_vol_shock_mode: str = "fixed",
+    option_vol_shock_beta: float = 1.0,
+    option_vol_shock_floor: float = 0.05,
 ) -> np.ndarray:
     """Loss computation using absolute (dollar) shocks."""
     losses = np.empty(len(scenario_dollar_changes))
 
     for i, (_, row) in enumerate(scenario_dollar_changes.iterrows()):
         shocked = spots_0.copy()
+        scenario_returns = pd.Series(0.0, index=row.index, dtype=float)
         for ticker in row.index:
             if ticker in shocked.index:
                 shocked[ticker] = float(spots_0[ticker]) + float(row[ticker])
+                scenario_returns[ticker] = float(row[ticker]) / float(spots_0[ticker])
 
-        V_scenario = reprice_portfolio(portfolio, shocked, pricing_date)
+        V_scenario = reprice_portfolio(
+            portfolio,
+            shocked,
+            pricing_date,
+            underlying_returns=scenario_returns,
+            option_vol_shock_mode=option_vol_shock_mode,
+            option_vol_shock_beta=option_vol_shock_beta,
+            option_vol_shock_floor=option_vol_shock_floor,
+        )
         losses[i] = V0 - V_scenario
 
     return losses
@@ -135,6 +170,9 @@ def _compute_losses(
     scenario_returns: pd.DataFrame,
     pricing_date: date,
     V0: float,
+    option_vol_shock_mode: str = "fixed",
+    option_vol_shock_beta: float = 1.0,
+    option_vol_shock_floor: float = 0.05,
 ) -> np.ndarray:
     """Vectorised loss computation over all scenarios."""
     losses = np.empty(len(scenario_returns))
@@ -146,7 +184,15 @@ def _compute_losses(
             if ticker in shocked.index:
                 shocked[ticker] = float(spots_0[ticker]) * np.exp(float(row[ticker]))
 
-        V_scenario = reprice_portfolio(portfolio, shocked, pricing_date)
+        V_scenario = reprice_portfolio(
+            portfolio,
+            shocked,
+            pricing_date,
+            underlying_returns=row,
+            option_vol_shock_mode=option_vol_shock_mode,
+            option_vol_shock_beta=option_vol_shock_beta,
+            option_vol_shock_floor=option_vol_shock_floor,
+        )
         losses[i] = V0 - V_scenario  # loss = V0 - V_T
 
     return losses

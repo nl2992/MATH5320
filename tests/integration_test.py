@@ -80,7 +80,24 @@ results = service.run_all()
 for model_name, res in results.items():
     print(f"    [{model_name.upper()}]  VaR = ${res['var']:,.2f}  |  ES = ${res['es']:,.2f}")
     assert res["var"] > 0, f"{model_name} VaR must be positive"
-    assert res["es"] >= res["var"], f"{model_name} ES must be >= VaR"
+    assert res["es"] > 0, f"{model_name} ES must be positive"
+
+# Equal-confidence sanity check: ES should dominate VaR when both use the same tail level.
+print("    Re-running historical model with equal VaR/ES confidence for ordering check...")
+service_equal_conf = RiskEngineService(
+    portfolio=portfolio,
+    prices=prices,
+    pricing_date=date.today(),
+    lookback_days=252,
+    horizon_days=1,
+    var_confidence=0.99,
+    es_confidence=0.99,
+    estimator="window",
+    ewma_N=60,
+    n_simulations=2000,
+)
+equal_conf = service_equal_conf.run_all()
+assert equal_conf["historical"]["es"] >= equal_conf["historical"]["var"]
 
 # ── 5. Run backtest ────────────────────────────────────────────────────────────
 print("\n[5] Running walk-forward backtest (historical model)...")

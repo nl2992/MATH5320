@@ -26,6 +26,7 @@ def render_results_panel(
     prices: pd.DataFrame,
     lookback_days: int,
     var_confidence: float,
+    risk_params: dict | None = None,
 ) -> None:
     """
     Render the risk analysis results panel.
@@ -143,13 +144,14 @@ def render_results_panel(
 
     # ── Downloads ─────────────────────────────────────────────────────────────
     st.subheader("Downloads")
-    _render_downloads(results, portfolio_value, var_confidence)
+    _render_downloads(results, portfolio_value, var_confidence, risk_params or {})
 
 
 def _render_downloads(
     results: dict,
     portfolio_value: float,
     var_confidence: float,
+    risk_params: dict,
 ) -> None:
     """Render download buttons for JSON summary and losses CSV."""
     col1, col2 = st.columns(2)
@@ -158,6 +160,8 @@ def _render_downloads(
     summary = {
         "portfolio_value": portfolio_value,
         "var_confidence": var_confidence,
+        "calibration_mode": risk_params.get("calibration_mode", "historical"),
+        "option_vol_shock_mode": risk_params.get("option_vol_shock_mode", "fixed"),
         "historical": {
             "var": results["historical"]["var"],
             "es": results["historical"]["es"],

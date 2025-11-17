@@ -50,6 +50,11 @@ def run_backtest(
     estimator: str = "window",
     ewma_N: int = 60,
     n_simulations: int = 2_000,
+    calibration_mode: str = "historical",
+    manual_market_params: dict | None = None,
+    option_vol_shock_mode: str = "fixed",
+    option_vol_shock_beta: float = 1.0,
+    option_vol_shock_floor: float = 0.05,
 ) -> pd.DataFrame:
     """
     Walk-forward VaR backtest.
@@ -114,6 +119,11 @@ def run_backtest(
                 estimator=estimator,
                 ewma_N=ewma_N,
                 n_simulations=n_simulations,
+                calibration_mode=calibration_mode,
+                manual_market_params=manual_market_params,
+                option_vol_shock_mode=option_vol_shock_mode,
+                option_vol_shock_beta=option_vol_shock_beta,
+                option_vol_shock_floor=option_vol_shock_floor,
             )
         except Exception:
             continue
@@ -128,10 +138,19 @@ def run_backtest(
             spots_t,
             t_date.date() if hasattr(t_date, "date") else pricing_date,
         )
+        realized_returns = {}
+        for u in underlyings:
+            s0 = float(spots_t[u])
+            s1 = float(spots_t_h[u])
+            realized_returns[u] = float(np.log(s1 / s0))
         V_t_h = portfolio_value(
             portfolio,
             spots_t_h,
             t_plus_h_date.date() if hasattr(t_plus_h_date, "date") else pricing_date,
+            underlying_returns=realized_returns,
+            option_vol_shock_mode=option_vol_shock_mode,
+            option_vol_shock_beta=option_vol_shock_beta,
+            option_vol_shock_floor=option_vol_shock_floor,
         )
         realized_loss = V_t - V_t_h  # loss = V0 - V_T
 
@@ -160,6 +179,11 @@ def _forecast_var(
     estimator: str,
     ewma_N: int,
     n_simulations: int,
+    calibration_mode: str,
+    manual_market_params: dict | None,
+    option_vol_shock_mode: str,
+    option_vol_shock_beta: float,
+    option_vol_shock_floor: float,
 ) -> float:
     """Compute a single VaR forecast using the chosen model."""
     if model == "historical":
@@ -172,6 +196,9 @@ def _forecast_var(
             horizon_days=horizon_days,
             var_confidence=var_confidence,
             es_confidence=var_confidence,
+            option_vol_shock_mode=option_vol_shock_mode,
+            option_vol_shock_beta=option_vol_shock_beta,
+            option_vol_shock_floor=option_vol_shock_floor,
         )
         return result["var"]
 
@@ -186,6 +213,8 @@ def _forecast_var(
             es_confidence=var_confidence,
             estimator=estimator,
             ewma_N=ewma_N,
+            calibration_mode=calibration_mode,
+            manual_market_params=manual_market_params,
         )
         return result["var"]
 
@@ -203,6 +232,11 @@ def _forecast_var(
             estimator=estimator,
             ewma_N=ewma_N,
             random_seed=None,
+            calibration_mode=calibration_mode,
+            manual_market_params=manual_market_params,
+            option_vol_shock_mode=option_vol_shock_mode,
+            option_vol_shock_beta=option_vol_shock_beta,
+            option_vol_shock_floor=option_vol_shock_floor,
         )
         return result["var"]
 

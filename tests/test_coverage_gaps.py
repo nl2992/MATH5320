@@ -17,7 +17,7 @@ from src.pricing.black_scholes import bs_delta, bs_price
 from src.portfolio.portfolio import portfolio_exposure
 from src.portfolio.positions import option_delta_exposure, option_value
 from src.risk.backtest import _forecast_var, kupiec_test, run_backtest
-from src.risk.estimators import get_mean_cov
+from src.risk.estimators import get_mean_cov, manual_mean_cov
 from src.risk.monte_carlo import monte_carlo_var_es
 from src.risk.returns import build_overlapping_horizon_log_returns
 from src.schemas import OptionPosition, Portfolio, StockPosition
@@ -153,6 +153,9 @@ class TestBacktestGaps:
                 pricing_date=date.today(), lookback_days=60, horizon_days=1,
                 var_confidence=0.99, model="nope", estimator="window",
                 ewma_N=60, n_simulations=100,
+                calibration_mode="historical", manual_market_params=None,
+                option_vol_shock_mode="fixed", option_vol_shock_beta=1.0,
+                option_vol_shock_floor=0.05,
             )
 
     def test_run_backtest_monte_carlo(self, sample_prices, pf_stocks):
@@ -200,6 +203,32 @@ class TestMonteCarloGaps:
             random_seed=None,
         )
         assert res["var"] > 0
+
+
+class TestManualMeanCovValidation:
+    def test_manual_mean_cov_missing_underlying_raises(self):
+        with pytest.raises(ValueError, match="missing one or more portfolio underlyings"):
+            manual_mean_cov(
+                {
+                    "mu_daily": pd.Series({"AAPL": 0.0}),
+                    "cov_daily": pd.DataFrame([[0.0004]], index=["AAPL"], columns=["AAPL"]),
+                },
+                ["AAPL", "MSFT"],
+            )
+
+    def test_manual_mean_cov_non_psd_raises(self):
+        with pytest.raises(ValueError, match="positive semidefinite"):
+            manual_mean_cov(
+                {
+                    "mu_daily": pd.Series({"AAPL": 0.0, "MSFT": 0.0}),
+                    "cov_daily": pd.DataFrame(
+                        [[0.0004, 0.0010], [0.0010, 0.0003]],
+                        index=["AAPL", "MSFT"],
+                        columns=["AAPL", "MSFT"],
+                    ),
+                },
+                ["AAPL", "MSFT"],
+            )
 
     def test_mc_with_option_dedup(self, sample_prices, pf_with_option_same_underlying):
         res = monte_carlo_var_es(

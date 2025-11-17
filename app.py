@@ -23,12 +23,16 @@ import streamlit as st
 
 from src.config import (
     DEFAULT_BACKTEST_MODEL,
+    DEFAULT_CALIBRATION_MODE,
     DEFAULT_ES_CONFIDENCE,
     DEFAULT_ESTIMATOR,
     DEFAULT_EWMA_N,
     DEFAULT_HORIZON_DAYS,
     DEFAULT_LOOKBACK_DAYS,
     DEFAULT_MC_SIMULATIONS,
+    DEFAULT_OPTION_VOL_SHOCK_BETA,
+    DEFAULT_OPTION_VOL_SHOCK_FLOOR,
+    DEFAULT_OPTION_VOL_SHOCK_MODE,
     DEFAULT_VAR_CONFIDENCE,
 )
 from src.data.validation import validate_portfolio_tickers
@@ -64,6 +68,11 @@ st.session_state.setdefault(
         "estimator": DEFAULT_ESTIMATOR,
         "ewma_N": DEFAULT_EWMA_N,
         "n_simulations": DEFAULT_MC_SIMULATIONS,
+        "calibration_mode": DEFAULT_CALIBRATION_MODE,
+        "manual_market_params": None,
+        "option_vol_shock_mode": DEFAULT_OPTION_VOL_SHOCK_MODE,
+        "option_vol_shock_beta": DEFAULT_OPTION_VOL_SHOCK_BETA,
+        "option_vol_shock_floor": DEFAULT_OPTION_VOL_SHOCK_FLOOR,
     },
 )
 st.session_state.setdefault("portfolio", Portfolio())
@@ -212,11 +221,15 @@ with tab_data:
 
 # ── Tab 3: Risk Settings ───────────────────────────────────────────────────────
 with tab_settings:
-    risk_params = render_risk_settings()
+    portfolio_for_settings = st.session_state.get("portfolio", portfolio)
+    setting_tickers = [p.ticker for p in portfolio_for_settings.stocks] + [
+        p.underlying_ticker for p in portfolio_for_settings.options
+    ]
+    risk_params = render_risk_settings(setting_tickers)
     st.session_state["risk_params"] = risk_params
 
     # Show EWMA lambda
-    if risk_params["estimator"] == "ewma":
+    if risk_params["calibration_mode"] == "historical" and risk_params["estimator"] == "ewma":
         N = risk_params["ewma_N"]
         lam = (N - 1) / (N + 1)
         st.info(f"EWMA λ = (N-1)/(N+1) = ({N}-1)/({N}+1) = **{lam:.4f}**")
@@ -274,6 +287,7 @@ with tab_results:
                     prices=st.session_state["prices"],
                     lookback_days=st.session_state["risk_params"]["lookback_days"],
                     var_confidence=st.session_state["risk_params"]["var_confidence"],
+                    risk_params=st.session_state["risk_params"],
                 )
 
 # ── Tab 5: Backtesting ─────────────────────────────────────────────────────────
