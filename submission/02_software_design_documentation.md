@@ -11,6 +11,8 @@ The software architecture is appropriate for an academic risk engine because it:
 - separates data gathering from calibration and computation,
 - isolates pricing and risk formulas into mostly pure functions,
 - enables unit and integration testing against known numerical fixtures,
+- supports both historical calibration and manual mean/covariance input for the core market-risk engine,
+- carries option-volatility scenario controls through the full-repricing historical and Monte Carlo paths,
 - supports extension into course-formula modules without destabilizing the core stock/option risk application.
 
 ---
@@ -24,6 +26,7 @@ The system is an educational portfolio risk application for MATH GR 5320. Its co
 - define a portfolio of stocks and European options,
 - load historical market data,
 - compute VaR and ES under multiple methodologies,
+- choose historical or manual calibration of market-risk mean/covariance inputs,
 - compare methods under common data and parameter choices,
 - run walk-forward VaR backtests,
 - inspect supporting diagnostics and downloadable outputs.
@@ -175,13 +178,13 @@ This reduces duplicated logic and makes the path from user interaction to model 
 | Market data | `src/data/market_data.py` | CSV and market-data loading | Tickers, dates, CSVs | Aligned price data | `tests/test_market_data.py` |
 | Data validation | `src/data/validation.py` | Validate price and input data | Prices, settings | Errors or clean acceptance | `tests/test_config_and_validation.py` |
 | Black-Scholes | `src/pricing/black_scholes.py` | European option pricing and delta | `S, K, T, r, q, vol, type` | Price, delta | `tests/test_backend.py`, `tests/test_homework_cases.py` |
-| Position valuation | `src/portfolio/positions.py` | Per-position value and sensitivity | Position plus market inputs | Value, delta exposure | `tests/test_backend.py` |
-| Portfolio valuation | `src/portfolio/portfolio.py` | Aggregate positions and exposures | Portfolio and spot vector | Total value, exposure vector | `tests/test_backend.py` |
+| Position valuation | `src/portfolio/positions.py` | Per-position value, shocked option vol, and delta-dollar sensitivity | Position plus market inputs | Value, shocked volatility, delta-dollar exposure | `tests/test_backend.py` |
+| Portfolio valuation | `src/portfolio/portfolio.py` | Aggregate positions and corrected delta-dollar exposures | Portfolio and spot vector | Total value, exposure vector | `tests/test_backend.py` |
 | Returns | `src/risk/returns.py` | Log and horizon return construction | Price matrix | Return matrix | `tests/test_backend.py`, `tests/test_coverage_gaps.py` |
-| Estimators | `src/risk/estimators.py` | Rolling and EWMA mean/covariance | Return matrix | Mean vector, covariance matrix | `tests/test_backend.py`, `tests/test_homework_cases.py` |
-| Historical risk | `src/risk/historical.py` | Historical VaR/ES | Portfolio, history, settings | VaR, ES, losses | `tests/test_backend.py`, `tests/test_course_validation.py` |
-| Parametric risk | `src/risk/parametric.py` | Delta-normal VaR/ES | Exposure vector, covariance | VaR, ES | `tests/test_backend.py`, `tests/test_es_confidence_split.py` |
-| Monte Carlo risk | `src/risk/monte_carlo.py` | Simulated VaR/ES | Mean, covariance, portfolio | VaR, ES, losses | `tests/test_backend.py`, `tests/test_coverage_gaps.py` |
+| Estimators | `src/risk/estimators.py` | Rolling, EWMA, and manual mean/covariance assembly | Return matrix or manual parameter bundle | Mean vector, covariance matrix | `tests/test_backend.py`, `tests/test_homework_cases.py`, `tests/test_coverage_gaps.py` |
+| Historical risk | `src/risk/historical.py` | Historical VaR/ES with full repricing and optional vol shock | Portfolio, history, settings | VaR, ES, losses | `tests/test_backend.py`, `tests/test_course_validation.py` |
+| Parametric risk | `src/risk/parametric.py` | Delta-normal VaR/ES | Corrected delta-dollar exposure vector, covariance, optional manual mean/cov | VaR, ES | `tests/test_backend.py`, `tests/test_es_confidence_split.py` |
+| Monte Carlo risk | `src/risk/monte_carlo.py` | Simulated VaR/ES | Historical or manual mean/cov, portfolio, option-vol shock settings | VaR, ES, losses | `tests/test_backend.py`, `tests/test_coverage_gaps.py` |
 | Backtesting | `src/risk/backtest.py` | Walk-forward VaR validation | History, model settings | Exceptions, Kupiec, diagnostics | `tests/test_backend.py`, `tests/test_backtest_extensions.py` |
 | Exact GBM | `src/risk/lognormal.py` | Formula-sheet GBM VaR/ES | GBM parameters | Exact VaR/ES | `tests/test_lognormal.py`, `tests/test_course_validation.py` |
 | Hazard | `src/credit/hazard.py` | Reduced-form default | Hazard, recovery, maturity | Survival, density, spread | `tests/test_credit.py`, `tests/test_course_validation.py` |
@@ -189,7 +192,7 @@ This reduces duplicated logic and makes the path from user interaction to model 
 | CDS | `src/credit/cds.py` | Par spread calculation | Hazard, recovery, discounting | Spread, protection/premium values | `tests/test_credit.py`, `tests/test_course_validation.py` |
 | CVA | `src/credit/cva.py` | Counterparty valuation adjustment | Exposure, PD, recovery | CVA | `tests/test_credit.py`, `tests/test_cva_mitigants.py` |
 | Regulatory | `src/risk/regulatory.py` | RWA, capital ratio, DFAST-style calculations | Assets, losses, RWA | Ratios, paths, stress metrics | `tests/test_regulatory.py`, `tests/test_dfast_pathing.py` |
-| Service | `src/services/risk_engine_service.py` | Orchestrate end-to-end core risk run | Portfolio, data, settings | Unified result object | `tests/test_backend.py` |
+| Service | `src/services/risk_engine_service.py` | Orchestrate end-to-end core risk run | Portfolio, data, settings, calibration controls, vol-shock controls | Unified result object | `tests/test_backend.py`, `tests/integration_test.py` |
 | UI | `src/ui/*.py` | Streamlit display and input logic | User interaction | Rendered panels | `tests/test_ui_panels.py`, `tests/test_charts.py` |
 
 ### 5.2 Layer Responsibilities
@@ -214,6 +217,7 @@ The UI layer does not contain the main pricing or risk formulas. That is a stron
 - calculate current portfolio value,
 - run all VaR/ES models,
 - run backtesting,
+- carry calibration mode, manual mean/covariance inputs, and option-vol shock controls consistently across model calls,
 - return a unified result dictionary for the UI.
 
 #### Domain Layer
@@ -241,54 +245,63 @@ This is exactly the kind of separation of concerns that software-design document
 
 ## 6. Input and Output Schemas
 
+Important accuracy note: the schema tables below describe the intended input contract for the system. Current enforcement is split across Streamlit UI controls, `src/data/validation.py`, and numerical domain checks inside pricing/model functions rather than a single centralized schema-validation library.
+
 ### 6.1 Input Schema
 
 #### Stock Input
 
 | Field | Type | Rule | Validation behaviour |
 |---|---|---|---|
-| `ticker` | string | Non-empty symbol | Reject empty/missing ticker |
-| `quantity` | numeric | Can be positive or negative | Reject non-numeric values |
+| `ticker` | string | Non-empty symbol | UI should prevent empty or missing ticker |
+| `quantity` | numeric | Can be positive or negative | Numeric handling is expected in the data-entry flow |
 
 #### Option Input
 
 | Field | Type | Rule | Validation behaviour |
 |---|---|---|---|
-| `label` / `ticker` | string | Non-empty | Reject blank row if partially filled |
-| `underlying` / `underlying_ticker` | string | Must exist in market data | Reject if missing from prices |
-| `option_type` | string | `call` or `put` | Reject invalid type |
-| `quantity` | numeric | Signed numeric | Reject non-numeric value |
-| `strike` | numeric | Positive | Reject non-positive strike |
-| `maturity` | date / positive time to maturity | Must be future-dated for live option pricing | Reject invalid maturity in UI/pricing |
-| `volatility` | numeric | Positive decimal | Reject zero or negative volatility |
-| `risk_free_rate` | numeric | Numeric decimal | Reject malformed value |
-| `dividend_yield` | numeric | Numeric decimal | Reject malformed value |
-| `multiplier` | numeric | Positive | Reject non-positive multiplier |
+| `label` / `ticker` | string | Non-empty | UI should avoid blank partial rows |
+| `underlying` / `underlying_ticker` | string | Must exist in market data | Explicit ticker-existence validation is implemented |
+| `option_type` | string | `call` or `put` | Pricing layer rejects unknown types |
+| `quantity` | numeric | Signed numeric | Numeric handling is expected in the data-entry flow |
+| `strike` | numeric | Positive | Should be positive; invalid values can fail later in pricing |
+| `maturity` | date / positive time to maturity | Must be future-dated for live option pricing | Expired options are handled; malformed dates should fail visibly upstream |
+| `volatility` | numeric | Positive decimal | Pricing layer rejects non-positive volatility when repricing is attempted |
+| `risk_free_rate` | numeric | Numeric decimal | Numeric input expected |
+| `dividend_yield` | numeric | Numeric decimal | Numeric input expected |
+| `multiplier` | numeric | Positive | Positive value is expected; no single central validator enforces every case |
 
 #### Market Data Input
 
 | Field | Type | Rule | Validation behaviour |
 |---|---|---|---|
-| Date column / index | date | Must parse to `DatetimeIndex` | Reject malformed or missing dates |
-| Price columns | numeric | One price series per ticker | Reject missing ticker series |
-| Prices | numeric | Positive | Reject non-positive prices |
-| Lookback support | integer availability | Must support requested history | Raise insufficient-history error |
-| Alignment | shared date index | Aligned across underlyings after cleaning | Drop or reject inconsistent rows explicitly |
-| Missing data | NaN-aware | No unhandled NaN paths | Reject or drop with visible handling |
+| Date column / index | date | Must parse to `DatetimeIndex` | Implemented in CSV parsing and validation helpers |
+| Price columns | numeric | One price series per ticker | Missing required portfolio tickers are reported explicitly |
+| Prices | numeric | Positive | Non-positive prices are flagged explicitly |
+| Lookback support | integer availability | Must support requested history | Current behavior varies by path; backtests can return explicit empty reasons |
+| Alignment | shared date index | Aligned across underlyings after cleaning | Loader and downstream modules assume aligned histories after cleaning |
+| Missing data | NaN-aware | No unhandled NaN paths | All-NaN columns are flagged; broader missing-data handling is split across loader and workflow |
 
 #### Risk Settings
 
 | Field | Type | Rule | Validation behaviour |
 |---|---|---|---|
-| Lookback window | integer | Positive and sufficiently large | Reject if too short |
-| Horizon | integer | Positive | Reject if non-positive |
-| VaR confidence | float | In `(0,1)` | Reject invalid confidence |
-| ES confidence | float | In `(0,1)` | Reject invalid confidence |
-| Estimator type | enum | `window` or `ewma` | Reject invalid setting |
-| EWMA control | numeric | Positive if used | Reject invalid value |
-| Monte Carlo simulations | integer | Positive | Reject zero or negative count |
-| Random seed | integer or `None` | Fixed when reproducibility required | Document whether fixed or random |
-| Backtest dates | implied by history | Must be feasible given lookback and horizon | Return empty result with reason or reject |
+| Lookback window | integer | Positive and sufficiently large | Positive value is expected; infeasible windows surface later as insufficient-history behavior |
+| Horizon | integer | Positive | Positive value is expected; return helpers reject invalid horizons |
+| VaR confidence | float | In `(0,1)` | Values in `(0,1)` are expected; behavior is covered in tests |
+| ES confidence | float | In `(0,1)` | Values in `(0,1)` are expected; separate-confidence behavior is covered in tests |
+| Estimator type | enum | `window` or `ewma` | Supported values are assumed by orchestration |
+| EWMA control | numeric | Positive if used | Positive value is expected |
+| Calibration mode | enum | `historical` or `manual` | UI constrains choices and tests cover manual mode |
+| Manual daily mean | numeric table | One finite value per underlying in manual mode | Manual-parameter builder rejects missing or non-finite values |
+| Manual daily volatility / covariance | numeric table | Symmetric PSD covariance implied by vol/correlation inputs | Manual-parameter builder rejects non-PSD covariance |
+| Manual correlation | numeric matrix | Square, symmetric, unit diagonal expected | UI/editor plus PSD validation protect the downstream models |
+| Monte Carlo simulations | integer | Positive | Positive value is expected |
+| Option volatility shock mode | enum | `fixed` or `underlying_beta` | UI constrains choices; unknown modes raise visibly |
+| Option volatility shock beta | numeric | Non-negative when `underlying_beta` is used | UI constrains the domain |
+| Option volatility shock floor | numeric | Positive lower bound | UI constrains the domain |
+| Random seed | integer or `None` | Fixed when reproducibility required | Current code supports both fixed and unfixed usage depending on context |
+| Backtest dates | implied by history | Must be feasible given lookback and horizon | Backtest paths can return explicit empty results with reason |
 
 ### 6.2 Output Schema
 
@@ -352,6 +365,13 @@ The core orchestration path is implemented in `src/services/risk_engine_service.
 5. On backtest requests, call `run_backtest` and then `kupiec_test`.
 6. Return service-level objects to the UI for display and download.
 
+In the current implementation, that settings bundle is richer than in the earlier report version. It now carries:
+
+- `calibration_mode = historical | manual`,
+- `manual_market_params` for daily mean/covariance overrides in parametric and Monte Carlo runs,
+- `option_vol_shock_mode = fixed | underlying_beta`,
+- `option_vol_shock_beta` and `option_vol_shock_floor` for full-repricing scenario paths.
+
 ### 7.2 Why the Service Layer Matters
 
 Without a service layer, each Streamlit panel would need to know about:
@@ -384,15 +404,15 @@ The codebase uses both front-end and back-end validation. UI-level controls redu
 | Error case | Detection layer | Required behaviour |
 |---|---|---|
 | Missing ticker in price history | Data validation | Raise or display error |
-| Too few observations | Risk module | Raise insufficient-history error or return explicit empty reason |
+| Too few observations | Risk module | Return explicit empty reason in backtest paths or fail visibly in calculation paths |
 | Negative or zero prices | Data validation | Reject explicitly |
-| Duplicate dates | Data loader | Should be aggregated or rejected explicitly |
-| NaN prices | Data loader / validation | Drop with traceable handling or reject |
-| Invalid option maturity | Schema / pricing | Reject |
-| Negative volatility | Schema / pricing | Reject |
-| Invalid confidence | Risk settings | Reject |
-| Non-PSD covariance | Estimator / Monte Carlo | Raise or repair with documented method |
-| Empty portfolio | Schema / service | Reject |
+| Duplicate dates | Data loader | Should be aggregated or rejected explicitly; not all cases are centrally normalized |
+| NaN prices | Data loader / validation | All-NaN columns are flagged; broader missing-data handling is workflow-dependent |
+| Invalid option maturity | Schema / pricing | Expired options are handled; malformed values should fail visibly upstream or in pricing |
+| Negative volatility | Schema / pricing | Pricing should fail visibly when repricing is attempted |
+| Invalid confidence | Risk settings | Expected to be constrained by UI or fail visibly if misused |
+| Non-PSD covariance | Estimator / Monte Carlo | Manual covariance inputs are rejected explicitly; automatic repair is not the main design path |
+| Empty portfolio | Schema / service | Should be prevented or fail visibly; not all paths use one centralized rejector |
 | Download failure | Data layer / UI | Clear user-facing error message |
 | Monte Carlo seed missing | MC layer | Either randomize and record or require seed for regression |
 
@@ -400,7 +420,7 @@ The codebase uses both front-end and back-end validation. UI-level controls redu
 
 Lecture 5 emphasizes documenting the data used, assessing data quality, demonstrating suitability, identifying proxies, and documenting assumptions from cleaning or smoothing. In this repository, the relevant software-design responses are:
 
-- `src/data/validation.py` checks shape, index type, NaNs, and positivity.
+- `src/data/validation.py` checks emptiness, index type, all-NaN columns, and positivity.
 - `src/data/market_data.py` handles CSV parsing, sorting, numeric coercion, Yahoo Finance retrieval, retry logic, and cache logic.
 - `src/ui/market_data_panel.py` surfaces errors immediately to the user rather than silently proceeding.
 
@@ -413,7 +433,7 @@ The repository is reasonably defensive:
 - backtesting returns a documented empty result when insufficient history exists,
 - UI panels display exceptions rather than swallowing them.
 
-This is exactly the kind of visible failure behavior a model-risk-sensitive application should prefer.
+This is the kind of visible failure behavior a model-risk-sensitive application should prefer. At the same time, the implementation is lighter than the idealized contract tables in this report, so the documentation should describe distributed enforcement rather than imply one strict centralized validation layer.
 
 ---
 
@@ -434,6 +454,7 @@ The numerical implementation uses explicit validation and tolerance-based testin
 | Stale or missing data | Validate before calculation |
 | Wrong loss sign | Use explicit PnL and loss conventions plus sign-aware tests |
 | VaR / ES confidence confusion | Separate-confidence tests exist in `tests/test_es_confidence_split.py` |
+| Delta/exposure unit mismatch | Dedicated regression test checks that option exposure is delta-dollar and includes spot |
 | Historical reconstruction error | Compare log-return and absolute-change paths where implemented |
 
 ### 9.2 Lecture 5 Alignment
@@ -472,28 +493,29 @@ Observed local no-network run:
 python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py -v
 ```
 
-Observed result on `2026-05-10 04:54:54 EDT`:
+Observed result on `2026-05-11 03:00:09 EDT`:
 
-- `569 passed`
+- `576 passed`
 - `242 warnings`
 
 Observed strict coverage-gate run:
 
 ```bash
-python -m pytest tests/ --cov=src --cov-report=term-missing --cov-report=html --cov-report=xml --cov-fail-under=100 --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py
+python -m pytest tests/ --cov=src --cov-report=term-missing --cov-report=html:submission/coverage_report --cov-report=xml:submission/coverage_report/coverage.xml --cov-fail-under=100 --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py
 ```
 
 Observed result:
 
 - Unit tests still passed
 - Coverage gate failed
-- Total statement coverage was `92.49%`
+- Total statement coverage was `91.22%`
+- Both live integration scripts passed separately after the unit/coverage runs
 
-This matters for software design because the repository’s README states a 100% statement coverage target, but the current implementation has not yet reached that target.
+This matters for software design because the repository’s README states a 100% statement coverage target, but the current implementation has not yet reached that target even though the no-network suite and both live integration workflows now pass.
 
 ### 10.3 Captured Artifacts
 
-The following artifact files were created in `test_artifacts/` during this documentation pass:
+The following artifact files were created in `submission/test_artifacts/` during this documentation pass:
 
 - `pytest_output.txt`
 - `coverage_output.txt`
@@ -532,21 +554,21 @@ python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integr
 Run coverage:
 
 ```bash
-python -m pytest tests/ --cov=src --cov-report=term-missing --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py
+python -m pytest tests/ --cov=src --cov-report=term-missing --cov-report=html:submission/coverage_report --cov-report=xml:submission/coverage_report/coverage.xml --cov-fail-under=100 --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py
 ```
 
 Capture environment details:
 
 ```bash
 python --version
-pip freeze > test_artifacts/requirements_freeze.txt
+pip freeze > submission/test_artifacts/requirements_freeze.txt
 git rev-parse HEAD
 ```
 
 ### 11.2 Observed Environment for This Documentation Pass
 
-- Date/time: `2026-05-10 04:54:54 EDT`
-- Git commit: `50143fde53c1d6b4d9bee277b96d97c2ef870dca`
+- Date/time: `2026-05-11 03:00:09 EDT`
+- Git commit: `5841589e3f3d2dbd3c1e38b08642eccce201a6a2`
 - Python: `3.12.2`
 - OS: `Darwin 24.5.0 arm64`
 - Key packages observed:
@@ -583,15 +605,14 @@ Reproducibility is weaker for live-data integration because:
 | Streamlit app is not production software | No enterprise auth, audit, or access controls | Academic use only |
 | Yahoo / yfinance data can be imperfect | Corporate actions, stale prices, or data discrepancies | Allow CSV input and validation checks |
 | Black-Scholes handles only European options | No early exercise or path dependence | State scope clearly |
-| Constant volatility input | Misses smile and skew dynamics | Document limitation and test sensitivity |
+| Simplified option-volatility shock model | `underlying_beta` mode is not a full implied-vol surface model | Keep the limitation explicit and treat it as a course-level approximation |
 | Parametric VaR uses normal approximation | Weak tail modelling | Compare with historical and Monte Carlo |
 | Monte Carlo uses multivariate normal returns | Tail/model risk remains | Compare with empirical methods |
 | Historical VaR depends on lookback window | Instability if history is too short or unrepresentative | Allow window sensitivity analysis |
 | Credit and regulatory modules are simplified | Not suitable for production XVA or CCAR | Label as course-formula extensions |
 | DFAST helper is illustrative | Not an official Fed model | State non-intended use explicitly |
 | Current coverage target not met | Documentation/testing target mismatch | Extend tests before final submission |
-
-An additional software-specific limitation emerged during this documentation pass: both integration scripts currently fail because they assert `ES >= VaR` while the repository allows separate VaR and ES confidence levels. That is not simply a random bug; it is a mismatch between an older integration assumption and the current design.
+| Distributed validation rather than one strict schema layer | Some controls live in UI, some in loaders, some in numerical modules | Keep documentation aligned to the actual enforcement pattern |
 
 ---
 
@@ -599,14 +620,13 @@ An additional software-specific limitation emerged during this documentation pas
 
 The most useful software extensions would be:
 
-1. Align all integration scripts and docs with the current separate-confidence VaR/ES design.
-2. Increase statement coverage to the 100% target advertised in the README.
-3. Add explicit covariance PSD handling or repair for Monte Carlo edge cases.
+1. Increase statement coverage toward the 100% target advertised in the README.
+2. Extend the simplified `underlying_beta` option-volatility logic into a richer implied-vol stress model if the project is taken beyond coursework scope.
+3. Add explicit covariance PSD repair, or at least documented user-facing remediation, for manual-input edge cases.
 4. Add audit-style logging for data cleaning and dropped rows.
 5. Add explicit serialization of run settings and random seeds into downloadable artifacts.
-6. Add volatility-shock support for option stress testing.
-7. Add richer UI export support for report-ready tables and figures.
-8. Add packaging automation for the final submission bundle.
+6. Add richer UI export support for report-ready tables and figures.
+7. Add packaging automation for the final submission bundle.
 
 ---
 

@@ -2,27 +2,27 @@
 
 ## 1. Executive Summary
 
-The test results show a strong outcome for the repository’s no-network validation suite and a mixed outcome for full integration and coverage-gate enforcement.
+The refreshed test results show a strong outcome for the repository’s no-network validation suite and a mixed outcome only on the strict coverage gate.
 
 Observed local no-network suite result:
 
-- `569 passed`
+- `576 passed`
 - `0 failed`
 - `0 skipped`
 
 Observed strict coverage-gate result:
 
 - all no-network tests still passed,
-- but the coverage command failed because total statement coverage reached only `92.49%` against the stated `100%` target.
+- but the coverage command failed because total statement coverage reached only `91.22%` against the stated `100%` target.
 
 Observed integration-script result:
 
-- `tests/integration_test.py` failed
-- `tests/integration_test_formula_sheet.py` failed
+- `tests/integration_test.py` passed
+- `tests/integration_test_formula_sheet.py` passed
 
-Both integration failures came from the same assumption: the scripts assert `ES >= VaR` even when the repository is configured with separate VaR and ES confidence levels. In the current design, a `97.5%` ES can be lower than a `99%` VaR, so these failures appear to reflect an outdated integration expectation rather than a general breakdown of the core risk engine.
+The integration scripts were updated to respect the repository’s separate VaR and ES confidence design. They now confirm live-data download, service orchestration, full risk-model execution, and representative backtesting behavior end to end.
 
-Overall conclusion: the deterministic and no-network validation evidence strongly supports the core software design and formula implementations, but the coverage target is not yet met and the live integration scripts should be updated before final submission.
+Overall conclusion: the deterministic, no-network, and live integration evidence all support the core software design and formula implementations. The main remaining testing gap is that the README’s `100%` statement-coverage target is still not met.
 
 ---
 
@@ -30,8 +30,8 @@ Overall conclusion: the deterministic and no-network validation evidence strongl
 
 ### 2.1 Run Metadata
 
-- Date/time of observed run: `2026-05-10 04:54:54 EDT`
-- Git commit hash: `50143fde53c1d6b4d9bee277b96d97c2ef870dca`
+- Date/time of observed run: `2026-05-11 03:00:09 EDT`
+- Git commit hash: `5841589e3f3d2dbd3c1e38b08642eccce201a6a2`
 - Python version: `3.12.2`
 - OS: `Darwin 24.5.0 arm64`
 - Network status: enabled for integration-script execution
@@ -52,7 +52,7 @@ Overall conclusion: the deterministic and no-network validation evidence strongl
 
 ### 2.3 Captured Environment Artifacts
 
-The following files were written to `test_artifacts/`:
+The following files were written to `submission/test_artifacts/`:
 
 - `git_commit.txt`
 - `python_version.txt`
@@ -79,7 +79,7 @@ python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integr
 ### 3.2 Strict Coverage Run
 
 ```bash
-python -m pytest tests/ --cov=src --cov-report=term-missing --cov-report=html --cov-report=xml --cov-fail-under=100 --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py
+python -m pytest tests/ --cov=src --cov-report=term-missing --cov-report=html:submission/coverage_report --cov-report=xml:submission/coverage_report/coverage.xml --cov-fail-under=100 --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py
 ```
 
 ### 3.3 Integration Scripts
@@ -94,7 +94,7 @@ python tests/integration_test_formula_sheet.py
 ```bash
 git rev-parse HEAD
 python --version
-pip freeze > test_artifacts/requirements_freeze.txt
+pip freeze > submission/test_artifacts/requirements_freeze.txt
 ```
 
 ---
@@ -105,7 +105,7 @@ pip freeze > test_artifacts/requirements_freeze.txt
 
 | Test group | File(s) | Passed | Failed | Skipped | Notes |
 |---|---|---:|---:|---:|---|
-| Core backend | `test_backend.py` | 25 | 0 | 0 | Core pricing, portfolio, VaR/ES, service smoke tests |
+| Core backend | `test_backend.py` | 29 | 0 | 0 | Core pricing, portfolio, VaR/ES, service smoke tests |
 | Backtest extensions | `test_backtest_extensions.py` | 31 | 0 | 0 | Christoffersen, conditional coverage, traffic light, severity |
 | Course validation | `test_course_validation.py` | 67 | 0 | 0 | Course formula-sheet and regression fixtures |
 | Homework fixtures | `test_homework_cases.py` | 83 | 0 | 0 | Additional homework-derived validation cases |
@@ -116,22 +116,22 @@ pip freeze > test_artifacts/requirements_freeze.txt
 | Market data | `test_market_data.py` | 24 | 0 | 0 | CSV loader, yfinance wrappers, cache, rate helper |
 | Config/validation | `test_config_and_validation.py` | 10 | 0 | 0 | Input and data validation |
 | Charts | `test_charts.py` | 6 | 0 | 0 | Plot helpers |
-| UI panels | `test_ui_panels.py` | 67 | 0 | 0 | Streamlit panel behavior |
-| Coverage and numerics | `test_coverage_gaps.py`, `test_strict_numerics.py`, `test_es_confidence_split.py` | 47 | 0 | 0 | Gap-closing and numerical-discipline tests |
-| Integration | `integration_test.py` | 0 | 1 | 0 | Failed on historical `ES >= VaR` assertion |
-| Formula integration | `integration_test_formula_sheet.py` | 0 | 1 | 0 | Failed on historical `ES >= VaR` assertion |
+| UI panels | `test_ui_panels.py` | 68 | 0 | 0 | Streamlit panel behavior |
+| Coverage and numerics | `test_coverage_gaps.py`, `test_strict_numerics.py`, `test_es_confidence_split.py` | 49 | 0 | 0 | Gap-closing and numerical-discipline tests |
+| Integration | `integration_test.py` | 1 | 0 | 0 | Live-data end-to-end market-risk workflow passed |
+| Formula integration | `integration_test_formula_sheet.py` | 1 | 0 | 0 | Live-data formula-sheet workflow passed |
 
 ### 4.2 Overall Summary
 
 | Metric | Result |
 |---|---:|
-| No-network tests collected | 569 |
-| No-network tests passed | 569 |
+| No-network tests collected | 576 |
+| No-network tests passed | 576 |
 | No-network tests failed | 0 |
 | No-network tests skipped | 0 |
 | Coverage gate target | 100% |
-| Actual total statement coverage | 92.49% |
-| Integration scripts passed | 0 / 2 |
+| Actual total statement coverage | 91.22% |
+| Integration scripts passed | 2 / 2 |
 
 ---
 
@@ -139,10 +139,10 @@ pip freeze > test_artifacts/requirements_freeze.txt
 
 ### 5.1 No-Network Suite Outcome
 
-Observed tail of `test_artifacts/pytest_output.txt`:
+Observed tail of `submission/test_artifacts/pytest_output.txt`:
 
 ```text
-====================== 569 passed, 242 warnings in 15.28s ======================
+====================== 576 passed, 242 warnings in 14.95s ======================
 ```
 
 The warning volume was high but did not correspond to test failures. Most warnings came from dependency-version and deprecation notices in third-party libraries used by Streamlit or pandas.
@@ -163,45 +163,47 @@ The no-network suite provides strong evidence that:
 
 ### 6.1 `tests/integration_test.py`
 
-Status: `Failed`
+Status: `Passed`
 
-Observed failure excerpt:
+Observed success excerpt:
 
 ```text
 [4] Running all risk models...
     [HISTORICAL]  VaR = $4,821.40  |  ES = $4,793.83
-AssertionError: historical ES must be >= VaR
+[5] Running walk-forward backtest (historical model)...
+ALL INTEGRATION TESTS PASSED
 ```
 
 Interpretation:
 
-- The script reached live data download, portfolio creation, service instantiation, and model execution successfully.
-- Failure occurred only at the assertion that historical `ES >= VaR`.
-- Under the current repository design, VaR and ES confidence levels are separate, so this assertion is not always valid.
+- Live price download, portfolio creation, service orchestration, model execution, backtesting, EWMA mode, and multi-day horizon checks all completed successfully.
+- The script now uses an equal-confidence rerun only when it needs to check the theoretical ordering `ES >= VaR`.
 
 ### 6.2 `tests/integration_test_formula_sheet.py`
 
-Status: `Failed`
+Status: `Passed`
 
-Observed failure excerpt:
+Observed success excerpt:
 
 ```text
 [3] Stock+option portfolio → RiskEngineService.run_all()
     historical   VaR=1,757.98  ES=1,687.03
-AssertionError: historical ES < VaR
+[9] compute_rwa_and_ratio + run_dfast
+ALL FORMULA-SHEET INTEGRATION TESTS PASSED.
 ```
 
 Interpretation:
 
-- Live-data download, rate fetch, portfolio construction, and service execution all worked.
-- The same outdated assumption caused failure.
+- Live-data download, rate fetch, portfolio construction, core market-risk execution, backtesting, Merton, CDS, CVA, and regulatory checks all completed successfully.
+- The script now respects separate VaR and ES confidence levels and uses the repo’s current intended semantics.
 
 ### 6.3 Integration-Test Conclusion
 
-These are meaningful failures, but they do not point to a complete workflow crash. Instead, they indicate that:
+The refreshed integration runs support a stronger conclusion than the earlier package version:
 
-1. the end-to-end plumbing is operational up to the assertion point, and
-2. the integration scripts need to be reconciled with the current separate-confidence VaR/ES design.
+1. end-to-end plumbing is operational,
+2. the integration scripts are aligned with the separate-confidence VaR/ES design,
+3. live-data workflows now pass as written.
 
 ---
 
@@ -227,7 +229,7 @@ These values support the claim that the pure-formula layer is implemented correc
 
 ## 8. Homework Fixture Results
 
-The file [homework_fixture_results.csv](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/test_artifacts/homework_fixture_results.csv) was generated during this pass. Representative rows are summarized below.
+The file [homework_fixture_results.csv](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/submission/test_artifacts/homework_fixture_results.csv) was generated during this pass. Representative rows are summarized below.
 
 | Homework case | Area | Expected result | Actual result | Pass? |
 |---|---|---|---|---|
@@ -245,7 +247,7 @@ These results reinforce that the repository is not just unit-tested at an abstra
 
 ## 9. External/Official Benchmark Results
 
-The file [official_benchmark_results.csv](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/test_artifacts/official_benchmark_results.csv) was generated during this pass.
+The file [official_benchmark_results.csv](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/submission/test_artifacts/official_benchmark_results.csv) was generated during this pass.
 
 | Benchmark | Source type | Module | Expected behaviour | Result |
 |---|---|---|---|---|
@@ -267,7 +269,7 @@ Important nuance:
 
 ## 10. Backtesting Results
 
-The file [backtest_results.csv](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/test_artifacts/backtest_results.csv) captures a representative historical-model backtest on the most recent `1,500` aligned AAPL/CAT Bloomberg observations.
+The file [backtest_results.csv](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/submission/test_artifacts/backtest_results.csv) captures a representative historical-model backtest on the most recent `1,500` aligned AAPL/CAT Bloomberg observations.
 
 ### 10.1 Summary Table
 
@@ -342,19 +344,19 @@ Remaining gaps are more about richer data-quality logic, such as explicit stale-
 
 | Metric | Result | Target | Pass? |
 |---|---:|---:|---|
-| Statement coverage | 92.49% | 100% | No |
+| Statement coverage | 91.22% | 100% | No |
 | Branch coverage | Not measured in this command | Not stated | N/A |
-| Missing lines | 144 | 0 or justified | No |
-| Coverage HTML | `htmlcov/index.html` generated | Required | Yes |
-| Coverage XML | `coverage.xml` generated | Required | Yes |
+| Missing lines | 182 | 0 or justified | No |
+| Coverage HTML | `submission/coverage_report/index.html` generated | Required | Yes |
+| Coverage XML | `submission/coverage_report/coverage.xml` generated | Required | Yes |
 
 ### 12.2 Coverage-Failure Excerpt
 
-Observed tail of `test_artifacts/coverage_output.txt`:
+Observed tail of `submission/test_artifacts/coverage_output.txt`:
 
 ```text
-ERROR: Coverage failure: total of 92 is less than fail-under=100
-FAIL Required test coverage of 100% not reached. Total coverage: 92.49%
+ERROR: Coverage failure: total of 91 is less than fail-under=100
+FAIL Required test coverage of 100% not reached. Total coverage: 91.22%
 ```
 
 ### 12.3 Files with Missing Coverage
@@ -365,10 +367,11 @@ FAIL Required test coverage of 100% not reached. Total coverage: 92.49%
 | `src/credit/hazard.py` | 26 | Piecewise helper branches | Add targeted piecewise-hazard tests |
 | `src/ui/capital_panel.py` | 18 | UI branches not fully exercised | Add panel-path tests |
 | `src/ui/cds_cva_panel.py` | 18 | UI and branch-heavy error paths | Add panel-path tests |
-| `src/risk/historical.py` | 14 | Absolute-shock and branch paths | Add explicit historical-shock tests |
+| `src/risk/historical.py` | 16 | Historical vol-shock branches and helper paths | Add explicit historical-shock tests |
 | `src/services/regulatory_service.py` | 11 | Capital-path helper branches | Add service-branch tests |
 | `src/credit/cva.py` | 8 | Discounted / edge branches | Add CVA branch tests |
 | `src/risk/normal.py` | 7 | Direct formula helpers not all hit | Add direct normal-formula tests |
+| `src/risk/estimators.py` | 7 | Manual-parameter validation branches | Add targeted manual-input tests |
 | `src/credit/mitigation.py` | 4 | Less common mitigation branches | Add more mitigant tests |
 | `src/risk/returns.py` | 3 | Absolute-return helper path | Add branch tests |
 | `src/risk/regulatory.py` | 2 | Small residual branches | Add target tests |
@@ -386,13 +389,13 @@ Coverage is good for an academic repository, but it does not satisfy the formal 
 | Test / command | Status | Reason | Does it affect required functionality? | Resolution |
 |---|---|---|---|---|
 | No-network unit suite | Passed | N/A | No negative effect | Keep as primary validation evidence |
-| Strict coverage command | Failed | Coverage `92.49% < 100%` target | Yes, affects stated coverage target | Add missing branch tests |
-| `tests/integration_test.py` | Failed | Historical `ES >= VaR` assertion invalid under separate VaR/ES confidence levels | Partially; integration script needs update | Update integration expectations |
-| `tests/integration_test_formula_sheet.py` | Failed | Same `ES >= VaR` assumption | Partially; integration script needs update | Update integration expectations |
+| Strict coverage command | Failed | Coverage `91.22% < 100%` target | Yes, affects stated coverage target | Add missing branch tests |
+| `tests/integration_test.py` | Passed | N/A | No negative effect | Keep as live workflow evidence |
+| `tests/integration_test_formula_sheet.py` | Passed | N/A | No negative effect | Keep as live workflow evidence |
 
 ### 13.2 Skip Statement
 
-No required no-network unit tests were skipped in the observed unit-suite run. The only excluded checks were the two live-data integration scripts when running the no-network commands, and those were then executed separately and documented above.
+No required no-network unit tests were skipped in the observed unit-suite run. The two live-data integration scripts were excluded from the no-network commands by design and were then executed separately and passed.
 
 ---
 
@@ -411,12 +414,12 @@ What is strongly supported:
 What remains incomplete:
 
 - the stated 100% coverage target was not met,
-- both live integration scripts contain a now-invalid assumption about ES and VaR ordering when confidence levels differ,
-- some extension-module and UI branches remain uncovered.
+- some extension-module and UI branches remain uncovered,
+- the lowest-coverage areas are still concentrated in CDS, hazard, historical-vol-shock branches, regulatory-service helpers, and selected UI panels.
 
 Overall conclusion:
 
-The current repository has a strong no-network validation base and is acceptable as an academic risk-engine implementation, but it is not yet at the final testing standard implied by the strict `--cov-fail-under=100` target. The main remaining work is to close coverage gaps and bring the integration scripts into alignment with the current separate-confidence VaR/ES design.
+The current repository has a strong no-network and live-integration validation base and is acceptable as an academic risk-engine implementation, but it is not yet at the final testing standard implied by the strict `--cov-fail-under=100` target. The main remaining work is to close coverage gaps.
 
 ---
 
@@ -424,12 +427,12 @@ The current repository has a strong no-network validation base and is acceptable
 
 The following raw outputs should be included or linked when converting this markdown into the final submission package:
 
-- [pytest_output.txt](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/test_artifacts/pytest_output.txt)
-- [coverage_output.txt](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/test_artifacts/coverage_output.txt)
-- [integration_test_output.txt](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/test_artifacts/integration_test_output.txt)
-- [integration_test_formula_sheet_output.txt](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/test_artifacts/integration_test_formula_sheet_output.txt)
-- [requirements_freeze.txt](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/test_artifacts/requirements_freeze.txt)
-- [git_commit.txt](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/test_artifacts/git_commit.txt)
-- [backtest_results.csv](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/test_artifacts/backtest_results.csv)
-- [homework_fixture_results.csv](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/test_artifacts/homework_fixture_results.csv)
-- [official_benchmark_results.csv](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/test_artifacts/official_benchmark_results.csv)
+- [pytest_output.txt](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/submission/test_artifacts/pytest_output.txt)
+- [coverage_output.txt](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/submission/test_artifacts/coverage_output.txt)
+- [integration_test_output.txt](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/submission/test_artifacts/integration_test_output.txt)
+- [integration_test_formula_sheet_output.txt](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/submission/test_artifacts/integration_test_formula_sheet_output.txt)
+- [requirements_freeze.txt](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/submission/test_artifacts/requirements_freeze.txt)
+- [git_commit.txt](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/submission/test_artifacts/git_commit.txt)
+- [backtest_results.csv](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/submission/test_artifacts/backtest_results.csv)
+- [homework_fixture_results.csv](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/submission/test_artifacts/homework_fixture_results.csv)
+- [official_benchmark_results.csv](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/submission/test_artifacts/official_benchmark_results.csv)

@@ -1,0 +1,371 @@
+MATH5320 – Homework VIII  
+ 
+ 
+Credit risk mitigation refers to mechanisms to ameliorate the exposure of financial 
+institutions to counterparty default. Three common approaches used are netting, 
+collateralisation and usage of a central clearing counterparty. 
+Netting refers to the idea that we can reduce credit exposure by aggregating multiple bilateral 
+transactions with the same counterparty into a single net obligation, such that instead of each 
+contract being settled individually, where gains and losses across contracts are offset. This 
+reduces the total exposure as the net m2m amount is a risk if the counterparty defaults. In 
+practice, such netting agreements are implemented an regulated via ISDA master agreements. 
+This is because, this can come from swaps, and if we are on the OTM leg, that is a liability, 
+and is counted against us, whereas we are ITM, and the counterparty defaults, we have made 
+a loss. The idea is that by netting, we can narrow such incidences.  
+As a result, it lowers current exposures, expected exposures, expected losses and CV A. 
+However, netting introduces legal risk, since the enforceability of the netting agreement must 
+be recognised under the relevant jurisdiction at the time of default, especially since many 
+agreements are cross-border, and is subject to local regulations. It needs to be also noted that 
+netting effectively changes the seniority structure of debt, and in that sense, is a transfer of 
+risk from counterparty to bondholders. 
+ 
+Collateralisation, as its names suggest is obvious, is under the ISDA Credit Support Annex, 
+which reduces credit risk by requiring counterparty with a negative mark-to-market position 
+(or not having enough maintenance margin etc.) to post collateral, subject to a minimum 
+transfer amount, This collateral serves as protection against losses if the counterparty 
+defaults. Collateral is typically exchanged through variation margin, which adjusts daily 
+according to market movements, and sometimes initial margin, which protects against 
+potential future exposures. 
+Collateralisation, like the above, can reduce exposures. But it does introduce liquidity risk, 
+since the counterparties must meet the margin calls immediately. Operational risks will also 
+persist, since it is complex. Gap risk, can arise because exposures naturally can still change 
+between margin calls.  
+Notably, collateralisation does not reduce risk to 0, and exposure is still equal to the 
+thresholds plus movement in the market value over the period, and potentially the MTA itself, 
+
+
+and there is still residual exposure. The collateral may also be insufficient with huge 
+volatilies. 
+ 
+The use of clearing houses, as third parties that stand between the original transacting parties, 
+was mandated after the GFC. After clearing, each original party faces the CCP rather than 
+each other. The goal is to improve the market, by having greater transparency, 
+standardization, and the ability of the CCP to apply risk mitigation tools centrally, rather than 
+having all the derivatives traded OTC. 
+The idea is the note that the risk is not eliminated, and while trades are balanced, so that the 
+CCP has no ordinary market risk before default, it still bears the default risk. To manage this, 
+CCPs themselves, have collateralisation, netting, default settlement rules and clearing house 
+capital. In the cause of defaults, there are management tools such as auctioning off trades, 
+reassigning trades, variation margin gains haircut, and tear-ups. 
+As such, the use of CCPs reduces bilateral counterparty risk, but centralises the risk. IF the 
+margins and other protections are insufficient, the losses can arise the clearing house level.  
+Cumulatively, all three mitigants reduce counterparty risk, but none of them makes risk 
+disappear, each with their own idiosyncrasies. It mitigates but does not eliminate risks 
+whatsoever. 
+ 
+ 
+For the above given parameters: 
+ 
+CDS contract pricing mainly comes from the value of three cash flows: 
+
+
+ 
+We intend to price the CDS in accordance to what was given in the lecture such that (derived 
+through RN-Pricing with the assuming of independence of default time and the numeriire, 
+where R is also a known constant ): 
+• 𝐷(𝑡) = 𝑒−𝑟𝑡be the discount factor, 
+• 𝑠(𝑡) = P(𝜏 > 𝑡)be the survival probability, 
+• 𝑝(𝑡)be the default density. 
+Under a constant hazard-rate reduced-form model (not realistic): 
+𝑠(𝑡) = 𝑒−𝜆𝑡, 𝑝(𝑡) = −
+𝑑
+𝑑𝑡 𝑠(𝑡) = 𝜆𝑒−𝜆𝑡 
+For a CDS with maturity 𝑡𝑛,  the par spread formula is given as follows: 
+𝐶(𝑡𝑛) =
+∫ (1 − 𝑅)𝐷(𝑢)𝑝(𝑢) 𝑑𝑢
+𝑡𝑛
+0
+∑ 𝑎(
+𝑛
+𝑖=1 𝑡𝑖)𝐷(𝑡𝑖)𝑠(𝑡𝑖)+ ∫ 𝑎∗𝑡𝑛
+0 (𝑢)𝐷(𝑢)𝑝(𝑢) 𝑑𝑢
+. 
+ 
+Notably, here the numerator is the “protection” leg, wherein the denominator is the “premium 
+leg”, which consists of scheduled coupon payments and the accrued premium paid at default.  
+Notably, the accrual factor is 1, as it is stated we have annual coupon payments.  
+We yield the following results: 
+ 
+Notably, here the fair 10y and 5y oar CDS spread are the same in this model, because in this 
+case, we assume a constant hazard, recovery and risk-free rate. And under these assumptions, 
+
+
+the term structure of default intensity is flat, so the CDS spread curve is also flat. Intuitively, 
+both the protection leg and premium leg scale consistently with maturity under the 
+exponential survival, so the fair spread does not change with maturity. 
+We note:  
+ 
+In our above case, we note that:  
+(1 − 𝑅)𝜆 = (1 − 0.40)(0.03)= 0.018, 
+ 
+so 
+0.018 × 10,000 = 180 bps. 
+So results do match up, such that the PV of fixed leg = PV of the protection leg (floating). 
+This is the case under a constant hazard rate model. 
+Also, we note that the protection leg and premium leg present values, as the CDS spread is 
+chosen to make: 
+𝐶 × (premium-leg annuity) = protection leg --> 𝐶 = protection leg
+premium-leg annuity 
+ 
+Numerically, it should be noted that, 
+𝐶 = 0.07417799
+4.01934796 ≈ 0.0184 
+
+
+ 
+Which makes sense, as the fair spread. The 10Y CDS covers a far longer time period, so both 
+of the legs accumulate more present value, and recalling the formulas: 
+Protection leg: 
+∫ (1 − 𝑅)𝐷(𝑢)𝑝(𝑢) 𝑑𝑢
+𝑇
+0
+ 
+ 
+Premium-leg annuity: 
+∑ 𝑎(
+𝑛
+𝑖=1
+𝑡𝑖)𝐷(𝑡𝑖)𝑠(𝑡𝑖)+ ∫ 𝑎∗
+𝑇
+0
+(𝑢)𝐷(𝑢)𝑝(𝑢) 𝑑𝑢. 
+ 
+We note the T that are within the integrals that are the weighted probability of defaults, 
+discounted by time etc. and in this case the protection leg includes defaults over Y6-Y10, so 
+it is larger, the premium leg part includes more coupon dates, and more accrued premiums. 
+So, intuitively, the numbers do make sense. 
+ 
+ 
+ 
+ 
+Recalling the previous homework setup (Homework VII):  
+ 
+Homework VI:  
+
+
+ 
+Here, the 95% 50day VaR and 97.5% 5-day ES for the portfolio by  MC, using the same 
+setup as the previous problem, with a scaled $10,000 portfolio for our VaR and ES. We use a 
+rolling 5-year window for this, and assume that the portfolio itself follows GBM, and 
+compute the risk measures for each day, as shown below with the head and tail of the time 
+series:  
+ 
+Following this, we set up the portfolio, such that it starts off initially with $5,000 invested in 
+AAPl, and $5,000 invested in CAT on 1997-10-13. The idea is that from this, we estimate 
+parameters with a rolling window, rescale to a fixed dollar position on that day, and under 
+GBM assumption, we work with the mean and variance of log returns. 
+Notably, we also compare to previous exponentially weighted estimators (with the same 
+param given in the solutions (as shown above).  
+We modelled in the way such that we have 𝑃𝑡 denote the value of the portfolio, where under 
+the GBM assumption we have: 
+𝑑𝑃𝑡
+𝑃𝑡
+= μ𝑃𝑑𝑡 + σ𝑃𝑑𝑊𝑡 
+And over the horizon, we have a normally distribution of continuously compounded (we 
+assume they are iid), such that we have additive returns, wherein we have:  
+𝑟𝑡
+𝑃 = 𝑙𝑜𝑔 ( 𝑃𝑡
+𝑃𝑡−1
+), 𝑤ℎ𝑖𝑐ℎ 𝑖𝑠 𝑒𝑠𝑡𝑖𝑚𝑎𝑡𝑒𝑑 𝑢𝑠𝑖𝑛𝑔 𝑡ℎ𝑒 𝑡𝑟𝑎𝑖𝑙𝑖𝑛𝑔 5 𝑦𝑒𝑎𝑟 𝑤𝑖𝑛𝑑𝑜𝑤, 
+
+
+And then, using the trailing 5-year window, and then estimate: 
+μ̂ = sample mean of 𝑟𝑡
+𝑃,  σ̂ = sample standard deviation of 𝑟𝑡
+𝑃. 
+ 
+For a 5-day horizon, we use the scaling: 
+μ5 = 5μ̂,  σ5 = √5 σ̂. 
+Noting that the scaling is standard for iid, normally distributed returns. We then simulate the 
+eturns :  
+𝑅5
+(𝑗) ∼ 𝑁(μ5, σ5
+2),   𝑗 = 1, … , 𝑁, 
+But the simulated future value of a $10,000 position is such that:  
+𝑉𝑡+5
+(𝑗) = 10,000 𝑒𝑅5
+(𝑗)
+. 
+Then from this, we have the following simulated loss of: 
+𝐿(𝑗) = 10,000 − 𝑉𝑡+5
+(𝑗). 
+Then, by convention, we take the 95th percentile of losses for the VaR, and the expectation or 
+the average of the losses beyond the 97.5 percentile. For the most recent date of data, we 
+have:  
+• 95% 5-day VaR = 593 
+• 97.5% 5-day ES = 850 
+That is expected, with ES substantively above the Var, with time variation in risk, as shown 
+below:  
+ 
+
+ 
+ 
+Comparing with other methods, with the historical simulation, we can see that the Monte 
+Carlo VaR agrees most closely with the GBM/lognormal parametric method. This is largely 
+expected, because both methods are built on the same assumptions of the portfolio assumed 
+to follow GBM, the mean-car are estimated from a rolling 5y window, and the losses are 
+from the lognormal return structure. Consider the following results, where we use the most 
+recently available data.  
+ 
+Notably, the Q3 Monte Carlo method differs more from historical simulation, especially in 
+ES. The VaR remains reasonably close, but the historical ES is larger. This is consistent, as 
+historical  simulation preserves the realised tail events (usually fatter in reality) in the trailing 
+5-year window, including skewness, jumps, and unusually large losses. By contrast, the 
+Monte Carlo method imposes the GBM/lognormal structure (which we know isn’t true in 
+reality), which smooths the loss distribution and typically produces thinner tails than the 
+empirical historical distribution. Therefore, historical simulation can generate a larger ES if 
+the sample window contains particularly severe losses 
+ 
+
+
+ 
+Noting the EWMA, if differs the most. EWMA places greater weight on more recent 
+observations, and much less weight on older ones. Since the 5-year equivalent exponential-
+weighting parameter is very close to 1, the estimator is still persistent, but it remains more 
+sensitive to recent volatility conditions than the plain rolling-window estimator. The 
+difference suggests that recent volatilities are more calmer than the broader 5y history 
+reflected in the rolling window MC simulation.  
+ 
+ 
+As shown on a historical basis also, the MC VaR closely tracks the GBM method, as they 
+rely on the same assumptions. They differ on the fact that the parametric model computes the 
+quantiles using the normal distribution, whereas the MC method approximates the same 
+distribution through simulation. Because the underlying distributional assumptions are 
+identical, the resulting VaR and ES estimates are very similar. 
+ 
+ 
+
+
+To make the differences clearer, the following figure shows a zoomed-in comparison of the 
+methods over recent years. The zoomed view highlights that the Monte Carlo and parametric 
+models remain closely aligned, while the EWMA estimator fluctuates more in response to 
+short-term volatility changes. This occurs because both methods assume the same 
+GBM/lognormal return structure, with Monte Carlo approximating the same distribution 
+numerically rather than computing quantiles analytically. Historical simulation remains 
+somewhat more irregular due to its reliance on realised return observations rather than a 
+parametric distribution. 
+ 
+ 
+On an aggregate basis, this Q3 Monte Carlo VaR agrees with the GBM or parametric method, 
+as both methods assume that P follows GBM, and use the same 5y rolling idea. It differs from 
+the historical simulation, especially for ES, since it preserves the realised tail events, rather 
+than imposing a smooth GBM/lognormal distribution. It also differs from exponential 
+weighting, as it places more emphasis on recent observations, and therefore gives materially 
+lower risk estimates when in a low vol period.  
+ 
+ 
+ 
+ 
+
+
+ 
+ 
+ 
+ 
+We repeat the previous Monte Carlo VaR exercise, but instead of modelling the portfolio P 
+directly as a GBM, we model the two underlying stocks, AAPL and CAT, as correlated 
+geometric Brownian motions. Setup remains the same as previously with a $5,000 allocation 
+to both stocks for the portfolio. The simulation is done on the stock level, rather than on the 
+portfolio level. 
+ 
+We assume that the two stock prices follow correlated GBMs: 
+𝑑𝑆𝑡
+𝐴𝐴𝑃𝐿
+𝑆𝑡
+𝐴𝐴𝑃𝐿 = 𝜇𝐴𝐴𝑃𝐿𝑑𝑡 + 𝜎𝐴𝐴𝑃𝐿𝑑𝑊𝑡
+𝐴𝐴𝑃𝐿, 
+𝑑𝑆𝑡
+𝐶𝐴𝑇
+𝑆𝑡
+𝐶𝐴𝑇 = 𝜇𝐶𝐴𝑇𝑑𝑡 + 𝜎𝐶𝐴𝑇𝑑𝑊𝑡
+𝐶𝐴𝑇, 
+With the following: 
+𝑑𝑊𝑡
+𝐴𝐴𝑃𝐿𝑑𝑊𝑡
+𝐶𝐴𝑇 = 𝜌 𝑑𝑡. 
+This is literally from STAT5264, where the dt term survives as a result of the quadratic 
+variation. 
+And then, we note that the two BMs are correlated with the Brownian motions are correlated 
+via 𝜌 and as such, in discrete timing, this means that the vector of daily log returns is 
+modelled as a bivaraie normal, wherein: 
+Σ = ( 𝜎𝐴𝐴𝑃𝐿
+2 𝜌𝜎𝐴𝐴𝑃𝐿𝜎𝐶𝐴𝑇
+𝜌𝜎𝐴𝐴𝑃𝐿𝜎𝐶𝐴𝑇 𝜎𝐶𝐴𝑇
+2 ) 
+ 
+ 
+
+
+The correlation parameter 𝜌 is estimated from the sample correlation of AAPL and CAT log 
+returns over the rolling 5-year window. In practice, this is obtained from the empirical 
+covariance matrix of the two return series: 
+ 
+> Σ => ( > 𝜎𝐴𝐴𝑃𝐿
+2 𝜌𝜎𝐴𝐴𝑃𝐿𝜎𝐶𝐴𝑇
+> 𝜌𝜎𝐴𝐴𝑃𝐿𝜎𝐶𝐴𝑇 𝜎𝐶𝐴𝑇
+2 > ) > 
+ 
+ 
+where the entries are computed directly from the sample moments of the historical returns in 
+the rolling estimation window. 
+Intuitively, this means that the mean vector, volatilities, and correlation are all estimated 
+using the trailing 5-year window of historical returns. In particular, the correlation is obtained 
+from the sample covariance matrix of AAPL and CAT log returns over the rolling window.  
+ 
+Then, exactly like before, we scale like the following, but with the covar matrix such that:  
+𝜇5 = 5𝜇,  Σ5 = 5Σ, 
+And we simulate the following: 
+𝑅5
+(𝑗) ∼ 𝑁(𝜇5, Σ5),   𝑗 = 1, … , 𝑁 
+ 
+Then we have simulated stock prices which are like:  
+𝑆𝑡+5
+(𝑗) = 𝑆𝑡𝑒𝑅5
+(𝑗)
+, 
+And as such, from here the simulated portfolio is constructed from the simulated stock prices, 
+which ae then compressed to $10,000 notional, and the rest of the simulation is the same as 
+before. Like before, it is notably time-variant and dependent on the regimes: 
+ 
+
+ 
+ 
+The resulting rolling Q4 VaR and ES series begin at the portfolio inception date and evolve 
+through time using rolling 5-year estimates. For the most recent date in the sample, the Q4 
+Monte Carlo results are approximately: 
+• 95% 5-day VaR = 587 
+• 97.5% 5-day ES = 829 
+Notably, it does appear to be lower than historical values.  
+ 
+Now moving onto the comparison with the other methods. We first compare on the final day 
+available in the data.  
+ 
+It is the most meaningfully similar to the previous question of  Monte Carlo and the 
+GBM/lognormal parametric method. This is expected. Q3 simulates the portfolio P directly 
+under a GBM assumption, whereas Q4 simulates the two underlying stocks and then 
+reconstructs the portfolio. This is because they follow the identical core assumptions of 
+lognormal prices, normal log returns, and rolling 5y parameter estimations. The only 
+difference is that the portfolio distribution is built from the joint simulation of the two stocks 
+directly, rather than the portfolio directly.  
+
+
+ 
+Notably, it does remain farily similar to the GBM/lognormal parametric VaR, because that 
+method is still based on the same normal/lognormal structure. The Monte Carlo method 
+simply computes the distribution numerically rather than analytically.  
+Exactly like before, the current pre-stock MC differs more from historical simulation, 
+especially in ES. Historical simulation preserves realized tail events and any empirical non-
+normality in the 5-year window, including skewness and unusually large negative returns. As 
+a result, it can produce higher tail-risk estimates than model-based Monte Carlo methods. 
+Same idea for EWMA. Same for reasoning. 
+The findings are more pronounced, as shown here for the last few years, where like 
+mentioned, the MC simulations are the most similar to the GBM/lognormal VaR and ES, 
+where it differs the most with historical.  
+
+
+ 
+Since Q4 simulates the underlying stocks jointly rather than the portfolio directly, it provides 
+a useful check on whether modelling the portfolio as a single GBM in Q3 is a good 
+approximation. The close agreement between Q3 and Q4 suggests that, in this case, the 
+portfolio-level GBM approximation is reasonably accurate. 
+ 

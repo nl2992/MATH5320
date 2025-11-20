@@ -1,0 +1,310 @@
+MATH5320 – Homework VII 
+ 
+ 
+ 
+1) 
+Merton Model refers to a structural model, that generally assumes that a firm’s asset value follows a 
+process and defaults if the asset value gets too low relative to the debt, i.e. 𝑉𝑡 < 𝐷.  It’s called 
+structural because it is based off a balance-sheet structure, and also, under the basic Merton model, 
+there is no default before maturity (at T), and at t=0, the instantaneous default probability is zero.  
+It models the assets like the following: 
+𝑑𝑉 =  𝜇𝑉 𝑑𝑡 +  𝜎𝑉 𝑑𝑊  
+Recall from 5264, the solution to that is: 
+𝑉𝑇 = 𝑉0𝑒𝑥𝑝((𝜇 − 𝜎2/2))𝑇 + 𝜎𝑊𝑇)  
+And the only debt that is modelled is through a ZCB of value B, and is only checked for default at T. 
+IT functions effectively in a way where equity is a call option on the assets with strike B, and the debt 
+is a such that it is ZCB – put on the assets.  
+ 
+a)  
+For this question, we are evaluating under the historical measure, P, the probability that the firm will 
+default within 5 years.   
+ 
+ 
+Because it is the Merton model, and “we default” within 5 years and “default at T = 5”, it is the same 
+event such that  
+𝑃(default before 𝑇) = 𝑃(default at 𝑇) = 𝑃(𝑉𝑇 < 𝐵) = Φ(−𝑑2) 
+ 
+In this case, unlike the reduced form model, there is no hazard rate or survival curve to integrate. 
+Φ(−𝑑2) is literally jus the probability that we end up below B, or in other words “default”. As such, 
+the survival rate is basically: 
+ 
+𝑠0(𝑢) = 1 − Φ(−𝑑2) ⋅ 1𝑢≥𝑇 
+ 
+Now going back to the formula, for the probability for default, with two candiate drift terms, that is r 
+or μ  
+
+
+Under Q (RN measure)  (𝑑𝑟𝑖𝑓𝑡 − 𝑡𝑒𝑟𝑚 = 𝑟 = 0.055):  
+𝑑2 = 0.2578 + (0.055 − 0.0392) × 5
+0.6261 = 0.2578 + 0.0790
+0.6261 = 0.3368
+0.6261 = 0.5380 
+𝑝𝑅𝑁 = Φ(−0.5380) = 29.53% (2𝑑𝑝) 
+ 
+Under P (historical measure) (𝑑𝑟𝑖𝑓𝑡 − 𝑡𝑒𝑟𝑛 = 𝜇 = 0.023):  
+𝑑2 = 0.2578 + (0.023 − 0.0392) × 5
+0.6261 = 0.2578 − 0.0810
+0.6261 = 0.1768
+0.6261 = 0.2824 
+𝑝𝑅𝑊 = Φ(−0.2824) = 38.88% (2𝑑𝑝) 
+ 
+ 
+ 
+So we note that under P, we have a higher probability of default, and we note that every option pricing 
+model including Merton, is derived under the risk-neutral measure Q. And under Q, the discounted 
+asset is a martingale. So, under Q, we are basically looking at the probability of default, when assets 
+are martingales, and then “value” what something is worth today”. 
+ 
+But in the real-world, assets grow at drift, which is much, much lower than the r (in this case). As it is 
+lower, then it will be more likely to drift below B, so the IRL or P-measure default probability is 
+higher. As everything else is the same, the difference in default probability is purely driven by the 
+different drift term. 
+ 
+ 
+ 
+ 
+b) 
+Building on top of what we had before, now we want the “between three to four years”. We note that, 
+now, this follows on the critical limitation of Merton model, where there is no possibility of default 
+before time T. The idea is that default is only defined at maturity, so,  
+The model defines default only at the debt maturity date 𝑇. So for any interval that does not contain 
+𝑇, where 𝜏 is default time:  
+P (𝜏 ∈ (𝑥, 𝑥 + 1]) = 0. 
+ 
+Following on top of this, there are three cases such that: 
+There are three general cases: 
+
+
+If 𝑥 + 1 < 𝑇, then 
+P (𝜏 ∈ (𝑥, 𝑥 + 1]) = 0. 
+If the interval contains 𝑇, meaning 𝑥 < 𝑇 ≤ 𝑥 + 1, then 
+P (𝜏 ∈ (𝑥, 𝑥 + 1]) = P (𝑉𝑇 < 𝐷). 
+ 
+If 𝑥 ≥ 𝑇, then 
+P (𝜏 ∈ (𝑥, 𝑥 + 1]) = 0, 
+ 
+because default, if it happens, already happened at 𝑇, and there is no second default later for that 
+bond. And we note that in this model the default time is such that: 𝜏 = 𝑇. 
+ 
+So then, we note that the 𝑃(𝑑𝑒𝑓𝑎𝑢𝑙𝑡 ∈ (3,4)) = 𝑠0(3) − 𝑠0(4) = 1 − 1 = 0 
+ 
+This is because, if we look at the Merton Survival curve, before T, we have the 𝑠0(3)  =  1. 
+And then, in this case, it will literally be 1 – 1 = 0 (as shown above). If we were to look at the curves 
+from the step functions amalgamated, we will have:  
+ 
+Interval s0(start) s0(end) 
+P(default in 
+interval) 
+(0,1) 1 1 0% 
+(1,2) 1 1 0% 
+(2,3) 1 1 0% 
+(3,4) 1 1 0% 
+ 
+But then, it is at T = 5, where there is default probability, as shown before.  
+ 
+ 
+ 
+This is because, we defined T = 5 prior!  
+ 
+ 
+This reflects the general idea that Merton default is predictable, such that as we approach T, we know 
+if we are going to default, by look at the asset value. And the practical implication of this is that if we 
+tried to price a CDS on this using Merton, we will get a spread of 0 (over RFR), as the model will say 
+that there is no probability of default before T. This is because we are either exactly at T (where it can 
+default), or it never happens at all. This is a fairly weak point, and has many unrealistic pricing 
+implications so Black-Cox was introduced.  
+
+
+ 
+ 
+ 
+ 
+ 
+2)  
+ 
+The problem asks us to compute the 99% 5d historical VaR and the 97.5% 5d historical ES on the a 
+10,000 position for the last 20 years, and use log changes, s.t. we note that a rolling 5-year window 
+of daily data, as the foundation for later calculations. For each evaluation date 𝑑, we take the 
+previous 5 years of daily data, construct overlapping 5-day historical log-return scenarios, map each 
+scenario into a 5-day P&L on a $10,000 position, and then compute the empirical 99 percent VaR and 
+97.5 percent ES from that historical scenario distribution 
+ 
+For hw07 problem we have the following results table. 
+ 
+ 
+Note we did it by scaling the 1-day returns by sqrt(5) previously, and obtained similar results: 
+ 
+
+
+One notable result is that CAT’s latest 5-day historical ES exceeds AAPL’s, at $1,026.20 versus 
+$964.02, which reverses the ordering seen in some earlier parametric results in HW5. This reflects 
+CAT having more extreme log-return scenarios in the 5yr window relative to its recent volatility level, 
+which the parametric model's σ² estimate smooths over. AAPL and portfolio peaks cluster around 
+November to December 2008, consistent with the acute phase of the GFC dominating those windows. 
+We should note that direct from VaR difference, does slightly differ, and does matter, as we note 
+that the two methods are not equivalent. We note that the portfolio VaR difference (direct minus from 
+A&C) is nonzero: mean = −$22.95, standard deviation = $39.84, and maximum absolute difference = 
+$225.75. The two methods are not equivalent for log returns because: 
+log (𝑤𝐴 ⋅ 𝐴 + 𝑤𝐶 ⋅ 𝐶) ≠ 𝑤𝐴 ⋅ log (𝐴) + 𝑤𝐶 ⋅ log (𝐶) 
+ 
+by Jensen's inequality (log is concave). The portfolio log-return is nonlinear in the component log-
+returns, so applying weights to individual scenarios and summing gives a different distribution than 
+directly using the portfolio return series. The difference is modest on average but can still reach 
+$225.75 on individual dates, so it is not negligible for risk measurement 
+We note that the difference is small, but in absolute cases, it can reach up to almost 226, which does 
+make a difference for risk assessment. 
+ 
+This was also noted in MATH5380, when attributing returns, etc. the portfolio and its individual 
+attributes do not line up, when using log-returns, and as such, matters here in performance attribution 
+more broadly.  
+As shown below the difference can change a lot across the back testing period, especially during 
+2006, when A & C > Direct. 
+ 
+
+
+We need to note that previously, in HKWK5 Q3, we used the parametric GBM position on individual 
+$10K positions, using 2y5y10y rolling windows on their equivalent EWMA values. As shown below, 
+these gave about 831-963$ for AAPL, and about 869-936$ for CAT. In HW6 Q2 (methodology 
+detailed later) we extended this parametrically to the full portfolio using a 2yr window, giving a GBM 
+VaR of ~$836 per $10k equivalent. The portfolio VaR per 10k ($836) fell below either single-stock 
+HW5 figure, reflecting the diversification benefit from combining AAPL and CAT with rolling 
+correlation ρ = 0.35, so combining them reduces portfolio variance below the weighted average of the 
+individual variances through the cross term 2𝑤𝐴𝑤𝐶𝜌𝜎𝐴𝜎𝐶 < 2𝑤𝐴𝑤𝐶𝜎𝐴𝜎𝐶. 
+Noting previous weeks, for hw05 Q3, as shown: 
+ 
+Using the corrected historical 5-day methodology, the latest historical VaR is $905.78 for AAPL, 
+$969.13 for CAT, and $898.76 for the portfolio, all meaningfully higher than every parametric 
+equivalent. The gap versus the closest parametric AAPL figure of about $843 is roughly $62.78, and 
+versus the portfolio parametric figure of about $836 is roughly $62.76.. This is a fundamental 
+structural difference, as the parametric model fits a lognormal to the 2y window, and then reads the 
+tail at the 1st percentile, where it is smoothed off, whereas historical simulation instead ranks all 1,260 
+scenarios and takes the 13th worst directly, meaning days like Liberation Day (3 April 2025), where 
+AAPL's log-return was −9.70%, enter the VaR at full weight rather than being absorbed into a fitted 
+estimate. 
+ 
+For hw06 Q2, we have: 
+ 
+ 
+Here, we used the estimates from the 2y5y10y windows, and corresponding estimated exponential 
+weights. For the portfolio (24,679 AAPL + 171 CAT), we compute a 5-day 99% VaR and 97.5% ES 
+on the actual dollar position using a 2-year rolling window for parameter estimation.  Two methods 
+are used, for the GBM exact which is lognormal, who Two-stock normal portfolio, and applies the 
+normal VaR/ES formula. Now it is no longer normalised to 10k. =Normalising back to a $10k 
+equivalent by dividing by portfolio value and rescaling: 
+ $579,445 / $6,931,590 × $10,000 = $836,  
+$662,028 / $6,931,590 × $10,000 = $955, 
+$597,001 / $6,931,590 × $10,000 = $861, 
+$600,071 / $6,931,590 × $10,000 = $866.  
+This is equivalent to $836 and $861 per $10k respectively.  Refer to the above results. 
+ 
+
+
+ 
+Note: these results comparison, were with the old scaled sqrt(5) approach, but conclusion remains 
+similar  
+ 
+Notably, the normal l ES ($866) is the single lowest ES figure in the entire table, lower even than the 
+HW5 single-stock AAPL parametric ES ($963), which makes it the clearest evidence that normality is 
+the binding assumption doing the most damage in terms of risk assessment. Notably, the  ES/VaR 
+ratio of 1.005 is economically implausible, and it says the average loss in the worst 2.5% of scenarios 
+is almost identical to the loss at the 1% threshold, which means that it only happens as the normal tail 
+is far too thin. GBM gives 1.142, and the historical simulation gives 1.070, and as such, it does 
+showcase the asymmetry and fat-tailedness of equity returns. 
+ 
+Over the 20-year backtest, the average historical 5-day VaR is $1,136.17 for AAPL and $1,077.93 for 
+the portfolio. It is higher than the short-window parametric averages (approx. $973 AAPL, approx. 
+$984 CAT) because the historical method captures the full severity of 2008 to 09 GFC scenarios that a 
+fitted normal distribution compresses, and therefore obscures. 
+ 
+ 
+ 
+Now, we look at the previous problem which was done with log-returns, and now we note the 
+following differences. Generally, log-returns are preferred as they are additive and are far easier for 
+calculations, and looking below, in terms of absolute and dollar changes for VaR and ES calculations, 
+it does not matter much in terms of differences. For this dataset, the choice between relative/log 
+changes and absolute/dollar changes does matter quantitatively, the portfolio VaR is $898.76 under 
+relative changes versus $572.27 under absolute changes on the latest date, and the average difference 
+over the sample is also substantial. It does not matter whether the portfolio VaR is computed directly 
+from the portfolio price series or reconstructed from AAPL and CAT price changes, because the 
+portfolio dollar change satisfies: 
+ 
+Δ𝑃 = 𝑁𝐴𝐴𝑃𝐿 ∗ Δ𝐴 + 𝑁𝐶𝐴𝑇 ∗ Δ𝐶 
+ 
+This is linear in the component changes, so constructing the portfolio scenario-by-scenario from A 
+and C gives an algebraically identical result to using the portfolio price series directly. This contrasts 
+with Q2, where the analogous VaR difference had mean - $22.95 and maximum absolute difference 
+$225.75, because log-returns do not satisfy a linear portfolio identity: 
+ 
+𝑟𝑃 ≠ 𝑁AAPL ∗ 𝑟𝐴 + 𝑁CAT ∗ 𝑟𝐶 
+The correct first-order approximation is 𝑟𝑃 ≈ ∑𝑤𝑖𝑟𝑖, and needs to account for Jensen’s inequality 
+correction. 
+ 
+
+
+ 
+ 
+It is worth noting that CAT’s absolute-change VaR of $393.16 is much lower than its relative/log-
+return VaR of $969.13, a gap of $575.97. For AAPL, the corresponding gap is smaller but still 
+material: $905.78 versus $579.54, a difference of $326.24. CAT also has the larger peak absolute-
+change VaR, at $3,543.44 versus $2,910.56 for AAPL, the reverse of the log-return ordering. 
+ 
+ 
+ 
+For the portfolio under absolute changes, the latest direct VaR is $572.27 and the latest ES is $664.57, 
+while the 20-year averages are $763.11 for VaR and $769.54 for ES. Compared with the relative/log-
+return approach, the portfolio VaR is lower under absolute changes by $326.49 on the latest date and 
+by $314.82 on average over the sample. For ES, the corresponding gaps are $293.43 on the latest date 
+and $318.51 on average. This is because the log-return method applies multiplicative shocks 
+proportional to current value, whereas the absolute-change method applies additive dollar shocks 
+ 
+But, if we compare the direct portfolio calculation with the portfolio rebuilt from AAPL and CAT 
+absolute changes, the maximum absolute difference is only 2.16 × 10−12for VaR and 
+9.09 × 10−13for ES, which is just floating-point noise.  We note that also, every since of the approx.. 
+5000 rows agree to within 10-8 (done in old workbook), and it is basically 2x machine epsilon, such 
+that it accumulates it in a way that differences are technically there.  
+ 
+Looking t it in terms of maximum dollar terms, we get the following: 
+
+
+ 
+The idea is that the absolute Δ is the same as its components, and its linearity is exact, whereas for 
+log-returns, this relationship falls apart, as non-linearity introduces the Jensen’s Inequality correction.   
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Over a long sample where equity prices trend upward, multiplicative return shocks generally produce 
+larger tail losses than dollar-change shocks. The time-series plots illustrate this behaviour. The log-
+return VaR and ES (blue) remain persistently above the absolute-change measures (red) for most of 
+the sample, with the largest divergence occurring during periods of elevated volatility such as the 
+2008–2009 financial crisis. This is in direct contrast to the previous q, where portfolio reconstruction 
+produced different results due to the non-linearity of log-returns, the absolute-change framework 
+preserves the exact linear relationship between the portfolio and its components. 
+ 
+Notably, the portfolio VaR and ES under absolute changes are substantially smaller than under the 
+log-return approach. 
+ 
+ 
+This is because, as mentioned already,  that the log-return method has multiplicative shocks applied to 
+portfolio value, whereas absolute change method has the additive dollar shocks being independent of 
+the current price level. Over a longer sample, where equity prices trend upward, multiplicative return 
+shocks generally produce larger tail losses than dollar-change shocks.  
+ 
+Therefore, while the choice between log-returns and absolute changes materially affects the 
+magnitude of VaR and ES, the method used to construct the portfolio from its components does not 
+
+
+matter under absolute changes because the portfolio P&L is exactly linear in the underlying price 
+changes. 
