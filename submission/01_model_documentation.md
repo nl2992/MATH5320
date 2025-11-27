@@ -1059,18 +1059,24 @@ FAIL Required test coverage of 100% not reached. Total coverage: 91.22%
 
 The notebook sequence provides a strong supplementary narrative:
 
-- `01_market_risk_var_es_goldens.ipynb`
-- `02_aapl_cat_var_es_methods.ipynb`
-- `03_historical_shock_methodology.ipynb`
-- `04_estimation_rolling_vs_ewma.ipynb`
-- `05_credit_hazard_risky_bond_spread.ipynb`
-- `06_credit_merton_structural_default.ipynb`
-- `07_cds_pricing_validation.ipynb`
-- `08_cva_counterparty_mitigation.ipynb`
-- `09_regulatory_rwa_dfast_pathing.ipynb`
-- `10_backtesting_validation_dashboard.ipynb`
+- `notebooks/01_market_risk_var_es_goldens.ipynb`
+- `notebooks/02_aapl_cat_var_es_methods.ipynb`
+- `notebooks/03_historical_shock_methodology.ipynb`
+- `notebooks/04_estimation_rolling_vs_ewma.ipynb`
+- `notebooks/05_credit_hazard_risky_bond_spread.ipynb`
+- `notebooks/06_credit_merton_structural_default.ipynb`
+- `notebooks/07_cds_pricing_validation.ipynb`
+- `notebooks/08_cva_counterparty_mitigation.ipynb`
+- `notebooks/09_regulatory_rwa_dfast_pathing.ipynb`
+- `notebooks/10_backtesting_validation_dashboard.ipynb`
+- `notebooks/11_end_to_end_demo.ipynb`
 
-These notebooks can be cited as appendices or supplementary evidence in the final submission.
+The primary formula-sheet demonstration artifact is the submission notebook:
+
+- **`submission/demo.ipynb`** — covers all fifteen course sections (§1 risk-measure theory through §15 regulatory capital), fully executed with outputs. Each section uses a six-cell structure: question, formulas, code, expected-vs-actual table, assertion, interpretation. All assertions pass.
+- **`submission/demo.md`** — front-end trace companion: screenshots of each relevant Streamlit tab with side-by-side comparison confirming the application matches the notebook for every section.
+
+These submission artifacts can be cited directly as evidence in the final submission package.
 
 ### Appendix E. User Guide and Reproducibility
 
@@ -1134,3 +1140,5 @@ python tests/integration_test_formula_sheet.py
 | Appendix contains formula and test details | Yes |
 | Screenshots inserted | Yes |
 | Local test pass evidence included | Yes |
+| Formula-sheet demo notebook (submission/demo.ipynb) referenced | Yes |
+| Front-end trace document (submission/demo.md) referenced | Yes |
