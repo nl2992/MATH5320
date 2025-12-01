@@ -4,6 +4,8 @@ __pycache__/
 .coverage
 htmlcov/
 .pytest_cache/
+.vscode/
+.ipynb_checkpoints/
 .streamlit/secrets.toml
 .env
 .DS_Store
