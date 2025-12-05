@@ -939,7 +939,10 @@ The most valuable next steps would be:
 3. Stein, H. J., `model_validation_report_example.pdf`, local reference document in `docs/references/`.
 4. Black, F., and Scholes, M. (1973). "The Pricing of Options and Corporate Liabilities." Journal of Political Economy.
 5. Kupiec, P. H. (1995). "Techniques for Verifying the Accuracy of Risk Measurement Models." Journal of Derivatives.
-6. Basel Committee on Banking Supervision. Basel traffic-light and capital multiplier framework, cited here only as context for the illustrative backtesting diagnostics.
+6. Christoffersen, P. (1998). "Evaluating Interval Forecasts." International Economic Review.
+7. Merton, R. C. (1974). "On the Pricing of Corporate Debt: The Risk Structure of Interest Rates." Journal of Finance, 29(2), 449–470.
+8. McNeil, A. J., Frey, R., and Embrechts, P. (2015). *Quantitative Risk Management: Concepts, Techniques and Tools* (Revised Edition). Princeton University Press.
+9. Basel Committee on Banking Supervision. Basel traffic-light and capital multiplier framework, cited here only as context for the illustrative backtesting diagnostics.
 
 ---
 
