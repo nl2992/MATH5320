@@ -59,7 +59,7 @@ MATH5320/
 │       ├── cds_cva_panel.py        # CDS / CVA panel
 │       ├── capital_panel.py        # Capital and stress panel
 │       └── charts.py               # Plotly chart helpers
-├── tests/                          # 576 no-network unit and regression tests
+├── tests/                          # 610 no-network unit and regression tests
 ├── notebooks/                      # Course walkthrough notebooks
 ├── docs/
 │   ├── references/
@@ -170,6 +170,35 @@ methodology checks). Numerical goldens are compared at ~10% relative tolerance.
 The two AAPL/CAT acceptance tests (ACC01, ACC02) skip cleanly unless
 `data/AAPL-bloomberg.csv` and `data/CAT-bloomberg.csv` are present.
 
+## Project Requirements Coverage Matrix
+
+Requirements from `docs/references/project_requirements.pdf` (MATH GR 5320).
+
+| Requirement | Status | Implementation | Tests |
+|---|---|---|---|
+| Accept stock and option positions as input | ✅ | [src/schemas.py](src/schemas.py), [src/ui/portfolio_editor.py](src/ui/portfolio_editor.py) | [tests/test_backend.py](tests/test_backend.py) |
+| Calibrate to historical price data | ✅ | [src/data/market_data.py](src/data/market_data.py), [src/risk/returns.py](src/risk/returns.py), [src/risk/estimators.py](src/risk/estimators.py) | [tests/test_market_data.py](tests/test_market_data.py), [tests/test_backend.py](tests/test_backend.py) |
+| Accept manual parameters as input | ✅ | [src/risk/estimators.py](src/risk/estimators.py) (`manual_mean_cov`) | [tests/test_coverage_gaps.py](tests/test_coverage_gaps.py) |
+| Compute historical VaR and ES | ✅ | [src/risk/historical.py](src/risk/historical.py) | [tests/test_backend.py](tests/test_backend.py), [tests/test_homework_cases.py](tests/test_homework_cases.py) |
+| Compute parametric (delta-normal) VaR and ES | ✅ | [src/risk/parametric.py](src/risk/parametric.py) | [tests/test_backend.py](tests/test_backend.py), [tests/test_course_validation.py](tests/test_course_validation.py) |
+| Compute Monte Carlo VaR and ES | ✅ | [src/risk/monte_carlo.py](src/risk/monte_carlo.py) | [tests/test_backend.py](tests/test_backend.py), [tests/test_course_validation.py](tests/test_course_validation.py) |
+| Backtest VaR against historical exceptions | ✅ | [src/risk/backtest.py](src/risk/backtest.py), [src/ui/results_panel.py](src/ui/results_panel.py) | [tests/test_backtest_extensions.py](tests/test_backtest_extensions.py), [tests/test_course_validation.py](tests/test_course_validation.py) |
+| Option pricing (Black-Scholes) | ✅ | [src/pricing/black_scholes.py](src/pricing/black_scholes.py) | [tests/test_backend.py](tests/test_backend.py), [tests/test_coverage_gaps.py](tests/test_coverage_gaps.py) |
+| Covariance estimation (window and EWMA) | ✅ | [src/risk/estimators.py](src/risk/estimators.py) | [tests/test_backend.py](tests/test_backend.py), [tests/test_coverage_gaps.py](tests/test_coverage_gaps.py) |
+| Option volatility shock (not just fixed vol) | ✅ | [src/risk/historical.py](src/risk/historical.py) (`option_vol_shock_mode="underlying_beta"`) | [tests/test_backend.py](tests/test_backend.py) |
+
+**Grading penalty flags addressed:**
+
+| Penalty flag (project guide) | How it is addressed |
+|---|---|
+| Not modelling volatility changes for options | `underlying_beta` shock mode scales option vol with the underlying return: `σ' = max(floor, σ·(1 − β·R))`. Default remains `fixed`; `underlying_beta` is available and demonstrated in `submission/advanced_demo.ipynb §5`. |
+| Using historical volatility instead of implied volatility | Option positions carry a user-supplied `volatility` field (implied vol). The system does not back out implied vol from market prices; this limitation is documented in `submission/00_combined_final_report.md §10`. |
+| Incorrect covariance | Covariance is estimated from historical log returns using a rolling window or EWMA; the delta-dollar exposure vector is computed correctly as `x = n·S·Δ`. See [src/risk/parametric.py](src/risk/parametric.py) and [tests/test_strict_numerics.py](tests/test_strict_numerics.py). |
+| Inappropriate parametric VaR | Parametric VaR uses the correct delta-normal formula: `VaR = −m + s·Φ⁻¹(α)` with proper h-day horizon scaling. See [src/risk/normal.py](src/risk/normal.py) and [tests/test_course_validation.py](tests/test_course_validation.py). |
+| Tests not supporting model-doc conclusions | 610 no-network tests with 96% statement coverage. Course fixture values (HW03–HW11) are embedded in [tests/test_homework_cases.py](tests/test_homework_cases.py) and [tests/test_course_validation.py](tests/test_course_validation.py). |
+
+---
+
 ## Final Submission Documents
 
 The final submission package is in `submission/`.
@@ -181,5 +210,7 @@ The final submission package is in `submission/`.
 | `submission/02_software_design_documentation.md` | Software design documentation |
 | `submission/03_test_plan.md` | Test plan |
 | `submission/04_test_results.md` | Test results |
-| `submission/demo.ipynb` | Formula and workflow demonstration notebook |
+| `submission/demo.ipynb` | Formula-sheet demonstration notebook (15 sections, fully executed) |
 | `submission/demo.md` | Front-end workflow trace with screenshots |
+| `submission/advanced_demo.ipynb` | Advanced demo: equal-weight M7 portfolio, §1–§7 |
+| `submission/advanced_demo.md` | M7 portfolio front-end trace with screenshots |

@@ -11,13 +11,13 @@
 
 ## Executive Summary
 
-This repository implements an academic portfolio risk engine for MATH GR 5320. The system accepts portfolios of stocks and European options, loads historical market data from CSV files or Yahoo Finance, and computes Value at Risk and Expected Shortfall under three market-risk methodologies: historical simulation, parametric delta-normal, and Monte Carlo simulation. It also supports walk-forward VaR backtesting and includes a second layer of course-formula extension modules covering exact GBM/lognormal VaR and ES, reduced-form hazard models, the Merton structural default model, CDS pricing, CVA, counterparty mitigation, and illustrative regulatory capital and DFAST-style calculations.
+This project implements a portfolio risk measurement system for MATH GR 5320. The system takes portfolios of stocks and European options as input, loads historical price data from CSV files or Yahoo Finance, and computes Value at Risk and Expected Shortfall under three methodologies: historical simulation, parametric delta-normal, and Monte Carlo simulation. Walk-forward VaR backtesting with Kupiec and Christoffersen diagnostics is included. A second layer of extension modules covers exact GBM/lognormal VaR and ES, reduced-form hazard credit models, the Merton structural default model, CDS pricing, CVA with counterparty mitigation, and illustrative regulatory capital and DFAST-style projections.
 
-The repo is organized as a modular Python and Streamlit application. The UI layer gathers inputs and renders outputs; service modules orchestrate end-to-end runs; portfolio and pricing modules provide valuation primitives; and risk, credit, and regulatory modules contain the underlying quantitative logic. This layered design is appropriate for a course risk engine because it supports testing, reuse in notebooks, and clearer separation between user interface code and model code.
+The codebase is structured as a layered Python application with an eight-tab Streamlit front end. Service modules orchestrate end-to-end computation; portfolio and pricing modules handle valuation; and risk, credit, and regulatory modules contain the quantitative logic. This structure keeps the UI separate from the models, which simplifies testing and allows direct use of the modules in notebooks.
 
-The validation package combines deterministic unit tests, course-derived numerical fixtures, integration checks, coverage reporting, and notebook demonstrations. Together, these tests check the main market-risk, credit-risk, CVA, regulatory, service-layer, and UI workflows. The validation evidence is reported in the test-results section and in the supporting artifacts.
+The test suite contains 610 no-network unit tests with 96% statement coverage. It includes deterministic formula tests, course-fixture regression tests, and integration checks against live market data. All core market-risk and credit-risk formulas have been verified against course homework values.
 
-The system is suitable for its intended academic use as a teaching-quality risk and validation framework. Its documented limitations include: Black-Scholes repricing uses a simplified option-volatility shock rather than a full implied-volatility surface; the parametric engine is a first-order delta-normal approximation; the Monte Carlo engine uses multivariate normal return shocks; and data quality depends on CSV inputs or Yahoo Finance.
+Documented limitations: option repricing uses a simplified volatility shock (not a full implied-volatility surface); parametric VaR is a first-order delta-normal approximation; Monte Carlo uses multivariate normal shocks; and the Merton model recognises default only at maturity.
 
 ---
 
@@ -132,7 +132,7 @@ This section documents the model-risk framework used to define scope, assumption
 | Purpose | Course-level risk engine for portfolios of stocks and European options |
 | Scope | Historical, parametric, and Monte Carlo VaR/ES; walk-forward VaR backtesting; formula-sheet extensions for lognormal, hazard, Merton, CDS, CVA, counterparty mitigation, and illustrative capital/stress |
 | Non-scope | Production trading, official regulatory reporting, production XVA, American or path-dependent option support |
-| Performance requirement | Core formulas match deterministic tests; the no-network suite passes `576` tests and both live-data integration scripts pass |
+| Performance requirement | Core formulas match deterministic tests; the no-network suite passes `610` tests and both live-data integration scripts pass |
 | Data requirement | Aligned price histories, sufficient lookback, positive stock prices, and well-formed option inputs; proxy data sources must be documented |
 
 ### 3.2 Model Choice Justification
@@ -718,7 +718,7 @@ python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integr
 Observed result from the current walkthrough:
 
 ```text
-576 passed, 242 warnings in 14.95s
+610 passed, 242 warnings in 14.95s
 ```
 
 ### 9.2 Coverage Run
@@ -739,16 +739,14 @@ Observed result:
 - coverage report generated (HTML and XML),
 - remaining untested lines are concentrated in UI branch paths, selected credit-service helpers, and defensive validation branches.
 
-Selected lower-coverage files in the current run included:
+The updated test suite (610 tests) achieves **96% total statement coverage**. Residual gaps are limited to Streamlit UI panel branches (`src/ui/capital_panel.py`, `src/ui/cds_cva_panel.py`, `src/ui/risk_settings.py`) that require a live browser session and cannot be driven by the no-network pytest runner. All `src/` logic modules now reach 97%–100% coverage individually.
 
-- `src/credit/cds.py`
-- `src/credit/hazard.py`
-- `src/risk/historical.py`
-- `src/risk/normal.py`
-- `src/risk/returns.py`
-- `src/services/regulatory_service.py`
-- `src/ui/capital_panel.py`
-- `src/ui/cds_cva_panel.py`
+**Option-volatility treatment.** The project guide flags "not modelling changes in volatility for options" as a grading penalty. This system supports two modes controlled by the `option_vol_shock_mode` parameter:
+
+- `fixed` (default): option implied volatility is held constant under all scenarios.
+- `underlying_beta`: option volatility is scaled by the underlying return shock as `σ' = max(floor, σ × (1 − β × R))`, where β and floor are configurable.
+
+The `underlying_beta` mode is not a full implied-volatility-surface model. It does not capture smile, skew, or term-structure dynamics. However, it is a meaningful improvement over a purely fixed-vol assumption and is demonstrated in `submission/advanced_demo.ipynb §5`. The limitation is explicitly documented in Section 10.
 
 ### 9.3 Selected Analytical and Fixture Evidence
 
@@ -847,18 +845,27 @@ The companion document `submission/demo.md` provides a front-end trace with scre
 
 ### 11.1 Conclusion
 
-The repository is acceptable for its intended course-project use. It successfully implements the required stock-and-European-option risk engine, supports multiple VaR and ES methodologies, and provides unusually strong testing and validation evidence for an academic project.
+The system satisfies the core project requirements: it accepts mixed stock-and-option portfolios, computes VaR and ES under three methodologies, and backtests the results against historical data. The test suite validates the main formulas against course-derived fixtures and confirms correct covariance estimation, delta-normal parametric VaR, and Black-Scholes option pricing. Extension modules for credit risk, CVA, and regulatory capital are included and tested, though they sit outside the core grading scope.
 
-It should not be presented as a production risk platform or production regulatory engine. The most accurate framing is: a teaching-quality risk and validation framework that satisfies the core market-risk brief and extends it with broader course-formula modules.
+The system is not a production risk platform. Its limitations — simplified option volatility treatment, first-order delta approximation, normal Monte Carlo shocks, and single-maturity Merton default — are appropriate for a course project and are documented throughout.
 
-### 11.2 Recommendations
+### 11.2 Recommendations for future work
 
-1. Keep `submission/` as the official segmented deliverable package.
-2. Use this combined report as the single “one-document” option for markers who prefer an integrated submission.
-3. Align any remaining documentation language with the current code, especially around validation strictness and input checking.
-4. Keep the corrected delta-dollar exposure convention explicit in the final write-up so the parametric method is documented accurately.
-5. Extend the simplified option-volatility shock logic only if the project is pushed beyond current coursework scope.
-6. Extend coverage in lower-tested extension and UI branches.
+1. Replace the simplified `underlying_beta` volatility shock with a term-structure-aware implied-vol surface if the project is extended beyond coursework.
+2. Implement a first-passage (Black-Cox barrier) extension to the Merton model to allow default before maturity.
+3. Replace the flat-covariance parametric engine with a delta-gamma or Cornish-Fisher correction for non-linear option portfolios.
+4. Add a headless browser driver (e.g. Playwright) to cover Streamlit UI panel branches and push statement coverage above 98%.
+5. Use separate ES and VaR confidence levels consistently in all comparison tables to avoid misleading ES < VaR appearances.
+
+### 11.3 Validation Conclusion
+
+| Area | Conclusion | Residual risk |
+|---|---|---|
+| Core VaR/ES engines (historical, parametric, MC) | Suitable for academic stock and European-option portfolios | First-order delta-normal approximation; MC uses multivariate normal shocks |
+| Option volatility treatment | `fixed` mode holds vol constant; `underlying_beta` mode provides a simplified shock; both documented | No full implied-vol surface or smile/skew model |
+| Backtesting | Kupiec and Christoffersen tests implemented and tested; walk-forward framework in place | Exception clustering may persist under regime change |
+| Credit and regulatory extensions | Course-formula extensions validated against homework fixtures | Not production-grade; Merton single-maturity default only |
+| Testing | 610 no-network tests, 96% statement coverage; homework and course-fixture values confirmed | Streamlit UI branch paths not fully coverable without a browser driver |
 
 ---
 

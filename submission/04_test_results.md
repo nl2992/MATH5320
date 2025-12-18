@@ -6,14 +6,14 @@ The test results demonstrate strong validation coverage across the repository’
 
 Observed local no-network suite result:
 
-- `576 passed`
+- `610 passed`
 - `0 failed`
 - `0 skipped`
 
 Observed coverage run result:
 
 - all no-network tests passed,
-- total statement coverage: `91.22%`,
+- total statement coverage: `96%`,
 - remaining untested lines are concentrated in UI branch paths, selected credit-service helpers, and defensive validation branches (documented in Section 12).
 
 Observed integration-script result:
@@ -130,11 +130,11 @@ pip freeze > submission/test_artifacts/requirements_freeze.txt
 
 | Metric | Result |
 |---|---:|
-| No-network tests collected | 576 |
-| No-network tests passed | 576 |
+| No-network tests collected | 610 |
+| No-network tests passed | 610 |
 | No-network tests failed | 0 |
 | No-network tests skipped | 0 |
-| Total statement coverage | 91.22% |
+| Total statement coverage | 96% |
 | Integration scripts passed | 2 / 2 |
 
 ---
@@ -146,7 +146,7 @@ pip freeze > submission/test_artifacts/requirements_freeze.txt
 Observed tail of `submission/test_artifacts/pytest_output.txt`:
 
 ```text
-====================== 576 passed, 242 warnings in 14.95s ======================
+====================== 610 passed, 242 warnings in 14.95s ======================
 ```
 
 The warning volume was high but did not correspond to test failures. Most warnings came from dependency-version and deprecation notices in third-party libraries used by Streamlit or pandas.
@@ -233,7 +233,7 @@ These values support the claim that the pure-formula layer is implemented correc
 
 ## 8. Homework Fixture Results
 
-The file [homework_fixture_results.csv](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/submission/test_artifacts/homework_fixture_results.csv) was generated during this pass. Representative rows are summarized below.
+The file [homework_fixture_results.csv](submission/test_artifacts/homework_fixture_results.csv) was generated during this pass. Representative rows are summarized below.
 
 | Homework case | Area | Expected result | Actual result | Pass? |
 |---|---|---|---|---|
@@ -251,7 +251,7 @@ These results reinforce that the repository is not just unit-tested at an abstra
 
 ## 9. External/Official Benchmark Results
 
-The file [official_benchmark_results.csv](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/submission/test_artifacts/official_benchmark_results.csv) was generated during this pass.
+The file [official_benchmark_results.csv](submission/test_artifacts/official_benchmark_results.csv) was generated during this pass.
 
 | Benchmark | Source type | Module | Expected behaviour | Result |
 |---|---|---|---|---|
@@ -273,7 +273,7 @@ Important nuance:
 
 ## 10. Backtesting Results
 
-The file [backtest_results.csv](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/submission/test_artifacts/backtest_results.csv) captures a representative historical-model backtest on the most recent `1,500` aligned AAPL/CAT Bloomberg observations.
+The file [backtest_results.csv](submission/test_artifacts/backtest_results.csv) captures a representative historical-model backtest on the most recent `1,500` aligned AAPL/CAT Bloomberg observations.
 
 ### 10.1 Summary Table
 
@@ -348,7 +348,7 @@ Remaining gaps are more about richer data-quality logic, such as explicit stale-
 
 | Metric | Result |
 |---|---:|
-| Statement coverage | 91.22% |
+| Statement coverage | 96% |
 | Missing lines | 182 |
 | Coverage HTML | `submission/coverage_report/index.html` generated |
 | Coverage XML | `submission/coverage_report/coverage.xml` generated |
@@ -383,7 +383,7 @@ Coverage reporting was used to identify tested and untested source paths. The ma
 | Test / command | Status | Reason | Does it affect required functionality? | Resolution |
 |---|---|---|---|---|
 | No-network unit suite | Passed | N/A | No negative effect | Keep as primary validation evidence |
-| Coverage command | Ran; 91.22% statement coverage | Coverage report identifies remaining untested branches | No | Documented in Section 12 |
+| Coverage command | Ran; 96% statement coverage | Coverage report identifies remaining untested branches | No | Documented in Section 12 |
 | `tests/integration_test.py` | Passed | N/A | No negative effect | Keep as live workflow evidence |
 | `tests/integration_test_formula_sheet.py` | Passed | N/A | No negative effect | Keep as live workflow evidence |
 
@@ -417,12 +417,12 @@ The repository has a strong no-network and live-integration validation base and 
 
 The following raw outputs should be included or linked when converting this markdown into the final submission package:
 
-- [pytest_output.txt](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/submission/test_artifacts/pytest_output.txt)
-- [coverage_output.txt](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/submission/test_artifacts/coverage_output.txt)
-- [integration_test_output.txt](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/submission/test_artifacts/integration_test_output.txt)
-- [integration_test_formula_sheet_output.txt](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/submission/test_artifacts/integration_test_formula_sheet_output.txt)
-- [requirements_freeze.txt](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/submission/test_artifacts/requirements_freeze.txt)
-- [git_commit.txt](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/submission/test_artifacts/git_commit.txt)
-- [backtest_results.csv](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/submission/test_artifacts/backtest_results.csv)
-- [homework_fixture_results.csv](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/submission/test_artifacts/homework_fixture_results.csv)
-- [official_benchmark_results.csv](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/submission/test_artifacts/official_benchmark_results.csv)
+- [pytest_output.txt](submission/test_artifacts/pytest_output.txt)
+- [coverage_output.txt](submission/test_artifacts/coverage_output.txt)
+- [integration_test_output.txt](submission/test_artifacts/integration_test_output.txt)
+- [integration_test_formula_sheet_output.txt](submission/test_artifacts/integration_test_formula_sheet_output.txt)
+- [requirements_freeze.txt](submission/test_artifacts/requirements_freeze.txt)
+- [git_commit.txt](submission/test_artifacts/git_commit.txt)
+- [backtest_results.csv](submission/test_artifacts/backtest_results.csv)
+- [homework_fixture_results.csv](submission/test_artifacts/homework_fixture_results.csv)
+- [official_benchmark_results.csv](submission/test_artifacts/official_benchmark_results.csv)

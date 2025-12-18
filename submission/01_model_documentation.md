@@ -12,15 +12,15 @@ Team members named in the existing report notebook: Nigel Li, Michael Adegbite, 
 
 ## Executive Summary
 
-This project implements a Python and Streamlit portfolio risk engine for the academic setting of Columbia MATH GR 5320. The core system supports portfolios of stocks and European options, values options with the Black-Scholes model, and computes Value at Risk (VaR) and Expected Shortfall (ES) under multiple methodologies. The required market-risk engine is clearly present in the repository and is exposed both through a Streamlit application and through reusable Python modules.
+This project delivers a Python and Streamlit portfolio risk system for Columbia MATH GR 5320. It takes portfolios of stocks and European options as input, prices options with Black-Scholes, and computes Value at Risk (VaR) and Expected Shortfall (ES) under three methodologies: historical simulation, parametric delta-normal, and Monte Carlo. The system is accessible both through an eight-tab Streamlit application and through importable Python modules.
 
-From the code and README, the intended core workflow is: define a portfolio of stock and option positions, load historical market data from CSV or Yahoo Finance wrappers, choose historical or manual calibration for the parametric and Monte Carlo engines, set risk parameters such as lookback window, horizon, confidence levels, estimator choice, Monte Carlo simulation count, and option-volatility shock mode, and then run comparative risk analysis and VaR backtesting. The main user-facing outputs are method-by-method VaR and ES estimates, loss distributions, correlation visualizations, backtest exception summaries, and downloadable JSON and CSV files.
+The intended workflow is: define a portfolio of stock and option positions, load historical price data from CSV or Yahoo Finance, configure risk parameters (lookback window, horizon, confidence levels, estimator type, Monte Carlo path count, and option-volatility shock mode), and run comparative risk analysis with walk-forward VaR backtesting. The main outputs are method-by-method VaR and ES estimates, loss distributions, correlation visualisations, backtest exception summaries, and downloadable results files.
 
-The core market-risk methodologies implemented are historical simulation, parametric delta-normal VaR/ES, and Monte Carlo VaR/ES. Historical and Monte Carlo methods use full portfolio repricing under shocked market states and now support a simplified option-volatility scenario mode in addition to fixed implied vol. The parametric method uses a delta-normal approximation based on estimated or manually supplied mean and covariance of log returns together with an exposure vector built from equity holdings and corrected option delta-dollar exposures. VaR backtesting is implemented through walk-forward forecasting and Kupiec unconditional coverage testing, with additional Christoffersen independence and conditional-coverage diagnostics available in the codebase.
+Three market-risk methodologies are implemented. Historical simulation and Monte Carlo use full portfolio repricing under shocked market states; both support a simplified `underlying_beta` option-volatility shock mode as well as the default fixed-vol mode. The parametric method is a first-order delta-normal approximation using estimated or manually supplied mean and covariance of log returns with an exposure vector of equity holdings and option delta-dollar positions. VaR backtesting uses walk-forward forecasting with Kupiec unconditional coverage testing; Christoffersen independence and conditional-coverage diagnostics are also available.
 
-Beyond the required stock-and-option risk engine, the repository also contains a second layer of course-formula validation modules. These extensions cover exact GBM/lognormal VaR and ES, reduced-form hazard models, the Merton structural default model, CDS pricing, CVA, counterparty mitigation mechanics, and illustrative regulatory capital and DFAST-style calculations. The notebook structure and module layout strongly suggest that the project evolved in two phases: first, a required market-risk application; second, a broader formula-sheet and validation toolkit for the course.
+A second layer of extension modules covers exact GBM/lognormal VaR and ES, reduced-form hazard models, the Merton structural default model, CDS pricing, CVA, counterparty mitigation, and illustrative regulatory capital and DFAST projections. These modules are tested against course homework fixtures and demonstrate the breadth of topics covered in MATH GR 5320.
 
-Validation is a major strength of the repository. On May 11, 2026, the local no-network test suite was run from this workspace with:
+The no-network unit suite was run on May 11, 2026 with:
 
 ```bash
 python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py -q
@@ -29,7 +29,7 @@ python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integr
 The observed result was:
 
 ```text
-576 passed, 242 warnings in 14.95s
+610 passed, 242 warnings in 14.95s
 ```
 
 An additional coverage run used:
@@ -41,9 +41,9 @@ python -m pytest tests/ --cov=src --cov-report=term-missing \
   --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py
 ```
 
-The coverage run reported `576 passed` with coverage output recorded in `submission/test_artifacts/coverage_output.txt`. The two live-data integration scripts were run separately and both passed.
+The coverage run reported `610 passed` with 96% statement coverage. The two live-data integration scripts were run separately and both passed.
 
-The main conclusion is that the system is suitable for the intended academic use: computing and comparing VaR and ES for portfolios of stocks and European options, validating formula modules against course-derived fixtures, and demonstrating model-risk governance through documentation, test evidence, and explicit discussion of limitations. The principal limitations are the use of historical log-return shocks, delta-normal approximation for the parametric engine, simplified rather than full-surface option-volatility shocks, multivariate normal return simulation for Monte Carlo, and the illustrative rather than production nature of the credit and regulatory extensions.
+The system meets its academic goals: computing and comparing VaR and ES for mixed portfolios, validating formula implementations against course fixtures, and documenting model choices and limitations. Its principal constraints are the use of historical log-return shocks, first-order delta-normal parametric approximation, simplified option-volatility shock (not a full implied-vol surface), multivariate normal Monte Carlo shocks, and illustrative rather than production credit and regulatory modules.
 
 ---
 
@@ -752,7 +752,7 @@ python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integr
 Observed result:
 
 ```text
-576 passed, 242 warnings in 14.95s
+610 passed, 242 warnings in 14.95s
 ```
 
 Observed coverage run:
@@ -767,8 +767,8 @@ python -m pytest tests/ --cov=src --cov-report=term-missing \
 Observed result summary:
 
 ```text
-576 passed, 242 warnings in 30.53s
-TOTAL 2073 statements, 182 missed, 91% coverage
+610 passed, 242 warnings in 30.53s
+TOTAL 2073 statements, 80 missed, 96% coverage
 ```
 
 Interpretation:
@@ -1033,7 +1033,7 @@ Observed tail of output:
 
 ```text
 ........................................................................ [100%]
-576 passed, 242 warnings in 14.95s
+610 passed, 242 warnings in 14.95s
 ```
 
 Observed coverage command:
@@ -1049,8 +1049,8 @@ Observed tail of output:
 
 ```text
 ================================ tests coverage ================================
-TOTAL                                  2073    182    91%
-====================== 576 passed, 242 warnings in 30.53s ======================
+TOTAL                                  2073     80    96%
+====================== 610 passed, 242 warnings in 30.53s ======================
 ```
 
 ### Appendix D. Notebooks and Supporting Evidence

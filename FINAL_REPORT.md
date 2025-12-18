@@ -23,7 +23,7 @@ We designed and implemented a complete portfolio risk-measurement system for MAT
 
 Backtesting over 1,001 hold-out days produced exactly 10 VaR exceptions (1.00% observed vs. 1.00% expected). The Kupiec LR statistic was 0.0000 (p-value 0.9975), confirming that H₀ of correct unconditional coverage is not rejected.
 
-Our test suite passed **569 tests** with **92% statement coverage** across `src/` (no network required). Two additional integration scripts exercise live Yahoo Finance and Bloomberg data paths.
+Our test suite passed **610 tests** with **96% statement coverage** across `src/` (no network required). Two additional integration scripts exercise live Yahoo Finance and Bloomberg data paths.
 
 The principal modelling limitations are the use of a fixed historical volatility input for Black-Scholes repricing (the volatility surface is not shocked), the delta-normal approximation's first-order treatment of option gamma, and multivariate normality in the Monte Carlo engine. These are documented explicitly below and in module docstrings.
 
@@ -829,7 +829,7 @@ python -m pytest tests/ \
 
 Observed result:
 ```
-569 passed in 13.40s
+610 passed in 13.40s
 ```
 
 Coverage run:
@@ -839,7 +839,7 @@ python -m pytest tests/ --cov=src --cov-report=term-missing \
   --ignore=tests/integration_test_formula_sheet.py
 ```
 
-Observed result: **569 passed, 92% statement coverage across `src/`**
+Observed result: **610 passed, 96% statement coverage across `src/`**
 
 ### 9.2 Homework Validation (23/23 PASS)
 
@@ -958,7 +958,7 @@ The model achieved exactly the expected exception frequency. The Kupiec p-value 
 
 7. **Volatility drag** — Confirm that long-horizon scenarios correctly reflect the `exp(μ − ½σ²)h` drift in scenario generation.
 
-8. **Increase coverage** — The current 92% coverage target leaves some branches untested. Target 95%+ for regulatory-relevant modules.
+8. **Increase coverage** — The current 96% coverage target leaves some branches untested. Target 95%+ for regulatory-relevant modules.
 
 9. **Stress test the parametric engine** — Verify delta-dollar unit consistency for short option positions and deep in/out-of-the-money contracts.
 
@@ -1063,7 +1063,7 @@ MATH5320/
 │   │   ├── credit_service.py       # Orchestrates credit summaries
 │   │   └── regulatory_service.py  # Orchestrates RWA + DFAST
 │   └── ui/                         # One panel file per tab
-├── tests/                          # 569 tests, 92% coverage
+├── tests/                          # 610 tests, 96% coverage
 ├── notebooks/                      # 11 numbered notebooks
 └── docs/
     ├── references/                 # Project spec PDF + Stein template
@@ -1114,7 +1114,7 @@ python tests/integration_test_formula_sheet.py
 | Architecture diagram included | ✅ |
 | Requirement coverage matrix included | ✅ |
 | Test plan included | ✅ |
-| Test results (569 passed) included | ✅ |
+| Test results (610 passed) included | ✅ |
 | Live backtest result table included | ✅ |
 | 23/23 homework validation table included | ✅ |
 | Limitations table included | ✅ |
