@@ -1,8 +1,0 @@
-Benchmark,Source type,Module,Expected behaviour,Result
-Option calculator style ATM call,independent option-pricing reference,Black-Scholes,Call price near 10.4506; delta near 0.6368,price=10.450583572185565; delta=0.6368306511756191
-Option calculator style ATM put,independent option-pricing reference,Black-Scholes,Put price near 5.5735; delta near -0.3632,price=5.573526022256971; delta=-0.3631693488243809
-Basel traffic light 0 exceptions,regulatory-style benchmark,backtesting,zone for 0 exceptions,GREEN
-Basel traffic light 4 exceptions,regulatory-style benchmark,backtesting,zone for 4 exceptions,GREEN
-Basel traffic light 5 exceptions,regulatory-style benchmark,backtesting,zone for 5 exceptions,YELLOW
-Basel traffic light 9 exceptions,regulatory-style benchmark,backtesting,zone for 9 exceptions,YELLOW
-Basel traffic light 10 exceptions,regulatory-style benchmark,backtesting,zone for 10 exceptions,RED
