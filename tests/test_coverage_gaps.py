@@ -13,14 +13,26 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from src.credit.cds import cds_par_spread, cds_par_spread_constant_full_closed_form
+from src.credit.cva import cva_continuous_constant_exposure, cva_discounted
+from src.credit.hazard import (
+    cumhazard_piecewise, density_piecewise, hazard_at_piecewise,
+    interval_default_prob_piecewise,
+)
+from src.credit.mitigation import default_waterfall_loss_allocation, mitigated_cva
 from src.pricing.black_scholes import bs_delta, bs_price
 from src.portfolio.portfolio import portfolio_exposure
 from src.portfolio.positions import option_delta_exposure, option_value
 from src.risk.backtest import _forecast_var, kupiec_test, run_backtest
 from src.risk.estimators import get_mean_cov, manual_mean_cov
 from src.risk.monte_carlo import monte_carlo_var_es
-from src.risk.returns import build_overlapping_horizon_log_returns
+from src.risk.normal import portfolio_delta_normal_mean_var
+from src.risk.returns import (
+    build_overlapping_horizon_absolute_returns,
+    build_overlapping_horizon_log_returns,
+)
 from src.schemas import OptionPosition, Portfolio, StockPosition
+from src.services.regulatory_service import run_dfast_capital_path
 from src.services.risk_engine_service import RiskEngineService
 
 
@@ -353,3 +365,240 @@ class TestRiskEngineServiceGaps:
         res = svc.run_backtest(model="historical")
         assert res["model"] == "historical"
         assert res["kupiec"]["n_observations"] > 0
+
+
+# ── normal.py — portfolio_delta_normal_mean_var ──────────────────────────────
+
+class TestNormalPortfolioMeanVar:
+    def test_basic_two_asset(self):
+        x = np.array([100.0, 200.0])
+        mu = np.array([0.001, 0.002])
+        cov = np.array([[0.0004, 0.0001], [0.0001, 0.0009]])
+        m, s = portfolio_delta_normal_mean_var(x, mu, cov)
+        assert abs(m - float(x @ mu)) < 1e-10
+        assert s > 0
+
+    def test_single_asset(self):
+        m, s = portfolio_delta_normal_mean_var([50.0], [0.0005], [[0.0004]])
+        assert m == pytest.approx(0.025)
+        assert s == pytest.approx(np.sqrt(0.0004) * 50.0)
+
+    def test_zero_variance_clamps_to_zero(self):
+        m, s = portfolio_delta_normal_mean_var([100.0], [0.001], [[0.0]])
+        assert s == 0.0
+
+
+# ── returns.py — absolute-return horizon builder ─────────────────────────────
+
+class TestAbsoluteReturns:
+    def test_build_absolute_returns(self):
+        dates = pd.date_range("2024-01-01", periods=10, freq="B")
+        prices = pd.DataFrame({"AAPL": np.linspace(100.0, 110.0, 10)}, index=dates)
+        result = build_overlapping_horizon_absolute_returns(prices, horizon=2)
+        assert result.shape[1] == 1
+        assert len(result) == 8  # 10 - 2
+
+    def test_bad_horizon_raises(self):
+        prices = pd.DataFrame({"A": [1.0, 2.0, 3.0]})
+        with pytest.raises(ValueError, match="horizon must be >= 1"):
+            build_overlapping_horizon_absolute_returns(prices, horizon=0)
+
+
+# ── estimators.py — validation branches in manual_mean_cov ───────────────────
+
+class TestManualMeanCovAllBranches:
+    def _valid_params(self):
+        return {
+            "mu_daily": pd.Series({"A": 0.001, "B": 0.002}),
+            "cov_daily": pd.DataFrame(
+                [[0.0004, 0.0001], [0.0001, 0.0009]],
+                index=["A", "B"], columns=["A", "B"],
+            ),
+        }
+
+    def test_non_dict_raises(self):
+        with pytest.raises(ValueError, match="must be a dict"):
+            manual_mean_cov([0.001, 0.002], ["A", "B"])
+
+    def test_missing_keys_raises(self):
+        with pytest.raises(ValueError, match="must contain"):
+            manual_mean_cov({"mu_daily": pd.Series({"A": 0.001})}, ["A"])
+
+    def test_non_finite_mu_raises(self):
+        p = self._valid_params()
+        p["mu_daily"] = pd.Series({"A": float("nan"), "B": 0.002})
+        with pytest.raises(ValueError, match="non-finite"):
+            manual_mean_cov(p, ["A", "B"])
+
+    def test_non_finite_cov_raises(self):
+        p = self._valid_params()
+        p["cov_daily"] = pd.DataFrame(
+            [[float("inf"), 0.0], [0.0, 0.0009]],
+            index=["A", "B"], columns=["A", "B"],
+        )
+        with pytest.raises(ValueError, match="non-finite"):
+            manual_mean_cov(p, ["A", "B"])
+
+    def test_asymmetric_cov_raises(self):
+        p = self._valid_params()
+        p["cov_daily"] = pd.DataFrame(
+            [[0.0004, 0.0005], [0.0001, 0.0009]],
+            index=["A", "B"], columns=["A", "B"],
+        )
+        with pytest.raises(ValueError, match="symmetric"):
+            manual_mean_cov(p, ["A", "B"])
+
+    def test_negative_diagonal_raises(self):
+        p = self._valid_params()
+        p["cov_daily"] = pd.DataFrame(
+            [[-0.0001, 0.0], [0.0, 0.0009]],
+            index=["A", "B"], columns=["A", "B"],
+        )
+        with pytest.raises(ValueError, match="negative diagonal"):
+            manual_mean_cov(p, ["A", "B"])
+
+
+# ── risk/historical.py — absolute shock path ─────────────────────────────────
+
+class TestHistoricalAbsoluteShock:
+    def test_absolute_shock_mode(self, sample_prices, pf_stocks):
+        from src.risk.historical import historical_var_es
+        res = historical_var_es(
+            portfolio=pf_stocks, prices=sample_prices, pricing_date=date.today(),
+            lookback_days=100, horizon_days=1,
+            var_confidence=0.95, es_confidence=0.95,
+            shock_type="absolute",
+        )
+        assert res["var"] > 0
+        assert res["es"] >= res["var"]
+
+
+# ── credit/cds.py — input validation + q==0 edge case ────────────────────────
+
+class TestCDSParSpreadClosedForm:
+    def test_negative_lambda_raises(self):
+        with pytest.raises(ValueError, match="lambda must be non-negative"):
+            cds_par_spread_constant_full_closed_form(T=5, freq=1, r=0.02, lam=-0.01, R=0.4)
+
+    def test_R_out_of_range_raises(self):
+        with pytest.raises(ValueError, match="R must be in"):
+            cds_par_spread_constant_full_closed_form(T=5, freq=1, r=0.02, lam=0.03, R=1.5)
+
+    def test_T_nonpositive_raises(self):
+        with pytest.raises(ValueError, match="T must be positive"):
+            cds_par_spread_constant_full_closed_form(T=0, freq=1, r=0.02, lam=0.03, R=0.4)
+
+    def test_freq_nonpositive_raises(self):
+        with pytest.raises(ValueError, match="freq must be positive"):
+            cds_par_spread_constant_full_closed_form(T=5, freq=0, r=0.02, lam=0.03, R=0.4)
+
+    def test_q_zero_branch(self):
+        # r=0, lam=0 → q=0 exercises the q==0.0 branch; spread = 0 (no hazard)
+        spread = cds_par_spread_constant_full_closed_form(T=5, freq=1, r=0.0, lam=0.0, R=0.4)
+        assert spread == 0.0
+
+    def test_accrual_false(self):
+        spread = cds_par_spread_constant_full_closed_form(T=5, freq=1, r=0.02, lam=0.03, R=0.4, accrual=False)
+        assert spread > 0
+
+
+# ── credit/hazard.py — piecewise functions ───────────────────────────────────
+
+class TestHazardPiecewise:
+    _GRID = [0.0, 1.0, 3.0, 5.0]
+    _LAMS = [0.02, 0.03, 0.025]
+
+    def test_hazard_at_within_grid(self):
+        h = hazard_at_piecewise(0.5, self._GRID, self._LAMS)
+        assert h == pytest.approx(0.02)
+
+    def test_hazard_at_extrapolates_past_end(self):
+        h = hazard_at_piecewise(10.0, self._GRID, self._LAMS)
+        assert h == pytest.approx(0.025)
+
+    def test_cumhazard_piecewise(self):
+        ch = cumhazard_piecewise(2.0, self._GRID, self._LAMS)
+        assert ch > 0
+
+    def test_density_piecewise(self):
+        d = density_piecewise(1.5, self._GRID, self._LAMS)
+        assert d > 0
+
+    def test_interval_default_prob_piecewise(self):
+        p = interval_default_prob_piecewise(1.0, 2.0, self._GRID, self._LAMS)
+        assert 0 < p < 1
+
+
+# ── credit/cva.py — validation branches ──────────────────────────────────────
+
+class TestCVAValidation:
+    def test_negative_exposure_raises(self):
+        with pytest.raises(ValueError, match="non-negative"):
+            cva_discounted([-1.0], [0.01], [0.99], R=0.4)
+
+    def test_bad_default_probs_raises(self):
+        with pytest.raises(ValueError, match="marginal_default_probs"):
+            cva_discounted([1.0], [-0.01], [0.99], R=0.4)
+
+    def test_bad_discount_factor_raises(self):
+        with pytest.raises(ValueError, match="discount_factors"):
+            cva_discounted([1.0], [0.01], [1.5], R=0.4)
+
+    def test_bad_R_raises(self):
+        with pytest.raises(ValueError, match="R must be in"):
+            cva_discounted([1.0], [0.01], [0.99], R=1.5)
+
+    def test_cva_continuous_negative_lam_raises(self):
+        with pytest.raises(ValueError, match="lam must be non-negative"):
+            cva_continuous_constant_exposure(K=1.0, lam=-0.01, T=1, R=0.4)
+
+    def test_cva_continuous_bad_R_raises(self):
+        with pytest.raises(ValueError, match="R must be in"):
+            cva_continuous_constant_exposure(K=1.0, lam=0.03, T=1, R=1.5)
+
+    def test_cva_continuous_bad_r_raises(self):
+        with pytest.raises(ValueError, match="r must be non-negative"):
+            cva_continuous_constant_exposure(K=1.0, lam=0.03, T=1, R=0.4, r=-0.01)
+
+
+# ── credit/mitigation.py — ccp waterfall validation + csa branch ─────────────
+
+class TestMitigationCoverage:
+    def test_ccp_negative_loss_raises(self):
+        with pytest.raises(ValueError, match="loss must be non-negative"):
+            default_waterfall_loss_allocation(loss=-1.0, defaulter_margin=0.5, default_fund=0.3, ccp_capital=0.1)
+
+    def test_ccp_negative_margin_raises(self):
+        with pytest.raises(ValueError, match="defaulter_margin must be non-negative"):
+            default_waterfall_loss_allocation(loss=1.0, defaulter_margin=-0.1, default_fund=0.3, ccp_capital=0.1)
+
+    def test_mitigated_cva_csa_branch(self):
+        # threshold > 0 → exercises the csa_residual_exposure_after_margin_call branch
+        result = mitigated_cva(
+            mtm_paths=[[2.0, 1.0], [3.0]],
+            marginal_default_probs=[0.01, 0.01],
+            discount_factors=[0.99, 0.98],
+            R=0.4,
+            collateral=[0.5, 0.5],
+            threshold=0.5,
+            mta=0.1,
+        )
+        assert result >= 0
+
+
+# ── services/regulatory_service.py — run_dfast_capital_path ──────────────────
+
+class TestRegulatoryServiceDFAST:
+    def test_run_dfast_capital_path_returns_all_scenarios(self):
+        result = run_dfast_capital_path(
+            tier1_capital=10_000_000,
+            rwa=80_000_000,
+            assets=100_000_000,
+        )
+        assert isinstance(result, dict)
+        assert len(result) >= 1
+        for name, val in result.items():
+            assert "path" in val
+            assert "passes" in val
+            assert "min_ratio" in val
+            assert len(val["path"]) == 9

@@ -1,27 +1,71 @@
 # MATH5320 Portfolio Risk System
 
-A Streamlit application for end-to-end portfolio risk analysis covering market risk, credit risk, and regulatory capital. Supports mixed portfolios of stocks and European options.
-
-**Columbia University · MATH GR 5320 · Spring 2026**
-
----
+A Streamlit application for portfolio risk analysis supporting stocks and European options.
 
 ## Features
 
-| Module | Capability |
-|--------|-----------|
+| Feature | Details |
+|---|---|
 | **Historical VaR / ES** | Full portfolio repricing under overlapping h-day log-return scenarios |
-| **Parametric VaR / ES** | Delta-Normal with horizon scaling; rolling window or EWMA covariance |
-| **Monte Carlo VaR / ES** | Full repricing under N(μ_h, Σ_h) correlated log-return shocks (Cholesky) |
-| **Black-Scholes Pricing** | European calls and puts with continuous dividends; Greeks |
-| **VaR Backtesting** | Walk-forward forecasting with Kupiec unconditional coverage LR test |
-| **Hazard / Reduced-form** | Survival function, default density, risky ZCB, CDS approximation |
-| **Merton Structural** | Q-PD and P-PD via GBM asset model; implied barrier inversion |
-| **CDS Pricing** | Par spread curve across tenors via hazard-rate bootstrapping |
-| **CVA & Mitigation** | Discrete CVA from exposure profile; netting and collateral mitigation |
-| **Regulatory Capital** | Basel III RWA, Tier-1 capital ratio, DFAST scenario PnL |
+| **Parametric VaR / ES** | Delta-Normal with horizon scaling; window or EWMA estimator |
+| **Monte Carlo VaR / ES** | Full repricing under N(μ_h, Σ_h) simulated log-return shocks |
+| **Black-Scholes Pricing** | European calls and puts with continuous dividends |
+| **VaR Backtesting** | Walk-forward forecasting with Kupiec unconditional coverage test |
+| **Downloads** | JSON risk summary, losses CSV, backtest CSV |
 
----
+## Architecture
+
+```
+MATH5320/
+├── app.py                          # Streamlit entry point (UI only)
+├── requirements.txt
+├── README.md
+├── src/
+│   ├── schemas.py                  # StockPosition, OptionPosition, Portfolio
+│   ├── config.py                   # Global defaults
+│   ├── data/
+│   │   ├── market_data.py          # CSV loader + yfinance downloader + cache
+│   │   └── validation.py           # Input validation
+│   ├── pricing/
+│   │   └── black_scholes.py        # BS price and delta
+│   ├── portfolio/
+│   │   ├── positions.py            # Per-position value and delta
+│   │   └── portfolio.py            # Portfolio valuation and exposure vector
+│   ├── risk/
+│   │   ├── returns.py              # Log returns, overlapping horizon returns
+│   │   ├── estimators.py           # Window and EWMA mean/covariance
+│   │   ├── historical.py           # Historical VaR/ES
+│   │   ├── parametric.py           # Delta-Normal VaR/ES
+│   │   ├── monte_carlo.py          # Monte Carlo VaR/ES
+│   │   ├── lognormal.py            # Exact GBM VaR/ES
+│   │   ├── regulatory.py           # RWA, capital ratio, DFAST helpers
+│   │   └── backtest.py             # Walk-forward backtest + Kupiec/Christoffersen
+│   ├── credit/
+│   │   ├── hazard.py               # Reduced-form hazard and survival
+│   │   ├── merton.py               # Merton structural default model
+│   │   ├── cds.py                  # CDS par spread
+│   │   ├── cva.py                  # CVA and exposure helpers
+│   │   └── mitigation.py           # Netting and collateral
+│   ├── services/
+│   │   ├── risk_engine_service.py  # Market-risk orchestration
+│   │   ├── credit_service.py       # Credit and CVA orchestration
+│   │   └── regulatory_service.py   # RWA and DFAST orchestration
+│   └── ui/
+│       ├── portfolio_editor.py     # Portfolio input
+│       ├── market_data_panel.py    # Data loading
+│       ├── risk_settings.py        # Parameter controls
+│       ├── results_panel.py        # Results and downloads
+│       ├── credit_panel.py         # Hazard / Merton panel
+│       ├── cds_cva_panel.py        # CDS / CVA panel
+│       ├── capital_panel.py        # Capital and stress panel
+│       └── charts.py               # Plotly chart helpers
+├── tests/                          # 610 no-network unit and regression tests
+├── notebooks/                      # Course walkthrough notebooks
+├── docs/
+│   ├── references/
+│   └── screenshots/
+└── submission/                     # Final submission package
+```
 
 ## Quick Start
 
@@ -29,337 +73,144 @@ A Streamlit application for end-to-end portfolio risk analysis covering market r
 # Install dependencies
 pip install -r requirements.txt
 
-# Run the app (default port 8501)
+# Run the app
 streamlit run app.py
-
-# Or on a specific port
-streamlit run app.py --server.port 8502
 ```
 
----
+## Usage Workflow
 
-## Application Tabs
-
-### Tab 1 · Portfolio Input
-Enter stock positions (ticker + quantity) and European option positions. Each option requires: label, underlying ticker, type (`call`/`put`), quantity (negative = short), strike ($), maturity (YYYY-MM-DD), implied vol σ, risk-free rate r, dividend yield q, and contract multiplier. The panel validates that option maturities are in the future and confirms the total position count.
-
-### Tab 2 · Market Data
-Load price history via Yahoo Finance (enter tickers space-separated, start/end dates, click **Download**) or upload a pre-formatted CSV. The panel shows row count, date range, and a scrollable price preview. Cached downloads avoid repeated network calls.
-
-### Tab 3 · Risk Settings
-Configure all risk parameters:
-
-| Parameter | Description |
-|-----------|-------------|
-| Calibration mode | `historical` (estimates μ, Σ from data) or `manual` (enter directly) |
-| Lookback window | Trading days used to estimate μ and Σ |
-| Risk horizon | Holding period in trading days (h) |
-| VaR confidence | e.g. 0.99 for 99% VaR |
-| ES confidence | e.g. 0.975 for 97.5% ES |
-| Estimator type | `window` (equal-weight rolling) or `ewma` (exponentially weighted) |
-| EWMA N parameter | λ = (N−1)/(N+1) |
-| Monte Carlo simulations | Number of Cholesky MC paths |
-| Option vol shock mode | `fixed` (vol constant) or `beta` (vol scales with underlying shock) |
-
-### Tab 4 · Run Analysis
-Click **Run Risk Analysis** to compute all three VaR/ES models simultaneously. Output includes:
-- Portfolio value and per-model VaR/ES comparison table
-- Bar chart: VaR and ES by model
-- Loss distribution histogram (historical simulation) with VaR/ES markers
-- Monte Carlo loss distribution tab
-- Return correlation heatmap (last lookback window)
-- Normalised price history chart
-- Download buttons: JSON summary, losses CSV
-
-### Tab 5 · Backtesting
-Select a model (`historical`, `parametric`, or `monte_carlo`) and click **Run Backtest** for a walk-forward out-of-sample backtest. Outputs:
-- Walk-forward VaR forecast vs realised loss chart with exception markers
-- Exception count, observed vs expected exception rate
-- Kupiec unconditional coverage LR statistic, p-value, and PASS/FAIL
-- Download: backtest results CSV
-
-### Tab 6 · Credit Risk
-**Section A — Reduced-form (hazard rate):** Enter constant hazard rate λ, recovery rate R, discount rate r, and a comma-separated list of horizons. Outputs survival function S(t), cumulative default probability F(t), default density f(t), risky ZCB price, and par spread by tenor. Headline metric: CDS approximation (1−R)λ in bps.
-
-**Section B — Merton structural model:** Enter firm value V₀, default barrier B, risk-free rate r (Q-measure), real-world drift μ (P-measure), asset volatility σ_A, and horizon T. Outputs Q-PD, P-PD, Merton equity E₀, Merton debt D₀, d₁, d₂. Also includes target-survival inversion: given a target survival probability s*, returns the implied barrier B*.
-
-### Tab 7 · CDS / CVA
-**Section A — CDS pricing:** Computes the full par-spread curve by bootstrapping a piecewise-constant hazard-rate term structure. Inputs: hazard rate λ, recovery R, discount rate r, tenor list. Chart shows spread vs tenor.
-
-**Section B — CVA & mitigation:** Computes discrete CVA from an exposure profile (exposure at each time step) and a hazard-rate curve. Mitigation options: netting (add an offsetting exposure) and collateral (reduce exposure by a posted amount). Outputs: CVA before and after each mitigation step.
-
-### Tab 8 · Capital & Stress
-Enter risk weights per ticker (Basel III standard approach) and Tier-1 equity capital. Outputs:
-- Risk-Weighted Assets (RWA) = Σ (position notional × risk weight)
-- Tier-1 capital ratio = equity / RWA
-- PASS if ratio ≥ 8% (Basel III minimum), FAIL otherwise
-- DFAST scenario PnL: applies user-defined shock factors to each position
-
----
-
-## Module Reference
-
-### `src/pricing/`
-
-| Module | Function | Description |
-|--------|----------|-------------|
-| `black_scholes.py` | `bs_price(S, K, T, r, q, sigma, option_type)` | Black-Scholes price for European call or put |
-| | `bs_delta(S, K, T, r, q, sigma, option_type)` | Option delta Δ |
-| | `bs_greeks(S, K, T, r, q, sigma, option_type)` | Full Greeks dict (delta, gamma, vega, theta, rho) |
-
-### `src/risk/`
-
-| Module | Key function | Description |
-|--------|-------------|-------------|
-| `returns.py` | `log_returns(prices)` | Daily log returns from price DataFrame |
-| | `overlapping_horizon_returns(log_ret, h)` | Rolling h-day overlapping returns |
-| `estimators.py` | `rolling_mean_cov(returns, window)` | Equal-weight μ̂, Σ̂ over trailing window |
-| | `ewma_mean_cov(returns, lam)` | EWMA μ̂, Σ̂ with decay parameter λ |
-| `historical.py` | `historical_var_es(portfolio, prices, pricing_date, lookback_days, horizon_days, var_confidence, es_confidence)` | Historical simulation VaR and ES |
-| `parametric.py` | `parametric_var_es(portfolio, prices, pricing_date, lookback_days, horizon_days, var_confidence, es_confidence, estimator)` | Delta-Normal VaR and ES |
-| `monte_carlo.py` | `monte_carlo_var_es(portfolio, prices, pricing_date, lookback_days, horizon_days, var_confidence, es_confidence, n_simulations, seed)` | Monte Carlo VaR and ES |
-| `lognormal.py` | `lognormal_var(V0, mu_daily, sigma_daily, horizon, confidence)` | Analytical GBM VaR for single lognormal position |
-| `backtest.py` | `run_backtest(...)` | Walk-forward VaR backtest |
-| | `kupiec_test(n_obs, n_exceptions, confidence)` | Kupiec LR statistic and p-value |
-| `regulatory.py` | `compute_rwa(positions, risk_weights)` | Basel III RWA |
-| | `capital_ratio(equity, rwa)` | Tier-1 capital ratio |
-| | `dfast_pnl(positions, shocks)` | DFAST scenario PnL |
-
-### `src/credit/`
-
-| Module | Key function | Description |
-|--------|-------------|-------------|
-| `hazard.py` | `survival(t, lam)` | S(t) = exp(−λt) |
-| | `cum_default(t, lam)` | F(t) = 1 − S(t) |
-| | `default_density(t, lam)` | f(t) = λ exp(−λt) |
-| | `risky_zcb(t, lam, r, R)` | Risky zero-coupon bond price |
-| | `cds_par_spread(T, lam, r, R)` | CDS par spread at tenor T |
-| `merton.py` | `merton_pd(V0, B, v, sigma, T)` | Default probability N(−d₂) under drift v |
-| | `merton_equity(V0, B, r, sigma, T)` | Merton equity value E₀ |
-| | `merton_debt(V0, B, r, sigma, T)` | Merton debt value D₀ |
-| | `implied_barrier(V0, sigma, T, r, target_survival)` | Invert Merton for implied barrier B* |
-| `cds.py` | `cds_full_spread(tenors, lam, r, R)` | Full par-spread curve across tenors |
-| `cva.py` | `compute_cva(exposure_profile, lam, r, R)` | Discrete CVA from exposure profile |
-| `mitigation.py` | `apply_netting(exposure, offset)` | Net exposure after offsetting trade |
-| | `apply_collateral(exposure, collateral)` | Exposure after collateral posting |
-
-### `src/services/`
-
-| Module | Class / function | Description |
-|--------|-----------------|-------------|
-| `risk_engine_service.py` | `RiskEngineService(portfolio, prices, ...)` | Orchestration layer — wires portfolio + data + parameters to all risk modules |
-| | `.run_all()` | Returns dict with `historical`, `parametric`, `monte_carlo` results |
-| | `.run_backtest(model)` | Returns backtest DataFrame and Kupiec dict |
-| | `.portfolio_value()` | Current mark-to-market portfolio value |
-
-### `src/schemas.py`
-
-```python
-StockPosition(ticker: str, quantity: int)
-
-OptionPosition(
-    ticker: str,
-    underlying_ticker: str,
-    option_type: Literal["call", "put"],
-    quantity: float,           # negative = short
-    strike: float,
-    maturity_date: date,
-    volatility: float,
-    risk_free_rate: float,
-    dividend_yield: float,
-    contract_multiplier: float,
-)
-
-Portfolio(
-    stocks: list[StockPosition] = [],
-    options: list[OptionPosition] = [],
-)
-```
-
----
-
-## Programmatic Usage
-
-All `src/` modules are pure functions — no Streamlit imports. Use them directly from Python:
-
-```python
-import sys
-sys.path.insert(0, '.')
-
-from src.schemas import Portfolio, StockPosition, OptionPosition
-from src.services.risk_engine_service import RiskEngineService
-from src.data.market_data import download_adjusted_close
-from datetime import date
-
-# Build a portfolio
-portfolio = Portfolio(stocks=[
-    StockPosition(ticker='AAPL', quantity=500),
-    StockPosition(ticker='MSFT', quantity=300),
-])
-
-# Load price data
-prices = download_adjusted_close(['AAPL', 'MSFT'], '2022-01-01', '2024-12-31')
-
-# Run risk analysis
-svc = RiskEngineService(
-    portfolio=portfolio,
-    prices=prices,
-    pricing_date=date(2024, 12, 31),
-    lookback_days=252,
-    horizon_days=5,
-    var_confidence=0.99,
-    es_confidence=0.975,
-    n_simulations=50_000,
-    estimator='window',
-)
-
-results = svc.run_all()
-print(f"Historical VaR: ${results['historical']['var']:,.2f}")
-print(f"Historical ES:  ${results['historical']['es']:,.2f}")
-
-# Backtest
-bt = svc.run_backtest(model='historical')
-print(f"Kupiec p-value: {bt['kupiec']['p_value']:.4f}")
-```
-
-```python
-# Credit risk — Merton model
-from src.credit.merton import merton_pd, merton_equity, merton_debt
-
-pd_q = merton_pd(V0=16.3, B=1.3, v=0.02, sigma=0.3119, T=5)
-print(f"NVDA Q-PD: {pd_q:.4%}")
-
-# CDS par spread curve
-from src.credit.cds import cds_full_spread
-spreads = cds_full_spread(tenors=[1, 2, 3, 5, 10], lam=0.03, r=0.03, R=0.40)
-```
-
----
-
-## Architecture
-
-```
-math5320/
-├── app.py                          # Streamlit entry point (8 tabs)
-├── requirements.txt
-├── README.md
-├── src/
-│   ├── schemas.py                  # StockPosition, OptionPosition, Portfolio
-│   ├── config.py                   # Global defaults
-│   ├── data/
-│   │   ├── market_data.py          # yfinance downloader + CSV loader
-│   │   └── validation.py           # Input validation helpers
-│   ├── pricing/
-│   │   └── black_scholes.py        # BS price, delta, Greeks
-│   ├── portfolio/
-│   │   ├── positions.py            # Per-position value and delta
-│   │   └── portfolio.py            # Portfolio valuation and exposure vector
-│   ├── risk/
-│   │   ├── returns.py              # Log returns, overlapping horizon returns
-│   │   ├── estimators.py           # Window and EWMA covariance
-│   │   ├── historical.py           # Historical simulation VaR/ES
-│   │   ├── parametric.py           # Delta-Normal VaR/ES
-│   │   ├── monte_carlo.py          # Cholesky Monte Carlo VaR/ES
-│   │   ├── lognormal.py            # Analytical GBM VaR/ES (single stock)
-│   │   ├── backtest.py             # Walk-forward backtest + Kupiec test
-│   │   └── regulatory.py          # RWA, capital ratio, DFAST
-│   ├── credit/
-│   │   ├── hazard.py               # Survival, default density, risky ZCB
-│   │   ├── merton.py               # Structural PD (Q and P measure)
-│   │   ├── cds.py                  # CDS par spread curve
-│   │   ├── cva.py                  # Discrete CVA
-│   │   └── mitigation.py          # Netting and collateral
-│   ├── services/
-│   │   └── risk_engine_service.py  # Orchestration layer
-│   └── ui/
-│       ├── portfolio_editor.py     # Tab 1 — portfolio input tables
-│       ├── market_data_panel.py    # Tab 2 — data loading
-│       ├── risk_settings.py        # Tab 3 — parameter controls
-│       ├── results_panel.py        # Tab 4 — results display + downloads
-│       ├── charts.py               # Plotly chart helpers
-│       ├── credit_panel.py         # Tab 6 — credit risk UI
-│       ├── cds_cva_panel.py        # Tab 7 — CDS / CVA UI
-│       └── capital_panel.py        # Tab 8 — capital & stress UI
-├── tests/
-│   ├── test_backend.py
-│   ├── test_course_validation.py   # PDF fixture goldens (LN01–REG02)
-│   ├── test_charts.py
-│   ├── test_ui_panels.py
-│   ├── test_credit.py
-│   ├── test_regulatory.py
-│   ├── test_lognormal.py
-│   ├── test_market_data.py
-│   ├── test_config_and_validation.py
-│   ├── test_credit_service.py
-│   ├── test_coverage_gaps.py
-│   ├── integration_test.py
-│   └── integration_test_formula_sheet.py
-└── submission/
-    ├── advanced_demo.ipynb         # M7 portfolio advanced demo (fully executed)
-    ├── advanced_demo.md            # Advanced demo front-end trace
-    ├── demo.ipynb                  # 15-section formula-sheet demo
-    ├── demo.md                     # Demo front-end trace with screenshots
-    └── *.md                        # Final report, model docs, test plan/results
-```
-
----
+1. **Portfolio Input** — Add stock positions (ticker + quantity) and option positions (label, underlying, type, quantity, strike, maturity, vol, r, q, multiplier).
+2. **Market Data** — Download price history from Yahoo Finance or upload a CSV file.
+3. **Risk Settings** — Configure lookback window, horizon, VaR/ES confidence levels, estimator type (window or EWMA), and Monte Carlo simulation count.
+4. **Run Analysis** — Click "Run Risk Analysis" to compute all three VaR/ES models. Results include a comparison table, loss histograms, correlation heatmap, and download buttons.
+5. **Backtesting** — Select a model and click "Run Backtest" for walk-forward VaR backtesting with Kupiec test results.
 
 ## Key Modelling Conventions
 
 | Convention | Specification |
-|------------|--------------|
-| Returns | Daily log returns: r_t = log(S_t / S_{t−1}) |
-| Horizon returns | Overlapping rolling sum: R_t^(h) = Σ r_{t−k} for k=0..h−1 |
-| Price shock | S_shocked = S₀ × exp(R) |
-| PnL | pnl = V_T − V₀ |
-| Loss | loss = V₀ − V_T (positive = loss) |
-| EWMA λ | λ = (N−1)/(N+1) |
-| Horizon scaling | μ_h = μ × h, Σ_h = Σ × h |
-| Parametric VaR | −μ_h + σ_h × Φ⁻¹(α) |
-| Parametric ES | −μ_h + σ_h × φ(z_α) / (1−α) |
-| Option pricing | Black-Scholes-Merton with continuous dividends |
-| Kupiec LR | LR_uc ~ χ²(1) under H₀: p = 1 − α |
-| Merton Q-PD | N(−d₂) with drift ν = r |
-| Merton P-PD | N(−d₂) with drift ν = μ (real-world) |
-| CDS approx spread | (1 − R) × λ |
-| CVA (discrete) | Σ_t LGD × PD(t−1, t) × EE(t) × D(t) |
-| RWA | Σ notional_i × risk_weight_i |
-| Capital ratio | Tier-1 equity / RWA |
-
----
+|---|---|
+| **Returns** | Daily log returns: r_t = log(S_t / S_{t-1}) |
+| **Horizon returns** | Overlapping rolling sum: R_t^(h) = Σ r_{t-k} for k=0..h-1 |
+| **Price shock** | S_shocked = S_0 × exp(R) |
+| **PnL** | pnl = V_T − V_0 |
+| **Loss** | loss = V_0 − V_T (positive = loss) |
+| **EWMA λ** | λ = (N−1)/(N+1) |
+| **Horizon scaling** | μ_h = μ × h, Σ_h = Σ × h |
+| **Parametric VaR** | −m + s × Φ⁻¹(confidence) |
+| **Parametric ES** | −m + s × φ(z) / α |
+| **Option pricing** | Black-Scholes with continuous dividends |
+| **Kupiec test** | LR_uc ~ χ²(1) |
 
 ## Running Tests
 
+All commands below are run from the project root.
+
+### Full unit-test suite (no network)
+
 ```bash
-# Full unit-test suite (no network)
-python -m pytest tests/ --ignore=tests/integration_test.py \
-  --ignore=tests/integration_test_formula_sheet.py -v
-
-# With coverage report
-python -m pytest tests/ --cov=src --cov-report=term-missing \
-  --ignore=tests/integration_test.py \
-  --ignore=tests/integration_test_formula_sheet.py
-
-# By domain
-python -m pytest tests/test_backend.py -v              # Core engine + service layer
-python -m pytest tests/test_course_validation.py -v    # PDF fixture goldens
-python -m pytest tests/test_credit.py -v               # Hazard / Merton / CDS / CVA
-python -m pytest tests/test_regulatory.py -v           # RWA / capital / DFAST
-python -m pytest tests/test_lognormal.py -v            # Analytical GBM VaR/ES
-python -m pytest tests/test_charts.py -v               # Plotly chart helpers
-python -m pytest tests/test_ui_panels.py -v            # Streamlit panels (AppTest)
-
-# Network integration tests
-python tests/integration_test.py
-python tests/integration_test_formula_sheet.py
-
-# Useful flags
-# -x        stop at first failure
-# -k "merton"  filter by keyword
-# --lf      re-run last failures
-# -s        show stdout
+python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py
 ```
+
+### With coverage report
+
+```bash
+python -m pytest tests/ --cov=src --cov-report=term-missing \
+  --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py
+```
+
+Coverage is reported with pytest-cov and reviewed through the terminal missing-line report.
+
+### Individual test files
+
+```bash
+python -m pytest tests/test_backend.py -v            # Core engine + service layer
+python -m pytest tests/test_course_validation.py -v  # PDF validation-sheet fixtures
+python -m pytest tests/test_charts.py -v             # Plotly chart helpers
+python -m pytest tests/test_ui_panels.py -v          # Streamlit UI panels (AppTest)
+python -m pytest tests/test_credit.py -v             # hazard / Merton / CDS / CVA
+python -m pytest tests/test_regulatory.py -v         # RWA / capital / DFAST
+python -m pytest tests/test_lognormal.py -v          # Exact GBM VaR / ES
+python -m pytest tests/test_market_data.py -v        # CSV loader + yfinance wrappers
+python -m pytest tests/test_config_and_validation.py -v
+python -m pytest tests/test_credit_service.py -v
+python -m pytest tests/test_coverage_gaps.py -v
+```
+
+### Running a single class or test
+
+```bash
+python -m pytest tests/test_course_validation.py::TestLN02_HomeworkIV -v
+python -m pytest tests/test_course_validation.py::TestMR01_HomeworkVII_QvsP::test_pd_Q -v
+```
+
+### Network integration tests
+
+```bash
+python tests/integration_test.py                  # End-to-end with real market data
+python tests/integration_test_formula_sheet.py    # Full formula-sheet integration
+```
+
+### Useful pytest flags
+
+| Flag | Effect |
+|---|---|
+| `-v` | Verbose (one line per test) |
+| `-x` | Stop at first failure |
+| `-k "merton"` | Only tests matching the keyword |
+| `--lf` | Re-run only last failures |
+| `-s` | Don't capture stdout (useful for debugging prints) |
 
 ### Course validation fixtures
 
-`tests/test_course_validation.py` encodes goldens from `risk_engine_validation_test_sheet.pdf` covering LN01–LN04, HZ01–HZ04, MR01–MR02, CDS01–CDS04, CVA01–CVA05, REG01–REG02. Numerical comparisons use ~10% relative tolerance. The two AAPL/CAT acceptance tests (ACC01, ACC02) skip unless `data/AAPL-bloomberg.csv` and `data/CAT-bloomberg.csv` are present.
+`tests/test_course_validation.py` encodes the course-supplied fixtures from
+`risk_engine_validation_test_sheet.pdf` (LN01–LN04, HZ01–HZ04, MR01–MR02,
+CDS01–CDS04, CVA01–CVA05, REG01–REG02, plus non-numeric monotonicity /
+methodology checks). Numerical goldens are compared at ~10% relative tolerance.
+
+The two AAPL/CAT acceptance tests (ACC01, ACC02) skip cleanly unless
+`data/AAPL-bloomberg.csv` and `data/CAT-bloomberg.csv` are present.
+
+## Project Requirements Coverage Matrix
+
+Requirements from `docs/references/project_requirements.pdf` (MATH GR 5320).
+
+| Requirement | Status | Implementation | Tests |
+|---|---|---|---|
+| Accept stock and option positions as input | ✅ | [src/schemas.py](src/schemas.py), [src/ui/portfolio_editor.py](src/ui/portfolio_editor.py) | [tests/test_backend.py](tests/test_backend.py) |
+| Calibrate to historical price data | ✅ | [src/data/market_data.py](src/data/market_data.py), [src/risk/returns.py](src/risk/returns.py), [src/risk/estimators.py](src/risk/estimators.py) | [tests/test_market_data.py](tests/test_market_data.py), [tests/test_backend.py](tests/test_backend.py) |
+| Accept manual parameters as input | ✅ | [src/risk/estimators.py](src/risk/estimators.py) (`manual_mean_cov`) | [tests/test_coverage_gaps.py](tests/test_coverage_gaps.py) |
+| Compute historical VaR and ES | ✅ | [src/risk/historical.py](src/risk/historical.py) | [tests/test_backend.py](tests/test_backend.py), [tests/test_homework_cases.py](tests/test_homework_cases.py) |
+| Compute parametric (delta-normal) VaR and ES | ✅ | [src/risk/parametric.py](src/risk/parametric.py) | [tests/test_backend.py](tests/test_backend.py), [tests/test_course_validation.py](tests/test_course_validation.py) |
+| Compute Monte Carlo VaR and ES | ✅ | [src/risk/monte_carlo.py](src/risk/monte_carlo.py) | [tests/test_backend.py](tests/test_backend.py), [tests/test_course_validation.py](tests/test_course_validation.py) |
+| Backtest VaR against historical exceptions | ✅ | [src/risk/backtest.py](src/risk/backtest.py), [src/ui/results_panel.py](src/ui/results_panel.py) | [tests/test_backtest_extensions.py](tests/test_backtest_extensions.py), [tests/test_course_validation.py](tests/test_course_validation.py) |
+| Option pricing (Black-Scholes) | ✅ | [src/pricing/black_scholes.py](src/pricing/black_scholes.py) | [tests/test_backend.py](tests/test_backend.py), [tests/test_coverage_gaps.py](tests/test_coverage_gaps.py) |
+| Covariance estimation (window and EWMA) | ✅ | [src/risk/estimators.py](src/risk/estimators.py) | [tests/test_backend.py](tests/test_backend.py), [tests/test_coverage_gaps.py](tests/test_coverage_gaps.py) |
+| Option volatility shock (not just fixed vol) | ✅ | [src/risk/historical.py](src/risk/historical.py) (`option_vol_shock_mode="underlying_beta"`) | [tests/test_backend.py](tests/test_backend.py) |
+
+**Grading penalty flags addressed:**
+
+| Penalty flag (project guide) | How it is addressed |
+|---|---|
+| Not modelling volatility changes for options | `underlying_beta` shock mode scales option vol with the underlying return: `σ' = max(floor, σ·(1 − β·R))`. Default remains `fixed`; `underlying_beta` is available and demonstrated in `submission/advanced_demo.ipynb §5`. |
+| Using historical volatility instead of implied volatility | Option positions carry a user-supplied `volatility` field (implied vol). The system does not back out implied vol from market prices; this limitation is documented in `submission/00_combined_final_report.md §10`. |
+| Incorrect covariance | Covariance is estimated from historical log returns using a rolling window or EWMA; the delta-dollar exposure vector is computed correctly as `x = n·S·Δ`. See [src/risk/parametric.py](src/risk/parametric.py) and [tests/test_strict_numerics.py](tests/test_strict_numerics.py). |
+| Inappropriate parametric VaR | Parametric VaR uses the correct delta-normal formula: `VaR = −m + s·Φ⁻¹(α)` with proper h-day horizon scaling. See [src/risk/normal.py](src/risk/normal.py) and [tests/test_course_validation.py](tests/test_course_validation.py). |
+| Tests not supporting model-doc conclusions | 610 no-network tests with 96% statement coverage. Course fixture values (HW03–HW11) are embedded in [tests/test_homework_cases.py](tests/test_homework_cases.py) and [tests/test_course_validation.py](tests/test_course_validation.py). |
+
+---
+
+## Final Submission Documents
+
+The final submission package is in `submission/`.
+
+| File | Purpose |
+|---|---|
+| `submission/00_combined_final_report.md` | Primary final report |
+| `submission/01_model_documentation.md` | Model documentation |
+| `submission/02_software_design_documentation.md` | Software design documentation |
+| `submission/03_test_plan.md` | Test plan |
+| `submission/04_test_results.md` | Test results |
+| `submission/demo.ipynb` | Formula-sheet demonstration notebook (15 sections, fully executed) |
+| `submission/demo.md` | Front-end workflow trace with screenshots |
+| `submission/advanced_demo.ipynb` | Advanced demo: equal-weight M7 portfolio, §1–§7 |
+| `submission/advanced_demo.md` | M7 portfolio front-end trace with screenshots |

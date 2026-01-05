@@ -1,2 +1,0 @@
-Model,Horizon,Confidence,Observations,Expected exceptions,Actual exceptions,Exception rate,Kupiec statistic,p-value,Interpretation
-historical,5,0.99,990,9.90000000000001,15,0.015151515151515152,2.292047578140398,0.1300382720675383,No reject
