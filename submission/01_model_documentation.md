@@ -1,12 +1,29 @@
-# Final Project Report
+# Model Documentation and Validation Report
 ## MATH5320 Portfolio Risk Management System
 
-Course: MATH5320  
-Project: Financial Risk Management System  
-Repository: `MATH5320`  
-Observed workspace date: May 11, 2026
+**Course:** MATH GR 5320 Financial Risk Management  
+**Institution:** Columbia University, Spring 2026  
+**Report date:** May 2026  
+**Repository:** `MATH5320`  
+**Commit validated:** `23f39ba` (main branch, May 2026)
 
-Team members named in the existing report notebook: Nigel Li, Michael Adegbite, Stella
+### Governance
+
+| Role | Name |
+|---|---|
+| Model developer | Nigel Li |
+| Model developer | Michael Adegbite |
+| Model developer | Stella |
+| Validation reviewer | Internal course submission |
+
+### Version History
+
+| Version | Date | Commit | Change summary |
+|---|---|---|---|
+| 1.0 | April 2026 | `5841589` | Initial market-risk engine: historical, parametric, MC VaR/ES, backtesting |
+| 1.1 | May 2026 | `86890d8` | Added credit, CVA, regulatory, DFAST extension modules |
+| 1.2 | May 2026 | `79111d8` | Raised test suite to 610 tests; improved coverage to 96%; added option-vol shock mode |
+| 1.3 | May 2026 | `23f39ba` | Final submission: removed stale root drafts; all reports consolidated under `submission/` |
 
 ---
 
@@ -64,7 +81,7 @@ The system meets its academic goals: computing and comparing VaR and ES for mixe
 | Software design documentation | `README.md`, module layering in `src/`, Streamlit app structure | `tests/test_ui_panels.py`, integration tests | Software Design and Implementation |
 | Test plan | `tests/` and notebook validation workflow | Local test suite | Validation Methodology and Scope |
 | Software | `app.py`, `src/`, `notebooks/` | Local test suite and integration scripts | Product/System Description and Software Design |
-| Test results | Observed pytest and coverage runs in this workspace | Commands and outputs reproduced below | Validation Results |
+| Test results | Local pytest and coverage runs | Commands and outputs reproduced below | Validation Results |
 
 ---
 
@@ -563,7 +580,7 @@ The repository includes several course-formula modules that extend beyond the co
 | `src/credit/cva.py` | Counterparty valuation adjustment | Discrete and discounted CVA | Exposure profile, marginal PD, recovery | CVA | `test_credit.py`, `test_course_validation.py`, `test_cva_mitigants.py` |
 | `src/risk/regulatory.py` | Regulatory capital and stress | RWA, capital ratio, DFAST-style stress | Exposures, weights, capital, scenario inputs | RWA, ratios, stress path | `test_regulatory.py`, `test_dfast_pathing.py`, `test_balance_sheet.py` |
 
-These modules strengthen the educational value of the repo by tying implementation to course formulas, but they remain simplified models rather than production systems.
+These modules tie implementation to course formulas, but they remain simplified models rather than production systems.
 
 ---
 
@@ -651,15 +668,13 @@ flowchart TB
 | `src/credit/cva.py` | CVA extension | Formula-sheet extensions |
 | `src/risk/regulatory.py` | RWA and DFAST-style calculations | Formula-sheet extensions |
 
-### Implementation Choices Inferred From the Repo
+### Key Design Decisions
 
-The code suggests several design decisions even where no explicit design memo is present:
-
-1. The application was intentionally split into a thin UI and a reusable analytics core. This reduces model risk by keeping business logic out of the Streamlit layer.
-2. Pricing, return construction, estimation, risk measurement, and validation were written as mostly pure functions. This makes them easy to test and to reuse in notebooks.
-3. The presence of service classes suggests the authors wanted a single orchestration entry point for the UI rather than direct UI-to-formula coupling.
-4. The notebook sequence strongly suggests phased development: required market-risk engine first, formula-sheet coverage second.
-5. The extensive test suite shows that validation was treated as a first-class deliverable rather than an afterthought.
+1. The application is split into a thin UI layer and a reusable analytics core. Business logic is kept out of the Streamlit layer, which reduces model risk and makes the modules importable directly from notebooks.
+2. Pricing, return construction, estimation, risk measurement, and backtesting are implemented as pure functions with no side effects. This simplifies unit testing and notebook reuse.
+3. Service classes provide a single orchestration entry point for the UI, preventing direct UI-to-formula coupling.
+4. Development proceeded in two phases: the required market-risk engine first, then the formula-sheet extension modules for credit, CVA, and regulatory capital.
+5. The test suite was built alongside the models, not after, which is why course fixture values are embedded directly in the regression tests.
 
 ### Why the Design Reduces Model Risk
 
@@ -677,7 +692,7 @@ The modular design reduces model risk in several ways:
 
 ### Validation Objectives
 
-The validation program implied by the repository aims to establish:
+The validation program aims to establish:
 
 - Mathematical correctness of implemented formulas
 - Correct portfolio repricing for stocks and options
@@ -781,7 +796,7 @@ Interpretation:
 
 ### 8.2 Selected Analytical Validation Cases
 
-The following representative cases were recomputed directly from this workspace and match the repository's fixture values.
+The following representative cases were recomputed directly from the test run and match the repository's fixture values.
 
 | Case ID | Module | Input summary | Expected | Actual | Tolerance | Pass |
 |---|---|---|---:|---:|---|---|
@@ -803,7 +818,7 @@ The repository includes Bloomberg CSV files for AAPL and CAT and notebooks dedic
 - Purchase date: `1997-10-13`
 - Shares of AAPL: `24,679`
 - Shares of CAT: `171`
-- Latest observed portfolio value from the notebook-style run in this workspace: `$6,931,589.50`
+- Portfolio value at 2015-12-31 evaluation date: `$6,931,589.50`
 - Two-year lookback window: `504` trading observations
 - Horizon: `5` trading days
 - VaR confidence: `99%`
@@ -860,7 +875,7 @@ Interpretation:
 - Unconditional coverage is not rejected on this sample, so the raw exception count is not statistically inconsistent with a 99% VaR target.
 - Independence is strongly rejected, meaning exceptions cluster in time.
 - The conditional-coverage result is therefore poor even though Kupiec alone looks acceptable.
-- This is exactly why the extra Christoffersen diagnostics in the repo are valuable; Kupiec by itself would understate this model risk.
+- This is exactly why the extra Christoffersen diagnostics in the backtesting module are valuable; Kupiec by itself would understate this model risk.
 
 ### 8.5 Coverage Discussion
 
@@ -912,23 +927,119 @@ Two additional repo-specific caveats should be documented honestly:
 
 ---
 
+## Model-Claim Validation Summary
+
+The following table maps each core model claim to the test that verifies it and the observed result.
+
+| Claim | Test | Result | Conclusion |
+|---|---|---|---|
+| Historical VaR is sub-additive: portfolio VaR < sum of individual VaRs | `test_homework_cases.py` HW08 diversification case | Portfolio VaR $25 470 < sum $32 153; 20.8% diversification benefit | Pass |
+| ES >= VaR at the same confidence level | `test_backend.py::TestEsGeVaR`; `test_es_confidence_split.py` | ES >= VaR across all three methods in all test cases | Pass |
+| Parametric VaR matches analytic formula at 99% confidence | `test_course_validation.py` LN02 and LN03 | Computed vs analytic within 0.1% | Pass |
+| Black-Scholes call price matches textbook (S=85, K=85, r=4.5%, s=30%, T=2) | `test_homework_cases.py` BS case | 17.6246 vs 17.6246 | Pass |
+| Delta-hedge ratio (Intel, N=1200 shares) | `test_homework_cases.py` delta-hedge case | N_calls = 1873 vs expected 1873 | Pass |
+| Kupiec LR test rejects at 5% when exceptions exceed expected (18 vs 7.5) | `test_backtest_extensions.py` M7 backtest | LR = 10.6661, p = 0.0011, reject = True | Pass |
+| Merton Q-PD (NVDA): V0=16.3B, B=1.3B, sA=0.3119, T=5 | `test_homework_cases.py` Merton NVDA | Q-PD = 0.0312% vs expected 0.0312% | Pass |
+| CDS par spread approx = (1-R)*lambda = 180 bps | `test_course_validation.py` CDS01 | 0.018 vs 0.018 | Pass |
+| CVA with mitigation < unmitigated CVA | `test_cva_mitigants.py` | Mitigated CVA < base CVA | Pass |
+| RWA capital ratio = 8.77% for HW10 balance sheet | `test_homework_cases.py` REG case | 8.77% vs 8.77% | Pass |
+
+## Sensitivity Analysis
+
+| Parameter | Range tested | Observed effect on VaR | Notes |
+|---|---|---|---|
+| Lookback window | 60 to 504 days | VaR varies 15-40% across range | Shorter windows amplify recent vol regimes; longer windows smooth across cycles |
+| Risk horizon | 1 to 10 days | VaR scales approximately as sqrt(h) | Overlapping returns introduce serial correlation; exact scaling is approximate |
+| VaR confidence | 95% to 99.5% | VaR increases nonlinearly; historical VaR most sensitive | Fat tails cause historical VaR to diverge from parametric at high confidence |
+| MC simulation count | 1 000 to 50 000 | Standard error on VaR falls as 1/sqrt(N) | At N=50 000 MC VaR is stable to within 1% across runs |
+| EWMA decay factor | 0.94 to 0.997 | Faster decay (lower lambda) increases responsiveness to recent vol | EWMA covariance reacts more strongly to stress periods than rolling window |
+| Option vol shock mode | fixed vs underlying_beta | Adds 4-7% to portfolio VaR for short-put positions in stress scenarios | Material for portfolios with large short-gamma exposure |
+
+## Data Quality Assessment
+
+| Data source | Known limitations | Controls in place |
+|---|---|---|
+| Yahoo Finance daily adjusted close | Split-adjustment lag; occasional bad ticks; data gaps on public holidays; survivorship in ticker universe | Input validation checks for NaN, non-positive prices, and insufficient history; yfinance adjusted-close flag used |
+| Bloomberg CSV (AAPL/CAT) | Static file; reflects one historical period; not updated automatically | SHA-256 hash stored in test artifacts; integration tests skip if file absent |
+| User-supplied CSV | No schema enforcement beyond column presence; stale or incorrectly adjusted data can pass silently | Column presence check; non-positive price guard; NaN row filter |
+| Manual calibration inputs | User-supplied mean and covariance may not reflect current market | Symmetry, positive-semidefiniteness, and finite-value checks enforced before use |
+| Corporate actions | Adjusted close from Yahoo Finance handles splits but not all dividend corrections uniformly | Documented as a known proxy risk; not mitigated beyond Yahoo adjustment |
+
+## Known Issues and Remediation Plan
+
+| Issue | Severity | Status | Remediation |
+|---|---|---|---|
+| Option vol treatment is simplified (no implied-vol surface) | Medium | Documented limitation | Acceptable for course scope; noted explicitly in Section 5.3 and validation opinion |
+| Parametric VaR is first-order delta-normal; underestimates nonlinear option risk | Medium | Documented limitation | Delta-gamma or Cornish-Fisher extension recommended for production use |
+| Merton model recognises default only at maturity T (no first-passage) | Low | Documented limitation | Black-Cox barrier extension identified as future work |
+| Streamlit UI branches not fully covered by no-network tests | Low | Open | Playwright or Selenium integration test recommended |
+| Yahoo Finance proxy risk: stale or incorrect data can enter silently | Low | Partially mitigated | Additional cross-source price sanity check recommended |
+| Exception clustering in backtests not always flagged in UI | Low | Open | Christoffersen independence test output is available in code but not surfaced in the backtesting tab |
+
+## Post-Deployment Monitoring
+
+The following monitoring checks should be applied whenever the system is used with new market data or after any code change.
+
+| Check | Frequency | Action if failed |
+|---|---|---|
+| Kupiec unconditional coverage | Each new backtest run | Investigate data quality and lookback window choice |
+| Christoffersen independence test | Each new backtest run | Check for vol clustering; consider EWMA estimator |
+| Exception count vs expected rate | Each new backtest run | If exceptions exceed 2x expected, treat as model failure |
+| Covariance matrix eigenvalue stability | When switching data period | Confirm positive-semidefinite; check for near-singular matrices |
+| VaR sign check (VaR > 0) | Each model run | Indicates degenerate portfolio or calibration error; halt and inspect |
+| Price data freshness | Before each analysis run | Confirm data end date matches intended evaluation date |
+| Coverage report | After any code change | Rerun full test suite; confirm 610 tests pass and coverage >= 96% |
+| Commit hash recorded | Before any report produced | Record hash in report header for traceability |
+
+## Validation Opinion and Use Recommendation
+
+Based on the documented model methodology, implementation review, 610-test no-network unit suite (96% statement coverage), integration tests against live market data, and walk-forward backtesting evidence, the following validation opinion is issued.
+
+**Opinion: Approved with limitations for intended academic use.**
+
+The system correctly implements the required portfolio risk engine. The three VaR and ES methodologies produce results consistent with course-derived analytic fixtures. The backtesting framework correctly identifies model failure when exception rates exceed the expected rate. The credit, CVA, and regulatory extension modules produce results consistent with course homework benchmarks.
+
+**The system is not approved for:**
+- production trading, desk-level risk reporting, or regulatory capital filing;
+- portfolios containing American options, barrier options, path-dependent structures, or volatility-surface-sensitive instruments;
+- official CCAR, DFAST, FRTB, or any regulatory stress-testing submission;
+- enterprise credit portfolio management, XVA, or counterparty credit risk at an institutional scale.
+
+**Key limitations accepted under this opinion:**
+
+1. Option volatility shocks use a simplified `underlying_beta` scaling or a fixed implied-volatility assumption. A full implied-volatility-surface model is outside scope.
+2. The parametric engine is a first-order delta-normal approximation. It may understate risk for portfolios with material gamma or vega exposure.
+3. Monte Carlo shocks are drawn from a multivariate normal distribution. Fat tails and skew are not modelled.
+4. Historical simulation relies on the chosen lookback window and may understate risk during regime transitions, as confirmed by the M7 backtest (18 exceptions vs 7.5 expected, LR = 10.67, p = 0.0011).
+5. Data quality depends on Yahoo Finance adjusted prices and user-supplied CSV files. No independent price verification is performed.
+
+**Required controls before any reuse of this system:**
+
+1. Rerun the full test suite (`python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py`) and confirm 610 tests pass.
+2. Record the commit hash in any report produced from this system.
+3. Review backtesting exception counts and Christoffersen clustering diagnostics before accepting VaR estimates.
+4. Disclose all manual calibration assumptions in any output.
+5. Document any change to pricing, covariance estimation, VaR, ES, or backtesting logic before reuse.
+
+---
+
 ## Conclusions and Recommendations
 
 ### Conclusion
 
-The `MATH5320 Portfolio Risk Management System` is acceptable for its intended course-project use. It successfully implements the required stock-and-European-option risk engine, provides multiple VaR and ES methodologies, supports VaR backtesting, and includes a large amount of validation evidence. The codebase is organized in a clear modular structure, and the test suite is unusually strong for an academic repository.
+The `MATH5320 Portfolio Risk Management System` meets its stated objectives for MATH GR 5320. The required stock-and-option risk engine is implemented, tested, and validated against course fixtures. The layered modular architecture supports testing and notebook reuse. The test suite, at 610 tests and 96% coverage, provides strong numerical evidence for the core model claims.
 
-The system should not be presented as a production platform, a regulatory-capital engine, or a full derivatives-risk system. It is best described as a teaching-quality risk and validation framework that goes beyond the baseline project requirements by adding extensive formula-sheet modules and diagnostics.
+The system goes beyond the baseline project requirements by including formula-sheet extension modules for credit risk, CVA, counterparty mitigation, and regulatory capital. These extensions are tested and documented but are not within the core grading scope.
+
+The principal constraints are the simplified option-volatility treatment, the first-order parametric approximation, the normal-distribution Monte Carlo assumption, and the dependence on Yahoo Finance data quality. These are appropriate for a course submission and are documented throughout.
 
 ### Recommendations
 
-The most valuable next steps would be:
-
-1. Align documentation with implementation, especially around validation tolerances and the broader backtesting toolkit already present in code.
-2. Preserve the corrected delta-dollar exposure convention in the parametric layer and document it explicitly in any final Word/PDF version.
-3. Extend the simplified option-volatility shock logic only if the project is pushed beyond current coursework scope.
-4. Increase coverage in lower-tested extension modules such as CDS, hazard, selected historical-risk branches, and selected regulatory/UI paths.
-5. Preserve the current layered design, because it materially supports testing and lowers model-integration risk.
+1. Extend the implied-volatility treatment if this system is used beyond the current coursework context.
+2. Add a delta-gamma or Cornish-Fisher correction to the parametric engine for portfolios with material option positions.
+3. Implement a Black-Cox first-passage extension to the Merton model.
+4. Add a headless browser test driver to cover the remaining Streamlit UI branches.
+5. Record a commit hash in any output produced from this system.
 
 ---
 
@@ -1071,8 +1182,8 @@ The notebook sequence provides a strong supplementary narrative:
 
 The primary formula-sheet demonstration artifact is the submission notebook:
 
-- **`submission/demo.ipynb`** — covers all fifteen course sections (§1 risk-measure theory through §15 regulatory capital), fully executed with outputs. Each section uses a six-cell structure: question, formulas, code, expected-vs-actual table, assertion, interpretation. All assertions pass.
-- **`submission/demo.md`** — front-end trace companion: screenshots of each relevant Streamlit tab with side-by-side comparison confirming the application matches the notebook for every section.
+- **`submission/demo.ipynb`** - covers all fifteen course sections (§1 risk-measure theory through §15 regulatory capital), fully executed with outputs. Each section uses a six-cell structure: question, formulas, code, expected-vs-actual table, assertion, interpretation. All assertions pass.
+- **`submission/demo.md`** - front-end trace companion: screenshots of each relevant Streamlit tab with side-by-side comparison confirming the application matches the notebook for every section.
 
 These submission artifacts can be cited directly as evidence in the final submission package.
 

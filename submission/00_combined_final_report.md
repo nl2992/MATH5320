@@ -781,7 +781,7 @@ A representative historical-model backtest was run on `1,500` aligned AAPL/CAT B
 | Average exception gap | $205,833 |
 | Maximum exception loss | $1,262,637 |
 
-Interpretation: unconditional coverage is not rejected on this sample, but independence is strongly rejected — exceptions cluster in time. This illustrates why the repo includes Christoffersen diagnostics beyond the minimum Kupiec test.
+Interpretation: unconditional coverage is not rejected on this sample, but independence is strongly rejected - exceptions cluster in time. This illustrates why the repo includes Christoffersen diagnostics beyond the minimum Kupiec test.
 
 ### 9.5 Live Integration Status
 
@@ -847,7 +847,7 @@ The companion document `submission/demo.md` provides a front-end trace with scre
 
 The system satisfies the core project requirements: it accepts mixed stock-and-option portfolios, computes VaR and ES under three methodologies, and backtests the results against historical data. The test suite validates the main formulas against course-derived fixtures and confirms correct covariance estimation, delta-normal parametric VaR, and Black-Scholes option pricing. Extension modules for credit risk, CVA, and regulatory capital are included and tested, though they sit outside the core grading scope.
 
-The system is not a production risk platform. Its limitations — simplified option volatility treatment, first-order delta approximation, normal Monte Carlo shocks, and single-maturity Merton default — are appropriate for a course project and are documented throughout.
+The system is not a production risk platform. Its limitations - simplified option volatility treatment, first-order delta approximation, normal Monte Carlo shocks, and single-maturity Merton default - are appropriate for a course project and are documented throughout.
 
 ### 11.2 Recommendations for future work
 
@@ -961,14 +961,14 @@ python -m jupyter nbconvert --to notebook --execute --inplace \
 | File | Description |
 |---|---|
 | `00_combined_final_report.md` | This integrated combined report |
-| `01_model_documentation.md` | Deliverable 1 — full model documentation (30 pts) |
-| `02_software_design_documentation.md` | Deliverable 2 — software design documentation (15 pts) |
-| `03_test_plan.md` | Deliverable 3 — test plan (20 pts) |
-| `04_test_results.md` | Deliverable 4/5 — test results (10 pts) |
-| `demo.ipynb` | Formula-sheet demonstration notebook — 15 sections, fully executed |
-| `demo.md` | Front-end trace with screenshots — 15 sections mapped to Streamlit tabs |
-| `advanced_demo.ipynb` | Advanced demo notebook — equal-weight Magnificent Seven portfolio, §1–§7 |
-| `advanced_demo.md` | M7 portfolio front-end trace with screenshots — Tabs 1–6 |
+| `01_model_documentation.md` | Deliverable 1 - full model documentation (30 pts) |
+| `02_software_design_documentation.md` | Deliverable 2 - software design documentation (15 pts) |
+| `03_test_plan.md` | Deliverable 3 - test plan (20 pts) |
+| `04_test_results.md` | Deliverable 4/5 - test results (10 pts) |
+| `demo.ipynb` | Formula-sheet demonstration notebook - 15 sections, fully executed |
+| `demo.md` | Front-end trace with screenshots - 15 sections mapped to Streamlit tabs |
+| `advanced_demo.ipynb` | Advanced demo notebook - equal-weight Magnificent Seven portfolio, §1–§7 |
+| `advanced_demo.md` | M7 portfolio front-end trace with screenshots - Tabs 1–6 |
 | `coverage_report/` | HTML and XML coverage reports from the local pytest run |
 | `test_artifacts/` | Captured environment and test artifacts (git hash, pytest output, etc.) |
 
@@ -976,20 +976,20 @@ python -m jupyter nbconvert --to notebook --execute --inplace \
 
 | Item | Included in this combined report? |
 |---|---|
-| Purpose, intended use, and non-intended use | Yes — Section 2 |
-| Requirement coverage matrix | Yes — Section 1 |
-| Model-risk management framework | Yes — Section 3 |
-| Core model description (BS, historical, parametric, MC, backtest) | Yes — Section 6 |
-| Software architecture and orchestration | Yes — Section 7 |
-| Representative application screenshots | Yes — Section 4 |
-| Test-plan summary | Yes — Section 8 |
-| Test-results summary with numeric evidence | Yes — Section 9 |
-| Actual backtest result table (Kupiec + Christoffersen) | Yes — Section 9.4 |
-| Formula-sheet demo coverage matrix (§1–§15) | Yes — Section 9.6 |
-| Limitations and model risk table | Yes — Section 10 |
-| Conclusions and recommendations | Yes — Section 11 |
-| References and bibliography | Yes — Section 12 |
-| Formula summary appendix | Yes — Appendix A |
-| Repository file tree | Yes — Appendix B |
-| Reproducibility commands incl. demo execution | Yes — Appendix C |
-| Submission package contents | Yes — Appendix D |
+| Purpose, intended use, and non-intended use | Yes - Section 2 |
+| Requirement coverage matrix | Yes - Section 1 |
+| Model-risk management framework | Yes - Section 3 |
+| Core model description (BS, historical, parametric, MC, backtest) | Yes - Section 6 |
+| Software architecture and orchestration | Yes - Section 7 |
+| Representative application screenshots | Yes - Section 4 |
+| Test-plan summary | Yes - Section 8 |
+| Test-results summary with numeric evidence | Yes - Section 9 |
+| Actual backtest result table (Kupiec + Christoffersen) | Yes - Section 9.4 |
+| Formula-sheet demo coverage matrix (§1–§15) | Yes - Section 9.6 |
+| Limitations and model risk table | Yes - Section 10 |
+| Conclusions and recommendations | Yes - Section 11 |
+| References and bibliography | Yes - Section 12 |
+| Formula summary appendix | Yes - Appendix A |
+| Repository file tree | Yes - Appendix B |
+| Reproducibility commands incl. demo execution | Yes - Appendix C |
+| Submission package contents | Yes - Appendix D |
