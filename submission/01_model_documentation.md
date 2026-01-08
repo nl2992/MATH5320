@@ -77,7 +77,7 @@ The system meets its academic goals: computing and comparing VaR and ES for mixe
 | Monte Carlo ES | `src/risk/monte_carlo.py` | `tests/test_backend.py`, `tests/test_es_confidence_split.py` | Model Description |
 | VaR backtesting | `src/risk/backtest.py`, `src/services/risk_engine_service.py` | `tests/test_backend.py`, `tests/test_backtest_extensions.py`, `notebooks/10_backtesting_validation_dashboard.ipynb` | Model Description and Validation Results |
 | Option pricing for European options | `src/pricing/black_scholes.py`, `src/portfolio/positions.py` | `tests/test_backend.py`, `tests/test_homework_cases.py` | Model Description |
-| Model documentation | This report draft plus the existing `FINAL_REPORT.ipynb` | Local repository evidence | Entire document |
+| Model documentation | `submission/01_model_documentation.md`, `submission/00_combined_final_report.md` | Local repository evidence | Entire document |
 | Software design documentation | `README.md`, module layering in `src/`, Streamlit app structure | `tests/test_ui_panels.py`, integration tests | Software Design and Implementation |
 | Test plan | `tests/` and notebook validation workflow | Local test suite | Validation Methodology and Scope |
 | Software | `app.py`, `src/`, `notebooks/` | Local test suite and integration scripts | Product/System Description and Software Design |
