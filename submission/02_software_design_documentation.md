@@ -493,9 +493,9 @@ Observed local no-network run:
 python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py -v
 ```
 
-Observed result on `2026-05-11 03:00:09 EDT`:
+Observed result on `2026-05-11 06:22:06 EDT`:
 
-- `576 passed`
+- `610 passed`
 - `242 warnings`
 
 Observed coverage run:
@@ -510,8 +510,9 @@ python -m pytest tests/ --cov=src --cov-report=term-missing \
 
 Observed result:
 
-- Unit tests passed
-- Coverage report generated; remaining untested lines are in UI branches, selected credit-service helpers, and defensive validation paths
+- `610 passed, 242 warnings in 70.04s`
+- `96%` statement coverage across `src/`
+- Coverage report generated; remaining untested lines are concentrated in UI branches, selected credit helpers, and a small number of defensive validation paths
 - Both live integration scripts passed separately
 
 ### 10.3 Captured Artifacts
@@ -572,8 +573,8 @@ git rev-parse HEAD
 
 ### 11.2 Observed Environment for This Documentation Pass
 
-- Date/time: `2026-05-11 03:00:09 EDT`
-- Git commit: `5841589e3f3d2dbd3c1e38b08642eccce201a6a2`
+- Date/time: `2026-05-11 06:22:06 EDT`
+- Git commit under test: `f154109fb8645c5be3ecf3d98669c74b1ae31935`
 - Python: `3.12.2`
 - OS: `Darwin 24.5.0 arm64`
 - Key packages observed:

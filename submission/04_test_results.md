@@ -14,7 +14,7 @@ Observed coverage run result:
 
 - all no-network tests passed,
 - total statement coverage: `96%`,
-- remaining untested lines are concentrated in UI branch paths, selected credit-service helpers, and defensive validation branches (documented in Section 12).
+- remaining untested lines are concentrated in UI branch paths, selected credit helpers, and a small number of defensive validation branches (documented in Section 12).
 
 Observed integration-script result:
 
@@ -31,8 +31,8 @@ Overall conclusion: the deterministic, no-network, and live integration evidence
 
 ### 2.1 Run Metadata
 
-- Date/time of observed run: `2026-05-11 03:00:09 EDT`
-- Git commit hash: `5841589e3f3d2dbd3c1e38b08642eccce201a6a2`
+- Date/time of observed run: `2026-05-11 06:22:06 EDT`
+- Git commit under test: `f154109fb8645c5be3ecf3d98669c74b1ae31935`
 - Python version: `3.12.2`
 - OS: `Darwin 24.5.0 arm64`
 - Network status: enabled for integration-script execution
@@ -122,7 +122,7 @@ pip freeze > submission/test_artifacts/requirements_freeze.txt
 | Config/validation | `test_config_and_validation.py` | 10 | 0 | 0 | Input and data validation |
 | Charts | `test_charts.py` | 6 | 0 | 0 | Plot helpers |
 | UI panels | `test_ui_panels.py` | 68 | 0 | 0 | Streamlit panel behavior |
-| Coverage and numerics | `test_coverage_gaps.py`, `test_strict_numerics.py`, `test_es_confidence_split.py` | 49 | 0 | 0 | Gap-closing and numerical-discipline tests |
+| Coverage and numerics | `test_coverage_gaps.py`, `test_strict_numerics.py`, `test_es_confidence_split.py` | 83 | 0 | 0 | Gap-closing and numerical-discipline tests |
 | Integration | `integration_test.py` | 1 | 0 | 0 | Live-data end-to-end market-risk workflow passed |
 | Formula integration | `integration_test_formula_sheet.py` | 1 | 0 | 0 | Live-data formula-sheet workflow passed |
 
@@ -146,7 +146,7 @@ pip freeze > submission/test_artifacts/requirements_freeze.txt
 Observed tail of `submission/test_artifacts/pytest_output.txt`:
 
 ```text
-====================== 610 passed, 242 warnings in 14.95s ======================
+====================== 610 passed, 242 warnings in 32.07s ======================
 ```
 
 The warning volume was high but did not correspond to test failures. Most warnings came from dependency-version and deprecation notices in third-party libraries used by Streamlit or pandas.
@@ -349,7 +349,7 @@ Remaining gaps are more about richer data-quality logic, such as explicit stale-
 | Metric | Result |
 |---|---:|
 | Statement coverage | 96% |
-| Missing lines | 182 |
+| Missing lines | 80 |
 | Coverage HTML | `submission/coverage_report/index.html` generated |
 | Coverage XML | `submission/coverage_report/coverage.xml` generated |
 
@@ -357,22 +357,20 @@ Remaining gaps are more about richer data-quality logic, such as explicit stale-
 
 | File | Missing lines | Why missing (likely) | Fix direction |
 |---|---|---|---|
-| `src/credit/cds.py` | 33 | Lower-tested branches in full CDS logic | Add branch-specific CDS tests |
-| `src/credit/hazard.py` | 26 | Piecewise helper branches | Add targeted piecewise-hazard tests |
-| `src/ui/capital_panel.py` | 18 | UI branches not fully exercised | Add panel-path tests |
-| `src/ui/cds_cva_panel.py` | 18 | UI and branch-heavy error paths | Add panel-path tests |
-| `src/risk/historical.py` | 16 | Historical vol-shock branches and helper paths | Add explicit historical-shock tests |
-| `src/services/regulatory_service.py` | 11 | Capital-path helper branches | Add service-branch tests |
-| `src/credit/cva.py` | 8 | Discounted / edge branches | Add CVA branch tests |
-| `src/risk/normal.py` | 7 | Direct formula helpers not all hit | Add direct normal-formula tests |
-| `src/risk/estimators.py` | 7 | Manual-parameter validation branches | Add targeted manual-input tests |
-| `src/credit/mitigation.py` | 4 | Less common mitigation branches | Add more mitigant tests |
-| `src/risk/returns.py` | 3 | Absolute-return helper path | Add branch tests |
-| `src/risk/regulatory.py` | 2 | Small residual branches | Add target tests |
+| `src/credit/cds.py` | 4 | Lower-frequency branches in the full CDS-leg logic | Add branch-specific CDS tests |
+| `src/credit/cva.py` | 1 | Small discounted/edge branch | Add one targeted CVA branch test |
+| `src/credit/hazard.py` | 6 | Piecewise-hazard helper branches | Add targeted piecewise-hazard tests |
+| `src/credit/mitigation.py` | 1 | Less common mitigation branch | Add one additional mitigant test |
+| `src/portfolio/positions.py` | 1 | Defensive option-exposure path | Add one position-level regression test |
+| `src/risk/estimators.py` | 1 | Manual-parameter validation branch | Add a targeted manual-input validation test |
+| `src/risk/regulatory.py` | 2 | Small residual capital-path branches | Add target regulatory tests |
+| `src/ui/capital_panel.py` | 18 | UI branches not fully exercised in no-network mode | Add panel-path tests or browser-driven checks |
+| `src/ui/cds_cva_panel.py` | 18 | UI and branch-heavy error paths | Add panel-path tests or browser-driven checks |
+| `src/ui/risk_settings.py` | 28 | Manual-calibration and option-vol UI branches | Add more panel-path tests or browser-driven checks |
 
 ### 12.3 Coverage Conclusion
 
-Coverage reporting was used to identify tested and untested source paths. The main uncovered lines are concentrated in UI branches, selected credit-service paths, and defensive validation branches. These are documented as future hardening areas rather than core model failures.
+Coverage reporting was used to identify tested and untested source paths. The main uncovered lines are now concentrated in three Streamlit panels plus a small number of residual credit, portfolio, estimator, and regulatory branches. These are documented as future hardening areas rather than core model failures.
 
 ---
 
