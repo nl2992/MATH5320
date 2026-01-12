@@ -1,12 +1,12 @@
 {
-  "tests/test_backend.py": 25,
+  "tests/test_backend.py": 29,
   "tests/test_backtest_extensions.py": 31,
   "tests/test_balance_sheet.py": 20,
   "tests/test_charts.py": 6,
   "tests/test_config_and_validation.py": 10,
   "tests/test_counterparty_mitigation.py": 21,
   "tests/test_course_validation.py": 67,
-  "tests/test_coverage_gaps.py": 25,
+  "tests/test_coverage_gaps.py": 61,
   "tests/test_credit.py": 61,
   "tests/test_credit_service.py": 11,
   "tests/test_cva_mitigants.py": 14,
@@ -18,5 +18,5 @@
   "tests/test_merton_timing.py": 22,
   "tests/test_regulatory.py": 15,
   "tests/test_strict_numerics.py": 18,
-  "tests/test_ui_panels.py": 67
+  "tests/test_ui_panels.py": 68
 }
