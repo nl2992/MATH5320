@@ -5,7 +5,7 @@
 **Institution:** Columbia University, Spring 2026  
 **Report date:** May 2026  
 **Repository:** `MATH5320`  
-**Commit validated:** `23f39ba` (main branch, May 2026)
+**Source commit under test:** `f154109fb8645c5be3ecf3d98669c74b1ae31935` (main branch, May 2026)
 
 ### Governance
 
@@ -24,6 +24,7 @@
 | 1.1 | May 2026 | `86890d8` | Added credit, CVA, regulatory, DFAST extension modules |
 | 1.2 | May 2026 | `79111d8` | Raised test suite to 610 tests; improved coverage to 96%; added option-vol shock mode |
 | 1.3 | May 2026 | `23f39ba` | Final submission: removed stale root drafts; all reports consolidated under `submission/` |
+| 1.4 | May 2026 | `f154109` | Source state used for the refreshed evidence bundle and live integration reruns |
 
 ---
 
@@ -46,7 +47,7 @@ python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integr
 The observed result was:
 
 ```text
-610 passed, 242 warnings in 14.95s
+610 passed, 242 warnings in 32.07s
 ```
 
 An additional coverage run used:
@@ -750,7 +751,7 @@ The validation suite mixes several tolerance styles depending on the problem:
 - Structural assertions for monotonicity and sign behavior
 - Monte Carlo tolerances that accept sampling noise
 
-Important documentation note: the current code in `tests/test_course_validation.py` sets `REL = 0.01`, meaning approximately 1% relative tolerance for those fixtures. The README still mentions about 10% relative tolerance. The documentation should therefore follow the code, not the outdated README text.
+Important documentation note: the current code in `tests/test_course_validation.py` sets `REL = 0.01`, meaning approximately 1% relative tolerance for those fixtures. The report therefore treats those homework and formula-sheet fixtures as tighter regression checks than the earlier draft documentation implied.
 
 ---
 
@@ -767,7 +768,7 @@ python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integr
 Observed result:
 
 ```text
-610 passed, 242 warnings in 14.95s
+610 passed, 242 warnings in 32.07s
 ```
 
 Observed coverage run:
@@ -782,7 +783,7 @@ python -m pytest tests/ --cov=src --cov-report=term-missing \
 Observed result summary:
 
 ```text
-610 passed, 242 warnings in 30.53s
+610 passed, 242 warnings in 70.04s
 TOTAL 2073 statements, 80 missed, 96% coverage
 ```
 
@@ -921,7 +922,7 @@ The main model risk is that the required equity/option risk engine combines full
 
 Two additional repo-specific caveats should be documented honestly:
 
-1. The README still mentions roughly 10% relative tolerance for course validation goldens, while the current code uses 1% relative tolerance in `tests/test_course_validation.py`. Documentation should be aligned to the code.
+1. Course validation fixtures are intentionally tight at roughly 1% relative tolerance in `tests/test_course_validation.py`, so report claims should stay grounded in those implemented checks rather than broader qualitative statements.
 2. The current option-volatility shock logic is deliberately simplified and should not be described as a full implied-volatility surface model.
 3. The live integration scripts now pass, but the README’s `100%` coverage target still overstates the achieved test coverage.
 
@@ -1144,7 +1145,7 @@ Observed tail of output:
 
 ```text
 ........................................................................ [100%]
-610 passed, 242 warnings in 14.95s
+610 passed, 242 warnings in 32.07s
 ```
 
 Observed coverage command:
@@ -1161,7 +1162,7 @@ Observed tail of output:
 ```text
 ================================ tests coverage ================================
 TOTAL                                  2073     80    96%
-====================== 610 passed, 242 warnings in 30.53s ======================
+================= 610 passed, 242 warnings in 70.04s (0:01:10) =================
 ```
 
 ### Appendix D. Notebooks and Supporting Evidence

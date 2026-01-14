@@ -5,7 +5,7 @@
 **Project title:** Portfolio Risk Management System  
 **Submission package version:** Final submission report  
 **Repository:** `MATH5320`  
-**Reference commit reviewed in this pass:** `a9dba89a130c5cab6c4cc6d5d6c08cdc3f95297e`  
+**Source commit under test in this pass:** `f154109fb8645c5be3ecf3d98669c74b1ae31935`  
 
 ---
 
@@ -718,7 +718,7 @@ python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integr
 Observed result from the current walkthrough:
 
 ```text
-610 passed, 242 warnings in 14.95s
+610 passed, 242 warnings in 32.07s
 ```
 
 ### 9.2 Coverage Run
@@ -737,9 +737,9 @@ Observed result:
 
 - all counted tests passed,
 - coverage report generated (HTML and XML),
-- remaining untested lines are concentrated in UI branch paths, selected credit-service helpers, and defensive validation branches.
+- remaining untested lines are concentrated in UI branch paths, selected credit helpers, and a small number of defensive validation branches.
 
-The updated test suite (610 tests) achieves **96% total statement coverage**. Residual gaps are limited to Streamlit UI panel branches (`src/ui/capital_panel.py`, `src/ui/cds_cva_panel.py`, `src/ui/risk_settings.py`) that require a live browser session and cannot be driven by the no-network pytest runner. All `src/` logic modules now reach 97%–100% coverage individually.
+The updated test suite (610 tests) achieves **96% total statement coverage**. Residual gaps are limited mainly to Streamlit UI panel branches (`src/ui/capital_panel.py`, `src/ui/cds_cva_panel.py`, `src/ui/risk_settings.py`) that require a richer interactive harness than the no-network pytest runner. Most non-UI logic modules now reach 95%–100% coverage, with the principal remaining exception being `src/credit/hazard.py` at 93%.
 
 **Option-volatility treatment.** The project guide flags "not modelling changes in volatility for options" as a grading penalty. This system supports two modes controlled by the `option_vol_shock_mode` parameter:
 
