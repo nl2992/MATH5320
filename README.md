@@ -165,7 +165,8 @@ python tests/integration_test_formula_sheet.py    # Full formula-sheet integrati
 `tests/test_course_validation.py` encodes the course-supplied fixtures from
 `risk_engine_validation_test_sheet.pdf` (LN01–LN04, HZ01–HZ04, MR01–MR02,
 CDS01–CDS04, CVA01–CVA05, REG01–REG02, plus non-numeric monotonicity /
-methodology checks). Numerical goldens are compared at ~10% relative tolerance.
+methodology checks). Numerical goldens are compared at approximately 1%
+relative tolerance (`REL = 0.01` in `tests/test_course_validation.py`).
 
 The two AAPL/CAT acceptance tests (ACC01, ACC02) skip cleanly unless
 `data/AAPL-bloomberg.csv` and `data/CAT-bloomberg.csv` are present.

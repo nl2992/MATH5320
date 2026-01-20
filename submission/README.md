@@ -11,6 +11,8 @@ This folder contains all deliverables and supporting evidence for the MATH GR 53
 | `02_software_design_documentation.md` | Software design documentation |
 | `03_test_plan.md` | Test plan |
 | `04_test_results.md` | Test results and validation evidence |
+| `advanced_demo.ipynb` | Extended demo notebook covering manual calibration and option-vol shocks |
+| `advanced_demo.md` | Markdown companion for the extended demo |
 | `demo.ipynb` | Formula and workflow demonstration notebook |
 | `demo.md` | Front-end workflow trace with screenshots |
 | `coverage_report/` | Coverage output generated from pytest-cov |
@@ -19,10 +21,10 @@ This folder contains all deliverables and supporting evidence for the MATH GR 53
 ## Quick start
 
 ```bash
-# Run all no-network unit tests (576 pass)
+# Run all no-network unit tests (610 passed in the refreshed evidence run)
 python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py
 
-# Run with coverage reporting
+# Run with coverage reporting (96% statement coverage in the refreshed evidence run)
 python -m pytest tests/ --cov=src --cov-report=term-missing \
   --ignore=tests/integration_test.py \
   --ignore=tests/integration_test_formula_sheet.py
