@@ -11,13 +11,13 @@
 
 ## Executive Summary
 
-This project implements a portfolio risk measurement system for MATH GR 5320. The system takes portfolios of stocks and European options as input, loads historical price data from CSV files or Yahoo Finance, and computes Value at Risk and Expected Shortfall under three methodologies: historical simulation, parametric delta-normal, and Monte Carlo simulation. Walk-forward VaR backtesting with Kupiec and Christoffersen diagnostics is included. A second layer of extension modules covers exact GBM/lognormal VaR and ES, reduced-form hazard credit models, the Merton structural default model, CDS pricing, CVA with counterparty mitigation, and illustrative regulatory capital and DFAST-style projections.
+This report covers the portfolio risk system built for MATH GR 5320. The system takes portfolios of stocks and European options as input, loads historical price data from CSV files or Yahoo Finance, and computes Value at Risk and Expected Shortfall under three methods: historical simulation, parametric delta-normal, and Monte Carlo simulation. It also includes walk-forward VaR backtesting with Kupiec and Christoffersen diagnostics. The repo also includes extension modules for exact GBM/lognormal VaR and ES, reduced-form hazard credit models, the Merton structural default model, CDS pricing, CVA with counterparty mitigation, and illustrative regulatory capital and DFAST-style projections.
 
-The codebase is structured as a layered Python application with an eight-tab Streamlit front end. Service modules orchestrate end-to-end computation; portfolio and pricing modules handle valuation; and risk, credit, and regulatory modules contain the quantitative logic. This structure keeps the UI separate from the models, which simplifies testing and allows direct use of the modules in notebooks.
+The codebase uses a layered Python structure with an eight-tab Streamlit front end. Service modules handle the end-to-end run, portfolio and pricing modules handle valuation, and risk, credit, and regulatory modules contain the quantitative logic. Keeping the UI separate from the model code makes testing easier and lets the same functions be reused in notebooks.
 
 The test suite contains 610 no-network unit tests with 96% statement coverage. It includes deterministic formula tests, course-fixture regression tests, and integration checks against live market data. All core market-risk and credit-risk formulas have been verified against course homework values.
 
-Documented limitations: option repricing uses a simplified volatility shock (not a full implied-volatility surface); parametric VaR is a first-order delta-normal approximation; Monte Carlo uses multivariate normal shocks; and the Merton model recognises default only at maturity.
+Main limitations: option repricing uses a simplified volatility shock rather than a full implied-volatility surface, parametric VaR is a first-order delta-normal approximation, Monte Carlo uses multivariate normal shocks, and the Merton model recognises default only at maturity.
 
 ---
 
@@ -746,7 +746,7 @@ The updated test suite (610 tests) achieves **96% total statement coverage**. Re
 - `fixed` (default): option implied volatility is held constant under all scenarios.
 - `underlying_beta`: option volatility is scaled by the underlying return shock as `σ' = max(floor, σ × (1 − β × R))`, where β and floor are configurable.
 
-The `underlying_beta` mode is not a full implied-volatility-surface model. It does not capture smile, skew, or term-structure dynamics. However, it is a meaningful improvement over a purely fixed-vol assumption and is demonstrated in `submission/advanced_demo.ipynb §5`. The limitation is explicitly documented in Section 10.
+The `underlying_beta` mode is not a full implied-volatility-surface model. It does not capture smile, skew, or term-structure dynamics. It is still better than holding vol fully fixed, and it is demonstrated in `submission/advanced_demo.ipynb §5`. The limitation is documented again in Section 10.
 
 ### 9.3 Selected Analytical and Fixture Evidence
 
@@ -847,7 +847,7 @@ The companion document `submission/demo.md` provides a front-end trace with scre
 
 The system satisfies the core project requirements: it accepts mixed stock-and-option portfolios, computes VaR and ES under three methodologies, and backtests the results against historical data. The test suite validates the main formulas against course-derived fixtures and confirms correct covariance estimation, delta-normal parametric VaR, and Black-Scholes option pricing. Extension modules for credit risk, CVA, and regulatory capital are included and tested, though they sit outside the core grading scope.
 
-The system is not a production risk platform. Its limitations - simplified option volatility treatment, first-order delta approximation, normal Monte Carlo shocks, and single-maturity Merton default - are appropriate for a course project and are documented throughout.
+This is not a production risk platform. The main limits are the simplified option-volatility treatment, the first-order delta approximation, normal Monte Carlo shocks, and single-maturity Merton default. Those limits are fine for a course project, but they should stay explicit.
 
 ### 11.2 Recommendations for future work
 

@@ -2,7 +2,7 @@
 
 ## 1. Executive Summary
 
-The test results demonstrate strong validation coverage across the repository’s no-network unit suite and live integration scripts.
+The test results show broad coverage across the repository’s no-network unit suite and live integration scripts.
 
 Observed local no-network suite result:
 
@@ -23,7 +23,7 @@ Observed integration-script result:
 
 The integration scripts confirm live-data download, service orchestration, full risk-model execution, and representative backtesting behavior end to end.
 
-Overall conclusion: the deterministic, no-network, and live integration evidence all support the core software design and formula implementations.
+Bottom line: the deterministic tests, the no-network suite, and the live integration runs all support the core software design and formula implementations.
 
 ---
 
@@ -153,7 +153,7 @@ The warning volume was high but did not correspond to test failures. Most warnin
 
 ### 5.2 Unit-Suite Interpretation
 
-The no-network suite provides strong evidence that:
+The no-network suite shows that:
 
 - core portfolio and pricing calculations work as expected,
 - risk engines return finite and plausible outputs,
@@ -405,9 +405,9 @@ What is strongly supported:
 
 Coverage reporting identifies untested branches in CDS, hazard, historical-vol-shock paths, regulatory-service helpers, and selected UI panels. These are documented as future hardening areas.
 
-Overall conclusion:
+Conclusion:
 
-The repository has a strong no-network and live-integration validation base and is acceptable as an academic risk-engine implementation. The core model, portfolio, service, and UI layers are exercised by dedicated tests. Coverage reporting identifies remaining untested branches for future extension.
+The repository has a solid no-network and live-integration test base and is good enough for course use. The core model, portfolio, service, and UI layers are all exercised by dedicated tests. Coverage reporting also shows the remaining branches that could still be covered later.
 
 ---
 

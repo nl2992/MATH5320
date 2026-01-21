@@ -1,10 +1,10 @@
-# MATH GR 5320 — System Demo: Front-End Trace
+# MATH GR 5320 - System Demo: Front-End Trace
 
 **Columbia University · Spring 2026**
 
 This document traces the Streamlit front-end alongside the notebook (`demo.ipynb`) for every formula-sheet section. Screenshots capture the exact UI state; each panel shows inputs and outputs side-by-side.
 
-The app runs at `localhost:8502`. All tabs share the same underlying `src/` modules — the notebook and the UI produce identical numbers.
+The app runs at `localhost:8502`. All tabs share the same underlying `src/` modules - the notebook and the UI produce identical numbers.
 
 ---
 
@@ -12,7 +12,7 @@ The app runs at `localhost:8502`. All tabs share the same underlying `src/` modu
 
 | # | Section | Notebook cell | App tab | Key target |
 |---|---------|---------------|---------|------------|
-| 1 | Risk-measure theory | §1 | — (theory) | ES coherent, VaR not |
+| 1 | Risk-measure theory | §1 | - (theory) | ES coherent, VaR not |
 | 2 | Option pricing & delta | §2 | Tab 1 + Tab 4 | price 17.625, Δ 0.6643 |
 | 3 | Delta-hedge intuition | §3 | Tab 1 | N_calls ≈ 1 873 |
 | 4 | Historical scenario VaR/ES | §4 | Tab 4 | VaR₉₀ 3 931, ES₈₀ 3 429 |
@@ -30,9 +30,9 @@ The app runs at `localhost:8502`. All tabs share the same underlying `src/` modu
 
 ---
 
-## §1 — Risk-Measure Theory
+## §1 - Risk-Measure Theory
 
-*Theoretical section — no dedicated UI tab.*
+*Theoretical section - no dedicated UI tab.*
 
 **Notebook output** (`demo.ipynb §1`):
 
@@ -52,17 +52,17 @@ ES₉₅(L1+L2)        = 1.xxxx
 
 ---
 
-## §2 — European Option Pricing & Delta
+## §2 - European Option Pricing & Delta
 
 ### App: Tab 1 · Portfolio Input
 
 ![Portfolio Input tab](../docs/screenshots/demo_portfolio_input.png)
 
-*Inputs: European call S=85, K=85, r=4.5%, σ=30%, T=2yr — option is entered in the Portfolio Input editor.*
+*Inputs: European call S=85, K=85, r=4.5%, σ=30%, T=2yr - option is entered in the Portfolio Input editor.*
 
 ### App: Tab 4 · Run Analysis (pricing output)
 
-![Run Analysis — top view](../docs/screenshots/demo_run_analysis.png)
+![Run Analysis - top view](../docs/screenshots/demo_run_analysis.png)
 
 *The Run Analysis tab shows Black-Scholes price and Greeks for all option positions in the portfolio.*
 
@@ -72,13 +72,13 @@ ES₉₅(L1+L2)        = 1.xxxx
 |----------|---------------|-------------|
 | Call price | **17.624562** | same |
 | Delta Δ | **0.664313** | same |
-| FD delta | **0.664313** | — |
+| FD delta | **0.664313** | - |
 
 **Assertions**: All pass at ±1% tolerance.
 
 ---
 
-## §3 — Delta-Hedge Intuition (Intel)
+## §3 - Delta-Hedge Intuition (Intel)
 
 ### Notebook comparison
 
@@ -93,7 +93,7 @@ ES₉₅(L1+L2)        = 1.xxxx
 
 ---
 
-## §4 — Historical Scenario VaR & ES (HW03)
+## §4 - Historical Scenario VaR & ES (HW03)
 
 ### Notebook comparison
 
@@ -106,7 +106,7 @@ ES₉₅(L1+L2)        = 1.xxxx
 
 ---
 
-## §5 — Single-Stock GBM VaR (HW04 Q1)
+## §5 - Single-Stock GBM VaR (HW04 Q1)
 
 ### App: Tab 3 · Risk Settings
 
@@ -124,7 +124,7 @@ ES₉₅(L1+L2)        = 1.xxxx
 
 ---
 
-## §6 — Two-Stock Parametric VaR (HW04 Q2)
+## §6 - Two-Stock Parametric VaR (HW04 Q2)
 
 ### Notebook comparison
 
@@ -139,7 +139,7 @@ ES₉₅(L1+L2)        = 1.xxxx
 
 ---
 
-## §7 — Rolling Window vs EWMA (HW05)
+## §7 - Rolling Window vs EWMA (HW05)
 
 ### App: Tab 3 · Risk Settings
 
@@ -157,11 +157,11 @@ ES₉₅(L1+L2)        = 1.xxxx
 
 ---
 
-## §8 — Historical AAPL/CAT VaR & ES
+## §8 - Historical AAPL/CAT VaR & ES
 
 ### App: Tab 4 · Run Analysis (scrolled)
 
-![Run Analysis — scrolled](../docs/screenshots/demo_run_analysis2.png)
+![Run Analysis - scrolled](../docs/screenshots/demo_run_analysis2.png)
 
 *Historical simulation results showing individual-stock and portfolio VaR/ES. Bloomberg CSV data is loaded in Tab 2.*
 
@@ -176,7 +176,7 @@ ES₉₅(L1+L2)        = 1.xxxx
 
 ---
 
-## §9 — Monte Carlo VaR & ES
+## §9 - Monte Carlo VaR & ES
 
 ### Notebook comparison
 
@@ -190,7 +190,7 @@ ES₉₅(L1+L2)        = 1.xxxx
 
 ---
 
-## §10 — VaR Backtesting (HW11)
+## §10 - VaR Backtesting (HW11)
 
 ### App: Tab 5 · Backtesting
 
@@ -208,11 +208,11 @@ ES₉₅(L1+L2)        = 1.xxxx
 
 ---
 
-## §11 — Hazard / Reduced-Form Credit (HW06)
+## §11 - Hazard / Reduced-Form Credit (HW06)
 
 ### App: Tab 6 · Credit Risk (section A)
 
-![Credit Risk tab — Reduced-form section](../docs/screenshots/demo_credit_risk.png)
+![Credit Risk tab - Reduced-form section](../docs/screenshots/demo_credit_risk.png)
 
 *Inputs: λ=0.0300, R=0.40, r=0.0300, horizons 0.25, 0.5, 1, 2, 3, 5, 10. The large metric shows CDS approx spread (1−R)λ = 180.0 bps.*
 
@@ -228,11 +228,11 @@ ES₉₅(L1+L2)        = 1.xxxx
 
 ---
 
-## §12 — Merton Structural Credit (HW07/HW09)
+## §12 - Merton Structural Credit (HW07/HW09)
 
 ### App: Tab 6 · Credit Risk (section B, scrolled)
 
-![Credit Risk tab — Merton section](../docs/screenshots/demo_credit_merton.png)
+![Credit Risk tab - Merton section](../docs/screenshots/demo_credit_merton.png)
 
 *Section B inputs: V₀, B (debt face value), r, μ, σ, T. Outputs: d₁, d₂, Q-PD, P-PD, equity value, debt value.*
 
@@ -248,7 +248,7 @@ ES₉₅(L1+L2)        = 1.xxxx
 
 ---
 
-## §13 — CDS Pricing (HW08)
+## §13 - CDS Pricing (HW08)
 
 ### App: Tab 7 · CDS / CVA (section A)
 
@@ -266,7 +266,7 @@ ES₉₅(L1+L2)        = 1.xxxx
 
 ---
 
-## §14 — CVA & Counterparty Mitigation (HW08/HW09)
+## §14 - CVA & Counterparty Mitigation (HW08/HW09)
 
 ### App: Tab 7 · CDS / CVA (section B)
 
@@ -285,7 +285,7 @@ ES₉₅(L1+L2)        = 1.xxxx
 
 ---
 
-## §15 — Regulatory Capital / RWA (HW10)
+## §15 - Regulatory Capital / RWA (HW10)
 
 ### App: Tab 8 · Capital & Stress
 
@@ -293,7 +293,7 @@ ES₉₅(L1+L2)        = 1.xxxx
 
 *Inputs: per-ticker risk weights prefilled from portfolio. Equity capital field. Outputs: RWA, capital ratio (22.84% shown for the loaded portfolio), PASS/FAIL, DFAST scenario PnL.*
 
-### Notebook comparison — HW10 inputs
+### Notebook comparison - HW10 inputs
 
 | Quantity | Notebook (§15) | Expected |
 |----------|----------------|----------|
@@ -311,20 +311,20 @@ ES₉₅(L1+L2)        = 1.xxxx
 
 ```
 src/
-├── pricing/black_scholes.py      §2, §3 — option price, delta, Greeks
+├── pricing/black_scholes.py      §2, §3 - option price, delta, Greeks
 ├── risk/
-│   ├── lognormal.py              §5 — GBM long/short VaR
-│   ├── historical.py             §4, §8 — historical simulation
-│   ├── parametric.py             §6 — delta-normal VaR/ES
-│   ├── monte_carlo.py            §9 — MC simulation
-│   ├── backtest.py               §10 — Kupiec LR test
-│   └── regulatory.py             §15 — RWA, capital ratio, DFAST
+│   ├── lognormal.py              §5 - GBM long/short VaR
+│   ├── historical.py             §4, §8 - historical simulation
+│   ├── parametric.py             §6 - delta-normal VaR/ES
+│   ├── monte_carlo.py            §9 - MC simulation
+│   ├── backtest.py               §10 - Kupiec LR test
+│   └── regulatory.py             §15 - RWA, capital ratio, DFAST
 └── credit/
-    ├── hazard.py                 §11 — survival, default probs, spreads
-    ├── merton.py                 §12 — structural PD, implied barrier
-    ├── cds.py                    §13 — CDS par spread
-    ├── cva.py                    §14 — discrete CVA
-    └── mitigation.py             §14 — netting, collateral
+    ├── hazard.py                 §11 - survival, default probs, spreads
+    ├── merton.py                 §12 - structural PD, implied barrier
+    ├── cds.py                    §13 - CDS par spread
+    ├── cva.py                    §14 - discrete CVA
+    └── mitigation.py             §14 - netting, collateral
 ```
 
 All modules are pure functions: no Streamlit imports, no network calls. The Streamlit app in `app.py` calls `src/services/` which wires these modules together with the UI layer.

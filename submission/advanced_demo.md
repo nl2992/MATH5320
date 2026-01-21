@@ -1,12 +1,12 @@
-# MATH GR 5320 — Advanced Demo: Magnificent Seven Portfolio
+# MATH GR 5320 - Advanced Demo: Magnificent Seven Portfolio
 
 **Columbia University · Spring 2026**
 
 This document traces the Streamlit front-end alongside the notebook (`advanced_demo.ipynb`) for an equal-weight **Magnificent Seven (M7)** portfolio constructed at 2015-12-31. Screenshots capture the exact UI state for each tab; all key numbers are compared against the notebook outputs.
 
-The app runs at `localhost:8502`. All tabs share the same underlying `src/` modules — the notebook and the UI call identical code paths.
+The app runs at `localhost:8502`. All tabs share the same underlying `src/` modules - the notebook and the UI call identical code paths.
 
-> **Evaluation-date note**: The notebook prices the portfolio at 2015-12-31 (split-adjusted spot prices via yfinance). The Streamlit app evaluates at the last loaded price in the market-data window (2016-12-30). Portfolio values and VaR figures therefore differ between the two — the structural properties (ES ≥ VaR, Historical > Parametric > MC, diversification benefit, backtest rejection) hold in both.
+> **Evaluation-date note**: The notebook prices the portfolio at 2015-12-31 (split-adjusted spot prices via yfinance). The Streamlit app evaluates at the last loaded price in the market-data window (2016-12-30). Portfolio values and VaR figures therefore differ between the two - the structural properties (ES ≥ VaR, Historical > Parametric > MC, diversification benefit, backtest rejection) hold in both.
 
 ---
 
@@ -20,7 +20,7 @@ The app runs at `localhost:8502`. All tabs share the same underlying `src/` modu
 | 4 | Option positions (OTM calls + short put) | §4 | Tab 1 | net value $1 371 |
 | 5 | Full portfolio risk (stocks + options) | §5 | Tab 4 | ΔVaR ≈ +$1 332 |
 | 6 | VaR backtesting (Kupiec) | §6 | Tab 5 | 18 exc vs 7.5, REJECT |
-| 7 | Merton credit — NVDA & TSLA | §7 | Tab 6 (B) | NVDA 0.031%, TSLA 0.192% |
+| 7 | Merton credit - NVDA & TSLA | §7 | Tab 6 (B) | NVDA 0.031%, TSLA 0.192% |
 
 ---
 
@@ -95,9 +95,9 @@ The app runs at `localhost:8502`. All tabs share the same underlying `src/` modu
 
 ## Tab 4 · Run Analysis
 
-### §2 + §5 — VaR/ES Comparison (three methods)
+### §2 + §5 - VaR/ES Comparison (three methods)
 
-![Run Analysis — portfolio summary](../docs/screenshots/04_run_analysis.png)
+![Run Analysis - portfolio summary](../docs/screenshots/04_run_analysis.png)
 
 *Portfolio Value $486 276.51 reflects Dec 2016 spot prices (last loaded). The notebook value of $351 204.44 uses Dec 2015 prices.*
 
@@ -122,7 +122,7 @@ The app runs at `localhost:8502`. All tabs share the same underlying `src/` modu
 - ES ≥ VaR for all three methods ✓
 - All values positive ✓
 
-### §3 — Diversification benefit
+### §3 - Diversification benefit
 
 *Shown implicitly via individual vs portfolio VaR in notebook §3:*
 
@@ -132,9 +132,9 @@ The app runs at `localhost:8502`. All tabs share the same underlying `src/` modu
 | Portfolio VaR (historical) | $25 470.58 |
 | **Diversification benefit** | **20.8%** |
 
-Portfolio VaR < sum of individual VaRs — sub-additivity of ES confirmed.
+Portfolio VaR < sum of individual VaRs - sub-additivity of ES confirmed.
 
-### §4 + §5 — Option impact on risk
+### §4 + §5 - Option impact on risk
 
 *Short TSLA puts dominate: net effect of adding options is a VaR increase.*
 
@@ -146,7 +146,7 @@ Portfolio VaR < sum of individual VaRs — sub-additivity of ES confirmed.
 
 ### Loss distribution & correlations
 
-![Run Analysis — loss distribution and correlations](../docs/screenshots/04_run_analysis.png)
+![Run Analysis - loss distribution and correlations](../docs/screenshots/04_run_analysis.png)
 
 *Historical simulation loss distribution (right-skewed; VaR marker at $47 217, ES at $47 408). Correlation matrix shows GOOGL–MSFT highest (0.71), NVDA and TSLA lowest inter-stock correlations (~0.25–0.37), consistent with diversification story. Normalised price history shows NVDA +250% in H2 2016 while other names stay near base=100.*
 
@@ -154,7 +154,7 @@ Portfolio VaR < sum of individual VaRs — sub-additivity of ES confirmed.
 
 ## Tab 5 · Backtesting
 
-### §6 — Kupiec unconditional coverage test
+### §6 - Kupiec unconditional coverage test
 
 ![Backtesting](../docs/screenshots/05_backtesting.png)
 
@@ -182,13 +182,13 @@ Portfolio VaR < sum of individual VaRs — sub-additivity of ES confirmed.
 | p-value | 0.0011 | 0.0011 ✓ |
 | H₀ rejected | True | True ✓ |
 
-**Interpretation**: The rolling 252-day window underestimates tail risk during the volatile 2013–2016 period. Exception clustering is visible in the walk-forward chart around Oct 2014 (macro volatility), Aug 2015 (China selloff), and Jan 2016 (energy/credit stress). This is a pedagogically valuable result — real-world VaR models based on a short calm-period window systematically understate risk during regime transitions.
+**Interpretation**: The rolling 252-day window understates tail risk during the volatile 2013-2016 period. Exception clustering is visible in the walk-forward chart around Oct 2014, Aug 2015, and Jan 2016. That is useful here because it shows a real weakness of short-window VaR models during regime changes.
 
 ---
 
 ## Tab 6 · Credit Risk
 
-### §7A — Reduced-form (hazard rate)
+### §7A - Reduced-form (hazard rate)
 
 *Inputs: λ = 0.0300, R = 0.40, r = 0.0300, horizons 0.25, 0.5, 1, 2, 3, 5, 10*
 
@@ -199,17 +199,17 @@ Portfolio VaR < sum of individual VaRs — sub-additivity of ES confirmed.
 | S(5) | 86.0708% |
 | P(τ ≤ 5) | 13.9292% |
 
-### §7B — Merton structural model (NVDA)
+### §7B - Merton structural model (NVDA)
 
 *Inputs: V₀ = $16.3B, B = $1.3B, r = 0.02, μ = 0.5135, σ_A = 0.3119, T = 5 yr*
 
 | Output | Notebook (§7) | Expected |
 |--------|---------------|----------|
 | Q-PD | **0.0312%** | 0.0312% ✓ |
-| P-PD | **≈ 0.00%** | — ✓ |
+| P-PD | **≈ 0.00%** | - ✓ |
 | E₀ + D₀ = V₀ | **$16.30B** | ✓ |
 
-### §7B — Merton structural model (TSLA)
+### §7B - Merton structural model (TSLA)
 
 *Inputs: V₀ = $33.7B, B = $2.7B, r = 0.02, μ = 0.0762, σ_A = 0.3567, T = 5 yr*
 
@@ -227,17 +227,17 @@ Portfolio VaR < sum of individual VaRs — sub-additivity of ES confirmed.
 
 ```
 src/
-├── pricing/black_scholes.py      §4 — OTM option prices, delta
+├── pricing/black_scholes.py      §4 - OTM option prices, delta
 ├── risk/
-│   ├── historical.py             §2, §3, §5, §6 — historical VaR/ES, backtest
-│   ├── parametric.py             §2, §5 — delta-normal VaR/ES
-│   ├── monte_carlo.py            §2, §5 — MC simulation
-│   └── backtest.py               §6 — walk-forward + Kupiec LR test
+│   ├── historical.py             §2, §3, §5, §6 - historical VaR/ES, backtest
+│   ├── parametric.py             §2, §5 - delta-normal VaR/ES
+│   ├── monte_carlo.py            §2, §5 - MC simulation
+│   └── backtest.py               §6 - walk-forward + Kupiec LR test
 └── credit/
-    ├── hazard.py                 §7A — survival, default probs, spreads
-    └── merton.py                 §7B — structural PD (Q and P measure)
+    ├── hazard.py                 §7A - survival, default probs, spreads
+    └── merton.py                 §7B - structural PD (Q and P measure)
 ```
 
-All modules are pure functions — no Streamlit imports, no network calls. The app calls `src/services/risk_engine_service.py` which wires these modules to the UI layer.
+All modules are pure functions - no Streamlit imports, no network calls. The app calls `src/services/risk_engine_service.py` which wires these modules to the UI layer.
 
 **Tests**: `tests/test_homework_cases.py` and `tests/test_course_validation.py` cover all key values above. Run with `python -m pytest tests/ -v`.

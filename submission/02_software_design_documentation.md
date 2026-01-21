@@ -2,11 +2,11 @@
 
 ## 1. Executive Summary
 
-The `MATH5320` repository implements a modular Python and Streamlit risk engine for portfolios of stocks and European options. The design separates user interface code, data loading, portfolio representation, pricing logic, risk models, orchestration, and validation tests. This separation is appropriate for a risk engine because the quantitative functions can be tested independently of the Streamlit interface, and the UI can be treated as a thin presentation layer over a reusable analytical core.
+The `MATH5320` repository is a modular Python and Streamlit risk engine for portfolios of stocks and European options. It keeps the UI, data loading, portfolio objects, pricing logic, risk models, orchestration, and tests separate. That is the right setup for this kind of project because the quantitative functions can be tested without the Streamlit layer, and the UI stays thin.
 
-The README describes the core application workflow clearly: portfolio input, market data loading, risk settings, risk analysis, and VaR backtesting. That workflow is reflected directly in the codebase structure. `app.py` controls the top-level Streamlit flow, `src/ui/` contains panel-level UI logic, `src/services/` orchestrates end-to-end computations, `src/portfolio/` and `src/schemas.py` define the portfolio domain model, `src/pricing/` and `src/risk/` hold the analytical logic, and `tests/` validates the implementation.
+The README describes the main application flow directly: portfolio input, market data loading, risk settings, risk analysis, and VaR backtesting. The code follows that same layout. `app.py` controls the top-level Streamlit flow, `src/ui/` contains the panel logic, `src/services/` handles orchestration, `src/portfolio/` and `src/schemas.py` define the portfolio objects, `src/pricing/` and `src/risk/` hold the analytical logic, and `tests/` validates the implementation.
 
-The software architecture is appropriate for an academic risk engine because it:
+The software architecture fits this project because it:
 
 - separates data gathering from calibration and computation,
 - isolates pricing and risk formulas into mostly pure functions,
@@ -589,7 +589,7 @@ git rev-parse HEAD
 
 ### 11.3 Reproducibility Assessment
 
-Reproducibility is good for deterministic and no-network paths because:
+Reproducibility is straightforward for deterministic and no-network paths because:
 
 - analytical modules are deterministic,
 - Monte Carlo defaults to a fixed seed where regression stability is needed,

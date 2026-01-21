@@ -5,7 +5,7 @@ These two PDFs are the authoritative guides for the MATH GR 5320 final project.
 
 ---
 
-## 1. `project_requirements.pdf` — Representative Guide
+## 1. `project_requirements.pdf` - Representative Guide
 
 **What it is:** The official Columbia MATH 5320 project specification.
 
@@ -19,7 +19,7 @@ The risk calculation system must:
 - Compute **Monte Carlo** and **historical ES**
 - **Backtest** computed VaRs against history
 
-### Deliverables (§3) — 5 items, graded out of 100 pts
+### Deliverables (§3) - 5 items, graded out of 100 pts
 
 | # | Deliverable | Points |
 |---|---|---|
@@ -30,7 +30,7 @@ The risk calculation system must:
 | 5 | Test results | 10 |
 
 ### Grading emphasis
-- **Model documentation (30 pts):** completeness, clarity, justification of *all* modelling choices and limitations (modelled on the Stein validation template — see below)
+- **Model documentation (30 pts):** completeness, clarity, justification of *all* modelling choices and limitations (modelled on the Stein validation template - see below)
 - **Software design doc (15 pts):** clear and complete architecture description
 - **Test plan (20 pts):** validates model performance; the test suite we have built maps directly to this
 - **Software (25 pts):** complete, correct, well-written; handles arbitrary securities; both history- and parameter-driven modes; all three VaR models + ES + backtest
@@ -45,9 +45,9 @@ The risk calculation system must:
 
 ---
 
-## 2. `model_validation_report_example.pdf` — Report Template
+## 2. `model_validation_report_example.pdf` - Report Template
 
-**What it is:** Harvey J. Stein, *Model Validation Municipal Bonds* (2014) — the example model validation report cited in the project spec (reference [Ste14a]).  This is the **report format and content standard** we must follow for Deliverable 1.
+**What it is:** Harvey J. Stein, *Model Validation Municipal Bonds* (2014) - the example model validation report cited in the project spec (reference [Ste14a]).  This is the **report format and content standard** we must follow for Deliverable 1.
 
 **Use this as the template for:**
 - Structure of the model documentation report

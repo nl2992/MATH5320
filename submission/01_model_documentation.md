@@ -30,7 +30,7 @@
 
 ## Executive Summary
 
-This project delivers a Python and Streamlit portfolio risk system for Columbia MATH GR 5320. It takes portfolios of stocks and European options as input, prices options with Black-Scholes, and computes Value at Risk (VaR) and Expected Shortfall (ES) under three methodologies: historical simulation, parametric delta-normal, and Monte Carlo. The system is accessible both through an eight-tab Streamlit application and through importable Python modules.
+This report covers a Python and Streamlit portfolio risk system built for Columbia MATH GR 5320. It takes portfolios of stocks and European options as input, prices options with Black-Scholes, and computes Value at Risk (VaR) and Expected Shortfall (ES) under three methods: historical simulation, parametric delta-normal, and Monte Carlo. The system can be used through the Streamlit app or directly through the Python modules.
 
 The intended workflow is: define a portfolio of stock and option positions, load historical price data from CSV or Yahoo Finance, configure risk parameters (lookback window, horizon, confidence levels, estimator type, Monte Carlo path count, and option-volatility shock mode), and run comparative risk analysis with walk-forward VaR backtesting. The main outputs are method-by-method VaR and ES estimates, loss distributions, correlation visualisations, backtest exception summaries, and downloadable results files.
 
@@ -61,7 +61,7 @@ python -m pytest tests/ --cov=src --cov-report=term-missing \
 
 The coverage run reported `610 passed` with 96% statement coverage. The two live-data integration scripts were run separately and both passed.
 
-The system meets its academic goals: computing and comparing VaR and ES for mixed portfolios, validating formula implementations against course fixtures, and documenting model choices and limitations. Its principal constraints are the use of historical log-return shocks, first-order delta-normal parametric approximation, simplified option-volatility shock (not a full implied-vol surface), multivariate normal Monte Carlo shocks, and illustrative rather than production credit and regulatory modules.
+For the course brief, the system does what it needs to do. It computes and compares VaR and ES for mixed portfolios, validates the main formulas against course fixtures, and documents the main modeling choices and limits. The main limits are the use of historical log-return shocks, a first-order delta-normal approximation, a simplified option-volatility shock rather than a full implied-vol surface, multivariate normal Monte Carlo shocks, and credit and regulatory modules that are course extensions rather than production models.
 
 ---
 
@@ -1028,7 +1028,7 @@ The system correctly implements the required portfolio risk engine. The three Va
 
 ### Conclusion
 
-The `MATH5320 Portfolio Risk Management System` meets its stated objectives for MATH GR 5320. The required stock-and-option risk engine is implemented, tested, and validated against course fixtures. The layered modular architecture supports testing and notebook reuse. The test suite, at 610 tests and 96% coverage, provides strong numerical evidence for the core model claims.
+The `MATH5320 Portfolio Risk Management System` meets its stated objectives for MATH GR 5320. The required stock-and-option risk engine is implemented, tested, and checked against course fixtures. The layered structure makes it easier to test and reuse in notebooks. The current suite, with 610 tests and 96% coverage, gives solid support for the core model claims.
 
 The system goes beyond the baseline project requirements by including formula-sheet extension modules for credit risk, CVA, counterparty mitigation, and regulatory capital. These extensions are tested and documented but are not within the core grading scope.
 
