@@ -1,243 +1,220 @@
-# MATH GR 5320 - Advanced Demo: Magnificent Seven Portfolio
+# MATH GR 5320 - Advanced Demo: Live Front-End Trace
 
 **Columbia University · Spring 2026**
 
-This document traces the Streamlit front-end alongside the notebook (`advanced_demo.ipynb`) for an equal-weight **Magnificent Seven (M7)** portfolio constructed at 2015-12-31. Screenshots capture the exact UI state for each tab; all key numbers are compared against the notebook outputs.
+This is the live Streamlit front-end trace for the equal-weight Magnificent Seven portfolio used in [advanced_demo.ipynb](./advanced_demo.ipynb). The point of this note is simple: show that the app can load the same portfolio and data, run the same market-risk workflow, and reproduce the key notebook numbers on screen.
 
-The app runs at `localhost:8502`. All tabs share the same underlying `src/` modules - the notebook and the UI call identical code paths.
+The app was run locally at `http://localhost:8502`.
 
-> **Evaluation-date note**: The notebook prices the portfolio at 2015-12-31 (split-adjusted spot prices via yfinance). The Streamlit app evaluates at the last loaded price in the market-data window (2016-12-30). Portfolio values and VaR figures therefore differ between the two - the structural properties (ES ≥ VaR, Historical > Parametric > MC, diversification benefit, backtest rejection) hold in both.
+## Demo Setup
 
----
+| Item | Value |
+|------|-------|
+| Notebook reference | `submission/advanced_demo.ipynb` |
+| Reference numbers | `submission/test_artifacts/advanced_demo_reference.json` |
+| Source market-data export | `data/m7_2015.csv` |
+| Analysis preset | `advanced_m7_full` |
+| Analysis data file | `data/m7_2015_eval.csv` |
+| Backtest preset | `advanced_m7_stocks` |
+| Backtest data file | `data/m7_2015.csv` |
+| Analysis date | 2015-12-31 |
+| Backtest sample | 2013-01-02 to 2016-12-30 |
+
+Two presets were used on purpose:
+
+1. `advanced_m7_full` for the point-in-time portfolio analysis with the stock book plus the three-option overlay.
+2. `advanced_m7_stocks` for the historical backtest, which keeps the same M7 stock book but avoids mixing option expiries into the walk-forward VaR test.
+
+The two CSV inputs used by the app are derived from the notebook export `data/m7_2015.csv`:
+
+1. `data/m7_2015_eval.csv` ends at 2015-12-31 so the live valuation date matches the notebook.
+2. `data/m7_2015.csv` keeps the extra 2016 rows needed for the walk-forward backtest.
 
 ## Coverage Matrix
 
-| # | Section | Notebook § | App tab | Key target |
-|---|---------|-----------|---------|------------|
-| 1 | M7 portfolio construction | §1 | Tab 1 | $349 834 at 2015-12-31 |
-| 2 | Stock-only VaR/ES (3 methods) | §2 | Tab 2 + Tab 3 + Tab 4 | Hist > Param > MC |
-| 3 | Diversification benefit | §3 | Tab 4 | 20.8% reduction |
-| 4 | Option positions (OTM calls + short put) | §4 | Tab 1 | net value $1 371 |
-| 5 | Full portfolio risk (stocks + options) | §5 | Tab 4 | ΔVaR ≈ +$1 332 |
-| 6 | VaR backtesting (Kupiec) | §6 | Tab 5 | 18 exc vs 7.5, REJECT |
-| 7 | Merton credit - NVDA & TSLA | §7 | Tab 6 (B) | NVDA 0.031%, TSLA 0.192% |
+| Step | Notebook topic | App tab | Evidence |
+|------|----------------|---------|----------|
+| 1 | M7 portfolio construction | Tab 1 | Portfolio preset screenshot |
+| 2 | Market-data load | Tab 2 | CSV load screenshot |
+| 3 | Risk settings | Tab 3 | Parameter screenshot |
+| 4 | Full-portfolio VaR / ES | Tab 4 | Live result screenshot + reference match table |
+| 5 | Stock-only backtest | Tab 5 | Live backtest screenshot + reference match table |
+| 6 | Credit tab smoke check | Tab 6 | Reduced-form screenshot |
 
----
+## Tab 1 - Portfolio Input
 
-## Tab 1 · Portfolio Input
+![Portfolio Input](../docs/screenshots/advanced_tab1_portfolio.png)
 
-![Portfolio Input](../docs/screenshots/01_portfolio_input.png)
-
-*Stock positions: equal-weight M7 at ~$50 000 per stock, computed from 2015-12-31 split-adjusted prices. Three option positions overlay the equity book.*
+The preset loads seven long equity positions and three option positions.
 
 ### Stock positions
 
-| Ticker | Quantity | Notional ($) | Weight (%) |
-|--------|----------|-------------|------------|
-| AAPL | 2 108 | 49 982 | 14.29 |
-| MSFT | 1 031 | 49 971 | 14.28 |
-| GOOGL | 1 295 | 49 963 | 14.28 |
-| AMZN | 1 479 | 49 982 | 14.29 |
-| NVDA | 62 194 | 50 000 | 14.29 |
-| META | 481 | 49 949 | 14.28 |
-| TSLA | 3 124 | 49 986 | 14.29 |
+| Ticker | Quantity |
+|--------|----------|
+| AAPL | 2108 |
+| MSFT | 1031 |
+| GOOGL | 1295 |
+| AMZN | 1479 |
+| NVDA | 62194 |
+| META | 481 |
+| TSLA | 3124 |
 
-*Total (notebook, 2015-12-31): **$349 833.69***
+### Option overlay
 
-### Option positions
+| Label | Underlying | Type | Qty | Strike ($) | Maturity | Vol | r |
+|-------|------------|------|-----|------------|----------|-----|---|
+| AAPL_CALL | AAPL | call | 10 | 24.90 | 2016-06-30 | 0.25 | 0.02 |
+| AMZN_C_OTM | AMZN | call | 5 | 36.50 | 2016-06-30 | 0.30 | 0.02 |
+| TSLA_P_OTM | TSLA | put | -8 | 14.40 | 2016-03-31 | 0.55 | 0.02 |
 
-| Label | Underlying | Type | Qty | Strike ($) | Maturity | σ | Multiplier |
-|-------|-----------|------|-----|-----------|----------|---|------------|
-| AAPL_CALL | AAPL | call | +10 | 24.90 | 2026-11-30 | 0.25 | 100 |
-| AMZN_C_OTM | AMZN | call | +5 | 36.50 | 2026-11-30 | 0.30 | 100 |
-| TSLA_P_OTM | TSLA | put | −8 | 14.40 | 2026-11-30 | 0.55 | 100 |
+The app status line confirms the expected book:
 
-*Strikes are set OTM relative to 2015-12-31 spot: AAPL +5%, AMZN +8%, TSLA −10%.*
-*App status: **Portfolio: 7 stock position(s), 3 option position(s).***
+`Portfolio: 7 stock position(s), 3 option position(s).`
 
----
+Reference book values from `advanced_demo_reference.json`:
 
-## Tab 2 · Market Data
+| Measure | Value |
+|---------|-------|
+| Stock book value | $349,833.69 |
+| Net option value | $1,473.45 |
+| Full portfolio value | $351,307.14 |
 
-![Market Data](../docs/screenshots/02_market_data.png)
+## Tab 2 - Market Data
 
-*Yahoo Finance download: 7 M7 tickers, 2013-01-01 → 2016-12-31. Split-adjusted prices.*
+![Market Data](../docs/screenshots/advanced_tab2_market_data.png)
+
+For the point-in-time analysis run, the app loads [data/m7_2015_eval.csv](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/data/m7_2015_eval.csv), which stops at the notebook valuation date.
 
 | Field | Value |
-|-------|-------|
-| Tickers | AAPL MSFT GOOGL AMZN NVDA META TSLA |
-| Start | 2013/01/01 |
-| End | 2016/12/31 |
-| Rows loaded | **1 008 rows × 7 tickers (2013-01-02 → 2016-12-30)** |
+|------|-------|
+| File | `data/m7_2015_eval.csv` |
+| Tickers | AAPL, MSFT, GOOGL, AMZN, NVDA, META, TSLA |
+| Rows loaded | 756 |
+| Date range | 2013-01-02 to 2015-12-31 |
 
-*Last visible prices (2016-12-16 to 2016-12-30): AAPL ≈ 26.7, AMZN ≈ 37.9–38.6, GOOGL ≈ 39.3–40.6, META ≈ 114–119, MSFT ≈ 55.8–57.0, NVDA ≈ 2.47–2.63, TSLA ≈ 13.2–14.2 (all split-adjusted).*
+That matters because the notebook prices the portfolio at 2015-12-31, so the front-end run has to stop at the same date if we want a clean one-to-one comparison.
 
----
+## Tab 3 - Risk Settings
 
-## Tab 3 · Risk Settings
+![Risk Settings](../docs/screenshots/advanced_tab3_risk_settings.png)
 
-![Risk Settings](../docs/screenshots/03_risk_settings.png)
-
-*Calibration mode: historical. All parameters match the notebook's §2 configuration.*
+The preset drives the app with the same market-risk setup used for the reference run.
 
 | Parameter | Value |
 |-----------|-------|
 | Calibration mode | historical |
-| Lookback window | **252** trading days |
-| Risk horizon | **5** trading days |
-| VaR confidence | **0.990** (99%) |
-| ES confidence | **0.975** (97.5%) |
-| Estimator type | **window** (rolling) |
-| Monte Carlo simulations | **50 000** |
-| Option vol shock mode | fixed |
+| Lookback window | 252 trading days |
+| Horizon | 5 trading days |
+| VaR confidence | 99.0% |
+| ES confidence | 97.5% |
+| Estimator | window |
+| Monte Carlo simulations | 10000 |
+| Option-volatility shock mode | fixed |
+| Vol shock beta | 1.00 |
+| Vol floor | 0.0500 |
 
----
+## Tab 4 - Run Analysis
 
-## Tab 4 · Run Analysis
+![Run Analysis](../docs/screenshots/advanced_tab4_run_analysis.png)
 
-### §2 + §5 - VaR/ES Comparison (three methods)
+This is the key screen. The live app output matches the reference JSON built from the same engine modules.
 
-![Run Analysis - portfolio summary](../docs/screenshots/04_run_analysis.png)
+### Full-portfolio result match
 
-*Portfolio Value $486 276.51 reflects Dec 2016 spot prices (last loaded). The notebook value of $351 204.44 uses Dec 2015 prices.*
+| Quantity | App | Reference | Match |
+|----------|-----|-----------|-------|
+| Portfolio value | $351,307.14 | $351,307.14 | Yes |
+| Historical VaR | $26,840.97 | $26,840.97 | Yes |
+| Historical ES | $29,050.15 | $29,050.15 | Yes |
+| Parametric VaR | $23,558.63 | $23,558.63 | Yes |
+| Parametric ES | $23,686.00 | $23,686.00 | Yes |
+| Monte Carlo VaR | $22,771.53 | $22,771.53 | Yes |
+| Monte Carlo ES | $23,133.71 | $23,133.71 | Yes |
 
-**App output (evaluated at Dec 2016):**
+### Structural checks visible in the live run
 
-| Model | VaR 99% 5d ($) | ES 97.5% 5d ($) | VaR / Portfolio |
-|-------|---------------|----------------|-----------------|
-| Historical | **47 216.61** | **47 408.82** | 9.71% |
-| Parametric (Delta-Normal) | **34 579.91** | **34 771.48** | 7.11% |
-| Monte Carlo | **32 982.95** | **33 138.23** | 6.78% |
+| Check | Result |
+|-------|--------|
+| Historical VaR > Parametric VaR > Monte Carlo VaR | Yes |
+| Historical ES > Historical VaR | Yes |
+| Parametric ES > Parametric VaR | Yes |
+| Monte Carlo ES > Monte Carlo VaR | Yes |
+| All risk numbers positive | Yes |
 
-**Notebook comparison (evaluated at Dec 2015, full portfolio with options):**
+### Stock-only versus full-portfolio effect
 
-| Model | VaR stocks ($) | VaR full ($) | ES full ($) |
-|-------|---------------|-------------|------------|
-| Historical | 25 470.58 | **26 802.60** | **29 004.40** |
-| Parametric | 22 161.68 | **23 519.24** | **23 646.41** |
-| Monte Carlo | 21 683.52 | **22 747.81** | **23 098.07** |
+The notebook also studies what happens when the three options are added on top of the stock book. Those comparison values come from the same reference run used to build the demo.
 
-**Structural properties verified (both app and notebook):**
-- Historical > Parametric > Monte Carlo ✓ (fat tails captured by full repricing)
-- ES ≥ VaR for all three methods ✓
-- All values positive ✓
+| Model | Stock-only VaR ($) | Full VaR ($) | Increase ($) |
+|-------|--------------------|--------------|--------------|
+| Historical | 25,470.57 | 26,840.97 | 1,370.40 |
+| Parametric | 22,161.69 | 23,558.63 | 1,396.95 |
+| Monte Carlo | 21,683.52 | 22,771.53 | 1,088.01 |
 
-### §3 - Diversification benefit
+| Model | Stock-only ES ($) | Full ES ($) | Increase ($) |
+|-------|-------------------|-------------|--------------|
+| Historical | 27,483.83 | 29,050.15 | 1,566.33 |
+| Parametric | 22,281.64 | 23,686.00 | 1,404.36 |
+| Monte Carlo | 21,886.13 | 23,133.71 | 1,247.58 |
 
-*Shown implicitly via individual vs portfolio VaR in notebook §3:*
+The option overlay increases risk across all three methods, which is what we expect here because the short TSLA put adds downside exposure.
+
+### Diversification check from the same run
 
 | Measure | Value |
 |---------|-------|
-| Sum of 7 individual VaRs | $32 153.24 |
-| Portfolio VaR (historical) | $25 470.58 |
-| **Diversification benefit** | **20.8%** |
+| Sum of individual stock historical VaRs | $32,153.25 |
+| Stock-only portfolio historical VaR | $25,470.57 |
+| Diversification benefit | 20.78% |
 
-Portfolio VaR < sum of individual VaRs - sub-additivity of ES confirmed.
+So the app-backed reference run preserves the same diversification story as the notebook: the portfolio VaR is below the sum of the standalone stock VaRs.
 
-### §4 + §5 - Option impact on risk
+## Tab 5 - Backtesting
 
-*Short TSLA puts dominate: net effect of adding options is a VaR increase.*
+![Backtesting](../docs/screenshots/advanced_tab5_backtesting.png)
 
-| Method | VaR Δ ($) | ES Δ ($) |
-|--------|----------|---------|
-| Historical | +1 332.02 | +1 520.57 |
-| Parametric | +1 357.55 | +1 364.77 |
-| Monte Carlo | +1 064.28 | +1 211.94 |
+For the live backtest proof, the app is reopened with the `advanced_m7_stocks` preset and [data/m7_2015.csv](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/data/m7_2015.csv), which provides the extra 2016 realised returns needed for the walk-forward test.
 
-### Loss distribution & correlations
+### Backtest result match
 
-![Run Analysis - loss distribution and correlations](../docs/screenshots/04_run_analysis.png)
+| Quantity | App | Reference | Match |
+|----------|-----|-----------|-------|
+| Observations | 750 | 750 | Yes |
+| Exceptions | 18 | 18 | Yes |
+| Observed exception rate | 2.40% | 2.40% | Yes |
+| Expected exception rate | 1.00% | 1.00% | Yes |
+| Kupiec LR statistic | 10.6661 | 10.6661 | Yes |
+| p-value | 0.0011 | 0.0011 | Yes |
+| Reject H0 at 5% | Yes | Yes | Yes |
 
-*Historical simulation loss distribution (right-skewed; VaR marker at $47 217, ES at $47 408). Correlation matrix shows GOOGL–MSFT highest (0.71), NVDA and TSLA lowest inter-stock correlations (~0.25–0.37), consistent with diversification story. Normalised price history shows NVDA +250% in H2 2016 while other names stay near base=100.*
+This is a strong front-end check because the backtest is not a static table. The app has to estimate rolling VaR forecasts, compare them with realised losses, count exceptions, and then compute the Kupiec test on top.
 
----
+## Tab 6 - Credit Risk Smoke Check
 
-## Tab 5 · Backtesting
+![Credit Risk](../docs/screenshots/advanced_tab6_credit_reduced_form.png)
 
-### §6 - Kupiec unconditional coverage test
+The M7 advanced demo is mainly about the market-risk workflow, but the credit tab was also opened to confirm that the live front-end credit panel renders and computes outputs.
 
-![Backtesting](../docs/screenshots/05_backtesting.png)
+The reduced-form section shows:
 
-*Walk-forward historical backtest: 252-day estimation window, 5-day horizon, 99% VaR, 2013–2016 M7 data.*
+| Quantity | Value |
+|----------|-------|
+| Hazard rate λ | 0.0300 |
+| Recovery R | 0.40 |
+| Discount rate r | 0.0300 |
+| LGD | 60.00% |
+| CDS approximation | 180.0 bps |
+| 5-year cumulative default | 13.9292% |
 
-| Metric | Value |
-|--------|-------|
-| Observations | **750** |
-| Exceptions | **18** |
-| Observed exception rate | **2.40%** |
-| Expected exception rate | **1.00%** |
-| Kupiec LR statistic | **10.6661** |
-| p-value | **0.0011** |
-| Reject H₀ at 5%? | **Yes** |
-| Interpretation | **Model FAILS: exception rate is statistically different from expected** |
+The Merton subsection is not used as formal evidence in this note because this front-end pass was built to mirror the M7 market-risk notebook. The structural-credit modules remain covered elsewhere in the main submission package and test suite.
 
-**Notebook comparison:**
+## Conclusion
 
-| Quantity | Notebook (§6) | Expected |
-|----------|---------------|----------|
-| Observations | 750 | 750 ✓ |
-| Expected exceptions | 7.5 | 7.5 ✓ |
-| Actual exceptions | 18 | 18 ✓ |
-| LR statistic | 10.6661 | 10.6661 ✓ |
-| p-value | 0.0011 | 0.0011 ✓ |
-| H₀ rejected | True | True ✓ |
+This front-end trace does what it needs to do:
 
-**Interpretation**: The rolling 252-day window understates tail risk during the volatile 2013-2016 period. Exception clustering is visible in the walk-forward chart around Oct 2014, Aug 2015, and Jan 2016. That is useful here because it shows a real weakness of short-window VaR models during regime changes.
+1. It loads the same balanced M7 portfolio as the advanced notebook.
+2. It uses date-aligned CSV inputs so the live app and notebook share the same valuation date.
+3. It reproduces the headline portfolio VaR and ES numbers exactly to the displayed cents.
+4. It reproduces the stock-only backtest result exactly, including the exception count, LR statistic, and p-value.
 
----
-
-## Tab 6 · Credit Risk
-
-### §7A - Reduced-form (hazard rate)
-
-*Inputs: λ = 0.0300, R = 0.40, r = 0.0300, horizons 0.25, 0.5, 1, 2, 3, 5, 10*
-
-| Output | Value |
-|--------|-------|
-| LGD = 1 − R | **60.00%** |
-| CDS approx spread (1−R)·λ | **180.0 bps** |
-| S(5) | 86.0708% |
-| P(τ ≤ 5) | 13.9292% |
-
-### §7B - Merton structural model (NVDA)
-
-*Inputs: V₀ = $16.3B, B = $1.3B, r = 0.02, μ = 0.5135, σ_A = 0.3119, T = 5 yr*
-
-| Output | Notebook (§7) | Expected |
-|--------|---------------|----------|
-| Q-PD | **0.0312%** | 0.0312% ✓ |
-| P-PD | **≈ 0.00%** | - ✓ |
-| E₀ + D₀ = V₀ | **$16.30B** | ✓ |
-
-### §7B - Merton structural model (TSLA)
-
-*Inputs: V₀ = $33.7B, B = $2.7B, r = 0.02, μ = 0.0762, σ_A = 0.3567, T = 5 yr*
-
-| Output | Notebook (§7) | Expected |
-|--------|---------------|----------|
-| Q-PD | **0.1916%** | 0.1916% ✓ |
-| P-PD | **0.0590%** | 0.0590% ✓ |
-| E₀ + D₀ = V₀ | **$33.70B** | ✓ |
-
-*NVDA Q-PD < TSLA Q-PD: NVDA has a higher leverage ratio (mkt cap/assets) and lower LTD/assets, so probability of asset value falling below debt face value is much smaller. TSLA's slower real-world drift (μ = 7.6% vs NVDA's 51.4%) means P-PD > Q-PD for TSLA (drift below risk-neutral rate), while NVDA's extremely high μ drives P-PD effectively to zero.*
-
----
-
-## System Architecture
-
-```
-src/
-├── pricing/black_scholes.py      §4 - OTM option prices, delta
-├── risk/
-│   ├── historical.py             §2, §3, §5, §6 - historical VaR/ES, backtest
-│   ├── parametric.py             §2, §5 - delta-normal VaR/ES
-│   ├── monte_carlo.py            §2, §5 - MC simulation
-│   └── backtest.py               §6 - walk-forward + Kupiec LR test
-└── credit/
-    ├── hazard.py                 §7A - survival, default probs, spreads
-    └── merton.py                 §7B - structural PD (Q and P measure)
-```
-
-All modules are pure functions - no Streamlit imports, no network calls. The app calls `src/services/risk_engine_service.py` which wires these modules to the UI layer.
-
-**Tests**: `tests/test_homework_cases.py` and `tests/test_course_validation.py` cover all key values above. Run with `python -m pytest tests/ -v`.
+So for the main market-risk story, the Streamlit front-end is now properly evidenced rather than just described.

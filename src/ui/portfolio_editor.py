@@ -197,7 +197,8 @@ def _validate_option_row(idx: int, row) -> str | None:
         maturity = date.fromisoformat(str(maturity_raw).strip())
     except ValueError:
         return f"{prefix} Maturity must be YYYY-MM-DD (got {maturity_raw!r})."
-    if maturity <= date.today():
+    allow_expired = bool(st.session_state.get("allow_expired_options", False))
+    if maturity <= date.today() and not allow_expired:
         return (
             f"{prefix} Maturity {maturity} must be in the future "
             "(expired options have no time value)."

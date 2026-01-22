@@ -1,0 +1,97 @@
+{
+  "eval_date": "2015-12-31",
+  "data_file": "data/m7_2015.csv",
+  "shares": {
+    "AAPL": 2108,
+    "MSFT": 1031,
+    "GOOGL": 1295,
+    "AMZN": 1479,
+    "NVDA": 62194,
+    "META": 481,
+    "TSLA": 3124
+  },
+  "V0_stocks": 349833.68879950047,
+  "stock_results": {
+    "historical": {
+      "var": 25470.567206183714,
+      "es": 27483.826168600735
+    },
+    "parametric": {
+      "var": 22161.687003593488,
+      "es": 22281.642241860634
+    },
+    "monte_carlo": {
+      "var": 21683.52332452941,
+      "es": 21886.13036553449
+    }
+  },
+  "sum_indiv_var": 32153.24678770355,
+  "diversification_benefit": 0.20783840666677278,
+  "options": [
+    {
+      "label": "AAPL_CALL",
+      "underlying": "AAPL",
+      "type": "call",
+      "qty": 10.0,
+      "strike": 24.8962,
+      "spot": 23.710670471191406,
+      "T": 0.4986301369863014,
+      "sigma": 0.25,
+      "bs_price": 1.2723057904437152,
+      "delta": 0.44764298049264506,
+      "total_value": 1272.305790443715,
+      "dollar_delta": 10613.91519920307
+    },
+    {
+      "label": "AMZN_C_OTM",
+      "underlying": "AMZN",
+      "type": "call",
+      "qty": 5.0,
+      "strike": 36.4981,
+      "spot": 33.794498443603516,
+      "T": 0.4986301369863014,
+      "sigma": 0.3,
+      "bs_price": 1.9244050796139653,
+      "delta": 0.4167149057501005,
+      "total_value": 962.2025398069827,
+      "dollar_delta": 7041.335616899079
+    },
+    {
+      "label": "TSLA_P_OTM",
+      "underlying": "TSLA",
+      "type": "put",
+      "qty": -8.0,
+      "strike": 14.4006,
+      "spot": 16.000667572021484,
+      "T": 0.2493150684931507,
+      "sigma": 0.55,
+      "bs_price": 0.9513237928977638,
+      "delta": -0.29490075915601055,
+      "total_value": -761.059034318211,
+      "dollar_delta": 3774.8872111936766
+    }
+  ],
+  "V0_full": 351307.138095433,
+  "full_results": {
+    "historical": {
+      "var": 26840.97029968786,
+      "es": 29050.154701819753
+    },
+    "parametric": {
+      "var": 23558.634067744297,
+      "es": 23685.99965054409
+    },
+    "monte_carlo": {
+      "var": 22771.530030983653,
+      "es": 23133.71252567994
+    }
+  },
+  "backtest": {
+    "observations": 750,
+    "expected_exceptions": 7.500000000000007,
+    "actual_exceptions": 18,
+    "lr_stat": 10.666064313185245,
+    "p_value": 0.0010911904648498887,
+    "reject_h0": true
+  }
+}

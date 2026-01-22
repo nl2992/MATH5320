@@ -36,6 +36,7 @@ from src.config import (
     DEFAULT_VAR_CONFIDENCE,
 )
 from src.data.validation import validate_portfolio_tickers
+from src.demo_presets import load_demo_preset
 from src.schemas import Portfolio
 from src.services.risk_engine_service import RiskEngineService
 from src.ui.capital_panel import render_capital_panel
@@ -77,6 +78,27 @@ st.session_state.setdefault(
 )
 st.session_state.setdefault("portfolio", Portfolio())
 st.session_state.setdefault("prices", None)
+
+
+def _apply_demo_preset_from_query() -> None:
+    """Apply a reproducible demo preset when requested via query params."""
+    demo_name = st.query_params.get("demo")
+    if not demo_name:
+        return
+
+    demo_name = str(demo_name)
+    if st.session_state.get("loaded_demo_preset") == demo_name:
+        return
+
+    payload = load_demo_preset(demo_name)
+    if payload is None:
+        return
+
+    for key, value in payload.items():
+        st.session_state[key] = value
+
+
+_apply_demo_preset_from_query()
 
 
 # ── Backtest results renderer ──────────────────────────────────────────────────
@@ -175,6 +197,8 @@ st.caption(
     "Market Risk (Historical · Parametric · Monte Carlo) · "
     "Credit Risk (Reduced-form · Merton) · CDS / CVA · Capital & Stress"
 )
+if st.session_state.get("loaded_demo_preset"):
+    st.info(f"Demo preset loaded: `{st.session_state['loaded_demo_preset']}`")
 
 # ── Tabs ───────────────────────────────────────────────────────────────────────
 (
@@ -264,10 +288,15 @@ with tab_results:
             if st.button("Run Risk Analysis", type="primary", key="run_analysis"):
                 with st.spinner("Computing VaR and ES across all models…"):
                     try:
+                        pricing_date = (
+                            current_prices.index[-1].date()
+                            if hasattr(current_prices.index[-1], "date")
+                            else date.today()
+                        )
                         service = RiskEngineService(
                             portfolio=current_portfolio,
                             prices=current_prices,
-                            pricing_date=date.today(),
+                            pricing_date=pricing_date,
                             **current_params,
                         )
                         results = service.run_all()
@@ -328,10 +357,15 @@ with tab_backtest:
                     "Running walk-forward backtest (this may take a moment)…"
                 ):
                     try:
+                        pricing_date = (
+                            current_prices.index[-1].date()
+                            if hasattr(current_prices.index[-1], "date")
+                            else date.today()
+                        )
                         service = RiskEngineService(
                             portfolio=current_portfolio,
                             prices=current_prices,
-                            pricing_date=date.today(),
+                            pricing_date=pricing_date,
                             **current_params,
                         )
                         bt_result = service.run_backtest(model=bt_model)
