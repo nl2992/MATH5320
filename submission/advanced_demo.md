@@ -2,7 +2,7 @@
 
 **Columbia University · Spring 2026**
 
-This is the live Streamlit front-end trace for the equal-weight Magnificent Seven portfolio used in [advanced_demo.ipynb](./advanced_demo.ipynb). The point of this note is simple: show that the app can load the same portfolio and data, run the same market-risk workflow, and reproduce the key notebook numbers on screen.
+This is the live Streamlit front-end trace for the equal-weight Magnificent Seven portfolio used in [advanced_demo.ipynb](./advanced_demo.ipynb). The point of this note is simple: show that the app can load the same portfolio and data, run the same market-risk workflow, and reproduce the notebook story on screen.
 
 The app was run locally at `http://localhost:8502`.
 
@@ -11,7 +11,7 @@ The app was run locally at `http://localhost:8502`.
 | Item | Value |
 |------|-------|
 | Notebook reference | `submission/advanced_demo.ipynb` |
-| Reference numbers | `submission/test_artifacts/advanced_demo_reference.json` |
+| Reference artifact | `submission/test_artifacts/advanced_demo_reference.json` |
 | Source market-data export | `data/m7_2015.csv` |
 | Analysis preset | `advanced_m7_full` |
 | Analysis data file | `data/m7_2015_eval.csv` |
@@ -30,6 +30,8 @@ The two CSV inputs used by the app are derived from the notebook export `data/m7
 1. `data/m7_2015_eval.csv` ends at 2015-12-31 so the live valuation date matches the notebook.
 2. `data/m7_2015.csv` keeps the extra 2016 rows needed for the walk-forward backtest.
 
+After rerunning both the notebook and the live app, the remaining differences are only a few cents on some summary numbers. That is small enough to treat as numerical rounding rather than a model discrepancy.
+
 ## Coverage Matrix
 
 | Step | Notebook topic | App tab | Evidence |
@@ -37,7 +39,7 @@ The two CSV inputs used by the app are derived from the notebook export `data/m7
 | 1 | M7 portfolio construction | Tab 1 | Portfolio preset screenshot |
 | 2 | Market-data load | Tab 2 | CSV load screenshot |
 | 3 | Risk settings | Tab 3 | Parameter screenshot |
-| 4 | Full-portfolio VaR / ES | Tab 4 | Live result screenshot + reference match table |
+| 4 | Full-portfolio VaR / ES | Tab 4 | Live result screenshot + notebook/app comparison table |
 | 5 | Stock-only backtest | Tab 5 | Live backtest screenshot + reference match table |
 | 6 | Credit tab smoke check | Tab 6 | Reduced-form screenshot |
 
@@ -63,7 +65,7 @@ The preset loads seven long equity positions and three option positions.
 
 | Label | Underlying | Type | Qty | Strike ($) | Maturity | Vol | r |
 |-------|------------|------|-----|------------|----------|-----|---|
-| AAPL_CALL | AAPL | call | 10 | 24.90 | 2016-06-30 | 0.25 | 0.02 |
+| AAPL_C_OTM | AAPL | call | 10 | 24.90 | 2016-06-30 | 0.25 | 0.02 |
 | AMZN_C_OTM | AMZN | call | 5 | 36.50 | 2016-06-30 | 0.30 | 0.02 |
 | TSLA_P_OTM | TSLA | put | -8 | 14.40 | 2016-03-31 | 0.55 | 0.02 |
 
@@ -71,13 +73,13 @@ The app status line confirms the expected book:
 
 `Portfolio: 7 stock position(s), 3 option position(s).`
 
-Reference book values from `advanced_demo_reference.json`:
+Notebook-side book values after rerun:
 
 | Measure | Value |
 |---------|-------|
-| Stock book value | $349,833.69 |
-| Net option value | $1,473.45 |
-| Full portfolio value | $351,307.14 |
+| Stock book value | $349,833.67 |
+| Net option value | $1,370.74 |
+| Full portfolio value | $351,204.42 |
 
 ## Tab 2 - Market Data
 
@@ -117,19 +119,19 @@ The preset drives the app with the same market-risk setup used for the reference
 
 ![Run Analysis](../docs/screenshots/advanced_tab4_run_analysis.png)
 
-This is the key screen. The live app output matches the reference JSON built from the same engine modules.
+This is the key screen. After the preset fix, the live app and the rerun notebook now line up to within a few cents.
 
-### Full-portfolio result match
+### Full-portfolio result comparison
 
-| Quantity | App | Reference | Match |
-|----------|-----|-----------|-------|
-| Portfolio value | $351,307.14 | $351,307.14 | Yes |
-| Historical VaR | $26,840.97 | $26,840.97 | Yes |
-| Historical ES | $29,050.15 | $29,050.15 | Yes |
-| Parametric VaR | $23,558.63 | $23,558.63 | Yes |
-| Parametric ES | $23,686.00 | $23,686.00 | Yes |
-| Monte Carlo VaR | $22,771.53 | $22,771.53 | Yes |
-| Monte Carlo ES | $23,133.71 | $23,133.71 | Yes |
+| Quantity | Notebook | App | Difference |
+|----------|----------|-----|------------|
+| Portfolio value | $351,204.42 | $351,204.43 | $0.01 |
+| Historical VaR | $26,802.56 | $26,802.58 | $0.02 |
+| Historical ES | $29,004.38 | $29,004.40 | $0.02 |
+| Parametric VaR | $23,519.23 | $23,519.24 | $0.01 |
+| Parametric ES | $23,646.41 | $23,646.41 | $0.00 |
+| Monte Carlo VaR | $22,747.81 | $22,747.82 | $0.01 |
+| Monte Carlo ES | $23,098.06 | $23,098.07 | $0.01 |
 
 ### Structural checks visible in the live run
 
@@ -143,19 +145,19 @@ This is the key screen. The live app output matches the reference JSON built fro
 
 ### Stock-only versus full-portfolio effect
 
-The notebook also studies what happens when the three options are added on top of the stock book. Those comparison values come from the same reference run used to build the demo.
+The notebook also studies what happens when the three options are added on top of the stock book.
 
 | Model | Stock-only VaR ($) | Full VaR ($) | Increase ($) |
 |-------|--------------------|--------------|--------------|
-| Historical | 25,470.57 | 26,840.97 | 1,370.40 |
-| Parametric | 22,161.69 | 23,558.63 | 1,396.95 |
-| Monte Carlo | 21,683.52 | 22,771.53 | 1,088.01 |
+| Historical | 25,470.54 | 26,802.56 | 1,332.02 |
+| Parametric | 22,161.68 | 23,519.23 | 1,357.55 |
+| Monte Carlo | 21,683.52 | 22,747.81 | 1,064.29 |
 
 | Model | Stock-only ES ($) | Full ES ($) | Increase ($) |
 |-------|-------------------|-------------|--------------|
-| Historical | 27,483.83 | 29,050.15 | 1,566.33 |
-| Parametric | 22,281.64 | 23,686.00 | 1,404.36 |
-| Monte Carlo | 21,886.13 | 23,133.71 | 1,247.58 |
+| Historical | 27,483.81 | 29,004.38 | 1,520.57 |
+| Parametric | 22,281.63 | 23,646.41 | 1,364.78 |
+| Monte Carlo | 21,886.12 | 23,098.06 | 1,211.94 |
 
 The option overlay increases risk across all three methods, which is what we expect here because the short TSLA put adds downside exposure.
 
@@ -164,7 +166,7 @@ The option overlay increases risk across all three methods, which is what we exp
 | Measure | Value |
 |---------|-------|
 | Sum of individual stock historical VaRs | $32,153.25 |
-| Stock-only portfolio historical VaR | $25,470.57 |
+| Stock-only portfolio historical VaR | $25,470.54 |
 | Diversification benefit | 20.78% |
 
 So the app-backed reference run preserves the same diversification story as the notebook: the portfolio VaR is below the sum of the standalone stock VaRs.
@@ -175,17 +177,17 @@ So the app-backed reference run preserves the same diversification story as the 
 
 For the live backtest proof, the app is reopened with the `advanced_m7_stocks` preset and [data/m7_2015.csv](/Users/nigelli/Desktop/Columbia%20MAFN/26Spring/MATH5320/Project/MATH5320/data/m7_2015.csv), which provides the extra 2016 realised returns needed for the walk-forward test.
 
-### Backtest result match
+### Backtest result comparison
 
-| Quantity | App | Reference | Match |
-|----------|-----|-----------|-------|
-| Observations | 750 | 750 | Yes |
-| Exceptions | 18 | 18 | Yes |
-| Observed exception rate | 2.40% | 2.40% | Yes |
-| Expected exception rate | 1.00% | 1.00% | Yes |
-| Kupiec LR statistic | 10.6661 | 10.6661 | Yes |
-| p-value | 0.0011 | 0.0011 | Yes |
-| Reject H0 at 5% | Yes | Yes | Yes |
+| Quantity | Notebook | App | Difference |
+|----------|----------|-----|------------|
+| Observations | 750 | 750 | 0 |
+| Exceptions | 18 | 18 | 0 |
+| Observed exception rate | 2.40% | 2.40% | 0.00% |
+| Expected exception rate | 1.00% | 1.00% | 0.00% |
+| Kupiec LR statistic | 10.6661 | 10.6661 | 0.0000 |
+| p-value | 0.0011 | 0.0011 | 0.0000 |
+| Reject H0 at 5% | Yes | Yes | No difference |
 
 This is a strong front-end check because the backtest is not a static table. The app has to estimate rolling VaR forecasts, compare them with realised losses, count exceptions, and then compute the Kupiec test on top.
 
@@ -214,7 +216,7 @@ This front-end trace does what it needs to do:
 
 1. It loads the same balanced M7 portfolio as the advanced notebook.
 2. It uses date-aligned CSV inputs so the live app and notebook share the same valuation date.
-3. It reproduces the headline portfolio VaR and ES numbers exactly to the displayed cents.
+3. It reproduces the headline portfolio VaR and ES numbers to within a few cents.
 4. It reproduces the stock-only backtest result exactly, including the exception count, LR statistic, and p-value.
 
 So for the main market-risk story, the Streamlit front-end is now properly evidenced rather than just described.

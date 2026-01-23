@@ -64,7 +64,7 @@ def _advanced_m7_stocks_df() -> pd.DataFrame:
 def _advanced_m7_options_df() -> pd.DataFrame:
     return pd.DataFrame(
         {
-            "Label": ["AAPL_CALL", "AMZN_C_OTM", "TSLA_P_OTM"],
+            "Label": ["AAPL_C_OTM", "AMZN_C_OTM", "TSLA_P_OTM"],
             "Underlying": ["AAPL", "AMZN", "TSLA"],
             "Type": ["call", "call", "put"],
             "Quantity": [10.0, 5.0, -8.0],
@@ -72,7 +72,7 @@ def _advanced_m7_options_df() -> pd.DataFrame:
             "Maturity": ["2016-06-30", "2016-06-30", "2016-03-31"],
             "Volatility": [0.25, 0.30, 0.55],
             "Risk-Free Rate": [0.02, 0.02, 0.02],
-            "Dividend Yield": [0.0, 0.0, 0.0],
+            "Dividend Yield": [0.02, 0.0, 0.0],
             "Multiplier": [100.0, 100.0, 100.0],
         }
     )
