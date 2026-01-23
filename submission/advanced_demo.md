@@ -40,8 +40,10 @@ After rerunning both the notebook and the live app, the remaining differences ar
 | 2 | Market-data load | Tab 2 | CSV load screenshot |
 | 3 | Risk settings | Tab 3 | Parameter screenshot |
 | 4 | Full-portfolio VaR / ES | Tab 4 | Live result screenshot + notebook/app comparison table |
-| 5 | Stock-only backtest | Tab 5 | Live backtest screenshot + reference match table |
-| 6 | Credit tab smoke check | Tab 6 | Reduced-form screenshot |
+| 5 | Manual direct-input calibration | Notebook only | Rerun notebook output table in §5 |
+| 6 | Option-volatility shock sensitivity | Notebook only | Rerun notebook output table in §6 |
+| 7 | Stock-only backtest | Tab 5 | Live backtest screenshot + reference match table |
+| 8 | Credit tab smoke check | Tab 6 | Reduced-form screenshot |
 
 ## Tab 1 - Portfolio Input
 
@@ -77,9 +79,9 @@ Notebook-side book values after rerun:
 
 | Measure | Value |
 |---------|-------|
-| Stock book value | $349,833.67 |
+| Stock book value | $349,833.69 |
 | Net option value | $1,370.74 |
-| Full portfolio value | $351,204.42 |
+| Full portfolio value | $351,204.44 |
 
 ## Tab 2 - Market Data
 
@@ -125,13 +127,13 @@ This is the key screen. After the preset fix, the live app and the rerun noteboo
 
 | Quantity | Notebook | App | Difference |
 |----------|----------|-----|------------|
-| Portfolio value | $351,204.42 | $351,204.43 | $0.01 |
-| Historical VaR | $26,802.56 | $26,802.58 | $0.02 |
-| Historical ES | $29,004.38 | $29,004.40 | $0.02 |
-| Parametric VaR | $23,519.23 | $23,519.24 | $0.01 |
+| Portfolio value | $351,204.44 | $351,204.43 | $0.01 |
+| Historical VaR | $26,802.59 | $26,802.58 | $0.01 |
+| Historical ES | $29,004.39 | $29,004.40 | $0.01 |
+| Parametric VaR | $23,519.24 | $23,519.24 | $0.00 |
 | Parametric ES | $23,646.41 | $23,646.41 | $0.00 |
 | Monte Carlo VaR | $22,747.81 | $22,747.82 | $0.01 |
-| Monte Carlo ES | $23,098.06 | $23,098.07 | $0.01 |
+| Monte Carlo ES | $23,098.07 | $23,098.07 | $0.00 |
 
 ### Structural checks visible in the live run
 
@@ -149,15 +151,15 @@ The notebook also studies what happens when the three options are added on top o
 
 | Model | Stock-only VaR ($) | Full VaR ($) | Increase ($) |
 |-------|--------------------|--------------|--------------|
-| Historical | 25,470.54 | 26,802.56 | 1,332.02 |
-| Parametric | 22,161.68 | 23,519.23 | 1,357.55 |
+| Historical | 25,470.58 | 26,802.59 | 1,332.01 |
+| Parametric | 22,161.68 | 23,519.24 | 1,357.55 |
 | Monte Carlo | 21,683.52 | 22,747.81 | 1,064.29 |
 
 | Model | Stock-only ES ($) | Full ES ($) | Increase ($) |
 |-------|-------------------|-------------|--------------|
-| Historical | 27,483.81 | 29,004.38 | 1,520.57 |
-| Parametric | 22,281.63 | 23,646.41 | 1,364.78 |
-| Monte Carlo | 21,886.12 | 23,098.06 | 1,211.94 |
+| Historical | 27,483.81 | 29,004.39 | 1,520.58 |
+| Parametric | 22,281.64 | 23,646.41 | 1,364.77 |
+| Monte Carlo | 21,886.13 | 23,098.07 | 1,211.94 |
 
 The option overlay increases risk across all three methods, which is what we expect here because the short TSLA put adds downside exposure.
 
@@ -165,11 +167,49 @@ The option overlay increases risk across all three methods, which is what we exp
 
 | Measure | Value |
 |---------|-------|
-| Sum of individual stock historical VaRs | $32,153.25 |
-| Stock-only portfolio historical VaR | $25,470.54 |
+| Sum of individual stock historical VaRs | $32,153.24 |
+| Stock-only portfolio historical VaR | $25,470.58 |
 | Diversification benefit | 20.78% |
 
 So the app-backed reference run preserves the same diversification story as the notebook: the portfolio VaR is below the sum of the standalone stock VaRs.
+
+## Notebook-Only Validation for Remaining Prompt Items
+
+The live app trace proves the main workflow, but two prompt-sensitive items are cleaner to show directly in the rerun notebook:
+
+1. the manual direct-input calibration path;
+2. the option-volatility shock path.
+
+### Manual direct-input calibration
+
+The project brief requires direct parameter input, not only historical calibration. In [advanced_demo.ipynb](./advanced_demo.ipynb) §6, the notebook takes the exact trailing-window daily mean and covariance from the M7 sample, feeds them back through `calibration_mode='manual'`, and compares the results with the standard historical-calibration run.
+
+| Measure | Historical calibration | Manual input path | Absolute difference |
+|---------|------------------------|-------------------|---------------------|
+| Parametric VaR | $23,519.24 | $23,519.24 | $0.00 |
+| Parametric ES | $23,646.41 | $23,646.41 | $0.00 |
+| Monte Carlo VaR | $22,747.81 | $22,747.81 | $0.00 |
+| Monte Carlo ES | $23,098.07 | $23,098.07 | $0.00 |
+
+That is the exact result we want. It shows the manual calibration path is wired correctly for the model families that consume `mu` and `Sigma` directly.
+
+### Option-volatility shock sensitivity
+
+The project guide also warns against leaving option volatility completely fixed without addressing the effect. In [advanced_demo.ipynb](./advanced_demo.ipynb) §7, the notebook reruns the full portfolio with `option_vol_shock_mode='underlying_beta'` and compares it with the base `fixed` run.
+
+| Measure | Fixed vol | `underlying_beta` | Change |
+|---------|-----------|-------------------|--------|
+| Historical VaR | $26,802.59 | $26,746.55 | -$56.05 |
+| Historical ES | $29,004.39 | $28,958.09 | -$46.30 |
+| Parametric VaR | $23,519.24 | $23,519.24 | $0.00 |
+| Parametric ES | $23,646.41 | $23,646.41 | $0.00 |
+| Monte Carlo VaR | $22,747.81 | $22,651.26 | -$96.55 |
+| Monte Carlo ES | $23,098.07 | $23,034.35 | -$63.71 |
+
+This is also the right behavior:
+
+1. the full-repricing engines change when option vol is shocked;
+2. the delta-normal parametric engine does not change, because it does not reprice options scenario by scenario.
 
 ## Tab 5 - Backtesting
 
@@ -218,5 +258,6 @@ This front-end trace does what it needs to do:
 2. It uses date-aligned CSV inputs so the live app and notebook share the same valuation date.
 3. It reproduces the headline portfolio VaR and ES numbers to within a few cents.
 4. It reproduces the stock-only backtest result exactly, including the exception count, LR statistic, and p-value.
+5. The rerun notebook now covers the two extra prompt-sensitive checks that are less natural to prove with a single static UI trace: manual direct-input calibration and option-vol shock sensitivity.
 
 So for the main market-risk story, the Streamlit front-end is now properly evidenced rather than just described.

@@ -746,7 +746,7 @@ The updated test suite (610 tests) achieves **96% total statement coverage**. Re
 - `fixed` (default): option implied volatility is held constant under all scenarios.
 - `underlying_beta`: option volatility is scaled by the underlying return shock as `σ' = max(floor, σ × (1 − β × R))`, where β and floor are configurable.
 
-The `underlying_beta` mode is not a full implied-volatility-surface model. It does not capture smile, skew, or term-structure dynamics. It is still better than holding vol fully fixed, and it is demonstrated in `submission/advanced_demo.ipynb §5`. The limitation is documented again in Section 10.
+The `underlying_beta` mode is not a full implied-volatility-surface model. It does not capture smile, skew, or term-structure dynamics. It is still better than holding vol fully fixed, and it is demonstrated in `submission/advanced_demo.ipynb §7`. The limitation is documented again in Section 10.
 
 ### 9.3 Selected Analytical and Fixture Evidence
 
@@ -967,8 +967,8 @@ python -m jupyter nbconvert --to notebook --execute --inplace \
 | `04_test_results.md` | Deliverable 4/5 - test results (10 pts) |
 | `demo.ipynb` | Formula-sheet demonstration notebook - 15 sections, fully executed |
 | `demo.md` | Front-end trace with screenshots - 15 sections mapped to Streamlit tabs |
-| `advanced_demo.ipynb` | Advanced demo notebook - equal-weight Magnificent Seven portfolio, §1–§7 |
-| `advanced_demo.md` | M7 portfolio front-end trace with screenshots - Tabs 1–6 |
+| `advanced_demo.ipynb` | Advanced demo notebook - equal-weight Magnificent Seven portfolio, §1-§10 including manual calibration and option-vol shock checks |
+| `advanced_demo.md` | M7 portfolio front-end trace with screenshots plus notebook-only validation tables |
 | `coverage_report/` | HTML and XML coverage reports from the local pytest run |
 | `test_artifacts/` | Captured environment and test artifacts (git hash, pytest output, etc.) |
 

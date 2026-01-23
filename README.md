@@ -192,7 +192,7 @@ Requirements from `docs/references/project_requirements.pdf` (MATH GR 5320).
 
 | Penalty flag (project guide) | How it is addressed |
 |---|---|
-| Not modelling volatility changes for options | `underlying_beta` shock mode scales option vol with the underlying return: `σ' = max(floor, σ·(1 − β·R))`. Default remains `fixed`; `underlying_beta` is available and demonstrated in `submission/advanced_demo.ipynb §5`. |
+| Not modelling volatility changes for options | `underlying_beta` shock mode scales option vol with the underlying return: `σ' = max(floor, σ·(1 − β·R))`. Default remains `fixed`; `underlying_beta` is available and demonstrated in `submission/advanced_demo.ipynb §7`. |
 | Using historical volatility instead of implied volatility | Option positions carry a user-supplied `volatility` field (implied vol). The system does not back out implied vol from market prices; this limitation is documented in `submission/00_combined_final_report.md §10`. |
 | Incorrect covariance | Covariance is estimated from historical log returns using a rolling window or EWMA; the delta-dollar exposure vector is computed correctly as `x = n·S·Δ`. See [src/risk/parametric.py](src/risk/parametric.py) and [tests/test_strict_numerics.py](tests/test_strict_numerics.py). |
 | Inappropriate parametric VaR | Parametric VaR uses the correct delta-normal formula: `VaR = −m + s·Φ⁻¹(α)` with proper h-day horizon scaling. See [src/risk/normal.py](src/risk/normal.py) and [tests/test_course_validation.py](tests/test_course_validation.py). |
@@ -213,5 +213,5 @@ The final submission package is in `submission/`.
 | `submission/04_test_results.md` | Test results |
 | `submission/demo.ipynb` | Formula-sheet demonstration notebook (15 sections, fully executed) |
 | `submission/demo.md` | Front-end workflow trace with screenshots |
-| `submission/advanced_demo.ipynb` | Advanced demo: equal-weight M7 portfolio, §1–§7 |
-| `submission/advanced_demo.md` | M7 portfolio front-end trace with screenshots |
+| `submission/advanced_demo.ipynb` | Advanced demo: equal-weight M7 portfolio, §1-§10 including manual calibration and option-vol shock checks |
+| `submission/advanced_demo.md` | M7 portfolio front-end trace with screenshots plus notebook-only proof for prompt-sensitive checks |
