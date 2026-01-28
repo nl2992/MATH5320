@@ -10,10 +10,104 @@ A Streamlit application for portfolio risk analysis supporting stocks and Europe
 | **Parametric VaR / ES** | Delta-Normal with horizon scaling; window or EWMA estimator |
 | **Monte Carlo VaR / ES** | Full repricing under N(μ_h, Σ_h) simulated log-return shocks |
 | **Black-Scholes Pricing** | European calls and puts with continuous dividends |
-| **VaR Backtesting** | Walk-forward forecasting with Kupiec unconditional coverage test |
+| **VaR Backtesting** | Walk-forward forecasting with Kupiec in the app and Christoffersen/Basel diagnostics in code |
 | **Downloads** | JSON risk summary, losses CSV, backtest CSV |
 
-## Architecture
+## What Matters for the Brief
+
+The project brief is narrower than the full repo. The core graded system is the stock and European-option risk engine:
+
+- portfolio input,
+- historical or manual parameter calibration,
+- historical, parametric, and Monte Carlo VaR,
+- historical, parametric, and Monte Carlo ES,
+- walk-forward backtesting.
+
+The credit, CVA, lognormal, and regulatory pieces are still part of the repo and still tested, but they should be read as course extensions rather than the main project boundary.
+
+## Architecture Overview
+
+```mermaid
+flowchart TB
+    U["User"] --> APP["Streamlit app<br/>app.py"]
+
+    subgraph UI["UI layer"]
+        PE["portfolio_editor.py"]
+        MD["market_data_panel.py"]
+        RS["risk_settings.py"]
+        RP["results_panel.py"]
+        CP["credit_panel.py"]
+        CC["cds_cva_panel.py"]
+        KP["capital_panel.py"]
+        CH["charts.py"]
+    end
+
+    subgraph SVC["Service layer"]
+        RSE["risk_engine_service.py"]
+        CRS["credit_service.py"]
+        RGS["regulatory_service.py"]
+    end
+
+    subgraph CORE["Core project engine"]
+        DAT["data/market_data.py<br/>data/validation.py"]
+        SCH["schemas.py"]
+        PRT["portfolio/positions.py<br/>portfolio/portfolio.py"]
+        BSM["pricing/black_scholes.py"]
+        RSK["risk/returns.py<br/>risk/estimators.py<br/>risk/historical.py<br/>risk/parametric.py<br/>risk/normal.py<br/>risk/monte_carlo.py<br/>risk/backtest.py"]
+    end
+
+    subgraph EXT["Course extensions"]
+        LOG["risk/lognormal.py"]
+        CRD["credit/hazard.py<br/>credit/merton.py<br/>credit/cds.py<br/>credit/cva.py<br/>credit/mitigation.py"]
+        REG["risk/regulatory.py"]
+    end
+
+    subgraph VAL["Validation and evidence"]
+        TST["tests/*"]
+        NB["notebooks/*"]
+        SUB["submission/*"]
+    end
+
+    APP --> PE
+    APP --> MD
+    APP --> RS
+    APP --> RP
+    APP --> CP
+    APP --> CC
+    APP --> KP
+    RP --> CH
+
+    PE --> RSE
+    MD --> RSE
+    RS --> RSE
+    CP --> CRS
+    CC --> CRS
+    KP --> RGS
+
+    RSE --> DAT
+    RSE --> SCH
+    RSE --> PRT
+    PRT --> BSM
+    RSE --> RSK
+
+    CRS --> CRD
+    RGS --> REG
+    RSK --> LOG
+
+    RSE --> OUT["Market-risk outputs<br/>VaR/ES tables<br/>loss distributions<br/>backtests<br/>downloads"]
+    CRS --> OUT2["Credit outputs<br/>hazard, Merton, CDS, CVA"]
+    RGS --> OUT3["Capital and stress outputs"]
+
+    TST --> CORE
+    TST --> EXT
+    NB --> CORE
+    NB --> EXT
+    SUB --> TST
+```
+
+The main design choice is straightforward: the Streamlit layer gathers inputs and renders outputs, while the pricing, risk, credit, and regulatory logic lives in reusable Python modules. That keeps the formulas testable outside the UI and makes the notebooks and test suite genuine evidence rather than separate one-off work.
+
+## Repository Layout
 
 ```
 MATH5320/
@@ -23,6 +117,7 @@ MATH5320/
 ├── src/
 │   ├── schemas.py                  # StockPosition, OptionPosition, Portfolio
 │   ├── config.py                   # Global defaults
+│   ├── demo_presets.py             # Reproducible Streamlit demo presets
 │   ├── data/
 │   │   ├── market_data.py          # CSV loader + yfinance downloader + cache
 │   │   └── validation.py           # Input validation
@@ -36,6 +131,7 @@ MATH5320/
 │   │   ├── estimators.py           # Window and EWMA mean/covariance
 │   │   ├── historical.py           # Historical VaR/ES
 │   │   ├── parametric.py           # Delta-Normal VaR/ES
+│   │   ├── normal.py               # Closed-form normal VaR/ES helpers
 │   │   ├── monte_carlo.py          # Monte Carlo VaR/ES
 │   │   ├── lognormal.py            # Exact GBM VaR/ES
 │   │   ├── regulatory.py           # RWA, capital ratio, DFAST helpers

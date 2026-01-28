@@ -599,56 +599,87 @@ The project follows a layered design:
 - Credit and regulatory extension layer
 - Test layer
 
-This structure is visible both in the README and in the `src/` directory layout.
+The repo is broader than the strict project brief, so the architecture is easiest to read in two blocks: the core market-risk engine that the brief actually asks for, and the course extensions layered around it.
 
 ```mermaid
 flowchart TB
-    subgraph UI["UI Layer"]
-        APP["app.py"]
-        UIP["src/ui/*"]
+    U["User"] --> APP["Streamlit app<br/>app.py"]
+
+    subgraph UI["UI layer"]
+        PE["portfolio_editor.py"]
+        MD["market_data_panel.py"]
+        RS["risk_settings.py"]
+        RP["results_panel.py"]
+        CP["credit_panel.py"]
+        CC["cds_cva_panel.py"]
+        KP["capital_panel.py"]
+        CH["charts.py"]
     end
 
-    subgraph SVC["Service Layer"]
-        RES["RiskEngineService"]
-        CRS["credit_service"]
-        RGS["regulatory_service"]
+    subgraph SVC["Service layer"]
+        RSE["risk_engine_service.py"]
+        CRS["credit_service.py"]
+        RGS["regulatory_service.py"]
     end
 
-    subgraph CORE["Core Analytics"]
+    subgraph CORE["Core project engine"]
+        DAT["data/market_data.py<br/>data/validation.py"]
         SCH["schemas.py"]
-        PRT["portfolio/*"]
-        PRC["pricing/black_scholes.py"]
-        RSK["risk/*"]
-        DAT["data/*"]
+        PRT["portfolio/positions.py<br/>portfolio/portfolio.py"]
+        BSM["pricing/black_scholes.py"]
+        RSK["risk/returns.py<br/>risk/estimators.py<br/>risk/historical.py<br/>risk/parametric.py<br/>risk/normal.py<br/>risk/monte_carlo.py<br/>risk/backtest.py"]
     end
 
-    subgraph EXT["Extensions"]
-        CRD["credit/*"]
+    subgraph EXT["Course extensions"]
+        LOG["risk/lognormal.py"]
+        CRD["credit/hazard.py<br/>credit/merton.py<br/>credit/cds.py<br/>credit/cva.py<br/>credit/mitigation.py"]
         REG["risk/regulatory.py"]
     end
 
-    subgraph TST["Validation"]
-        T1["tests/*"]
+    subgraph VAL["Validation and evidence"]
+        TST["tests/*"]
         NB["notebooks/*"]
+        SUB["submission/*"]
     end
 
-    APP --> UIP
-    UIP --> RES
-    UIP --> CRS
-    UIP --> RGS
-    RES --> SCH
-    RES --> PRT
-    RES --> RSK
+    APP --> PE
+    APP --> MD
+    APP --> RS
+    APP --> RP
+    APP --> CP
+    APP --> CC
+    APP --> KP
+    RP --> CH
+
+    PE --> RSE
+    MD --> RSE
+    RS --> RSE
+    CP --> CRS
+    CC --> CRS
+    KP --> RGS
+
+    RSE --> DAT
+    RSE --> SCH
+    RSE --> PRT
+    PRT --> BSM
+    RSE --> RSK
+
     CRS --> CRD
     RGS --> REG
-    PRT --> PRC
-    DAT --> UIP
-    DAT --> RES
-    T1 --> CORE
-    T1 --> EXT
+    RSK --> LOG
+
+    RSE --> OUT["Market-risk outputs<br/>VaR/ES tables<br/>loss distributions<br/>backtests<br/>downloads"]
+    CRS --> OUT2["Credit outputs<br/>hazard, Merton, CDS, CVA"]
+    RGS --> OUT3["Capital and stress outputs"]
+
+    TST --> CORE
+    TST --> EXT
     NB --> CORE
     NB --> EXT
+    SUB --> TST
 ```
+
+For the brief, the key branch is the market-risk path from the UI into `risk_engine_service.py`, then into valuation, return estimation, VaR, ES, and backtesting. The lognormal, credit, CVA, and regulatory modules are part of the repo and part of the course, but they sit outside that strict core boundary.
 
 ### Module Map
 
@@ -658,10 +689,12 @@ flowchart TB
 | `src/portfolio/positions.py` | Position-level valuation and sensitivity helpers | Portfolio valuation |
 | `src/portfolio/portfolio.py` | Portfolio valuation and exposure aggregation | Portfolio valuation and parametric engine |
 | `src/risk/historical.py` | Historical VaR/ES | Historical simulation |
+| `src/risk/normal.py` | Closed-form normal VaR/ES helpers | Parametric VaR formulas |
 | `src/risk/parametric.py` | Delta-normal VaR/ES | Parametric VaR |
 | `src/risk/monte_carlo.py` | Monte Carlo VaR/ES | Monte Carlo VaR |
 | `src/risk/backtest.py` | Walk-forward backtesting and diagnostics | Backtesting |
 | `src/risk/estimators.py` | Window and EWMA estimators | Estimation methods |
+| `src/demo_presets.py` | Reproducible Streamlit demo presets | Product/System Description and demo evidence |
 | `src/data/market_data.py` | CSV and Yahoo Finance data loading | Product/System Description |
 | `src/credit/hazard.py` | Hazard-rate extension | Formula-sheet extensions |
 | `src/credit/merton.py` | Structural default extension | Formula-sheet extensions |

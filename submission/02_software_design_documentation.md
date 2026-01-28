@@ -78,12 +78,81 @@ Lecture 5 frames pre-deployment model risk management in terms of requirements, 
 ### 3.1 Layered Architecture Diagram
 
 ```mermaid
-flowchart TD
-    U["User"] --> UI["Streamlit UI<br/>app.py<br/>ui/portfolio_editor.py<br/>ui/market_data_panel.py<br/>ui/risk_settings.py<br/>ui/results_panel.py<br/>ui/charts.py"]
-    UI --> SVC["Service Layer<br/>services/risk_engine_service.py"]
-    SVC --> DOM["Domain Layer<br/>schemas.py<br/>portfolio/positions.py<br/>portfolio/portfolio.py"]
-    DOM --> MOD["Model Layer<br/>pricing/black_scholes.py<br/>risk/returns.py<br/>risk/estimators.py<br/>risk/historical.py<br/>risk/parametric.py<br/>risk/monte_carlo.py<br/>risk/backtest.py<br/>risk/lognormal.py<br/>credit/hazard.py<br/>credit/merton.py<br/>credit/cds.py<br/>credit/cva.py<br/>risk/regulatory.py"]
-    MOD --> OUT["Outputs<br/>VaR/ES tables<br/>loss distributions<br/>backtest results<br/>JSON/CSV downloads<br/>validation reports"]
+flowchart TB
+    U["User"] --> APP["Streamlit app<br/>app.py"]
+
+    subgraph UI["UI layer"]
+        PE["portfolio_editor.py"]
+        MD["market_data_panel.py"]
+        RS["risk_settings.py"]
+        RP["results_panel.py"]
+        CP["credit_panel.py"]
+        CC["cds_cva_panel.py"]
+        KP["capital_panel.py"]
+        CH["charts.py"]
+    end
+
+    subgraph SVC["Service layer"]
+        RSE["risk_engine_service.py"]
+        CRS["credit_service.py"]
+        RGS["regulatory_service.py"]
+    end
+
+    subgraph CORE["Core project engine"]
+        DAT["data/market_data.py<br/>data/validation.py"]
+        SCH["schemas.py"]
+        PRT["portfolio/positions.py<br/>portfolio/portfolio.py"]
+        BSM["pricing/black_scholes.py"]
+        RSK["risk/returns.py<br/>risk/estimators.py<br/>risk/historical.py<br/>risk/parametric.py<br/>risk/normal.py<br/>risk/monte_carlo.py<br/>risk/backtest.py"]
+    end
+
+    subgraph EXT["Course extensions"]
+        LOG["risk/lognormal.py"]
+        CRD["credit/hazard.py<br/>credit/merton.py<br/>credit/cds.py<br/>credit/cva.py<br/>credit/mitigation.py"]
+        REG["risk/regulatory.py"]
+    end
+
+    subgraph VAL["Validation and evidence"]
+        TST["tests/*"]
+        NB["notebooks/*"]
+        SUB["submission/*"]
+    end
+
+    APP --> PE
+    APP --> MD
+    APP --> RS
+    APP --> RP
+    APP --> CP
+    APP --> CC
+    APP --> KP
+    RP --> CH
+
+    PE --> RSE
+    MD --> RSE
+    RS --> RSE
+    CP --> CRS
+    CC --> CRS
+    KP --> RGS
+
+    RSE --> DAT
+    RSE --> SCH
+    RSE --> PRT
+    PRT --> BSM
+    RSE --> RSK
+
+    CRS --> CRD
+    RGS --> REG
+    RSK --> LOG
+
+    RSE --> OUT["Market-risk outputs<br/>VaR/ES tables<br/>loss distributions<br/>backtests<br/>downloads"]
+    CRS --> OUT2["Credit outputs<br/>hazard, Merton, CDS, CVA"]
+    RGS --> OUT3["Capital and stress outputs"]
+
+    TST --> CORE
+    TST --> EXT
+    NB --> CORE
+    NB --> EXT
+    SUB --> TST
 ```
 
 ### 3.2 Architecture Explanation
@@ -95,6 +164,8 @@ The system uses a layered architecture.
 - The domain layer defines portfolios and positions.
 - The model layer contains pure pricing, risk, credit, and regulatory functions.
 - The output layer renders tables, charts, downloads, and validation artifacts.
+
+The core brief is the market-risk engine that runs from portfolio input through VaR, ES, and backtesting. The credit and regulatory branches sit beside that path as course extensions. This split matters because it keeps the graded core easy to identify while still letting the repo hold the broader coursework.
 
 This design is appropriate because pure model functions can be tested independently from the Streamlit interface. The repository README already signals this architecture: `app.py` is the UI entry point, `schemas.py` defines positions and portfolios, `data/` handles market data and validation, `pricing/` contains Black-Scholes, `portfolio/` handles valuation and exposure, `risk/` contains returns, estimation, VaR/ES, and backtesting, `services/` handles orchestration, and `ui/` implements Streamlit panels.
 
@@ -183,6 +254,7 @@ This reduces duplicated logic and makes the path from user interaction to model 
 | Returns | `src/risk/returns.py` | Log and horizon return construction | Price matrix | Return matrix | `tests/test_backend.py`, `tests/test_coverage_gaps.py` |
 | Estimators | `src/risk/estimators.py` | Rolling, EWMA, and manual mean/covariance assembly | Return matrix or manual parameter bundle | Mean vector, covariance matrix | `tests/test_backend.py`, `tests/test_homework_cases.py`, `tests/test_coverage_gaps.py` |
 | Historical risk | `src/risk/historical.py` | Historical VaR/ES with full repricing and optional vol shock | Portfolio, history, settings | VaR, ES, losses | `tests/test_backend.py`, `tests/test_course_validation.py` |
+| Normal helpers | `src/risk/normal.py` | Closed-form normal VaR/ES helpers used by the parametric engine | Mean, vol, confidence | Analytic VaR, ES | `tests/test_backend.py`, `tests/test_course_validation.py` |
 | Parametric risk | `src/risk/parametric.py` | Delta-normal VaR/ES | Corrected delta-dollar exposure vector, covariance, optional manual mean/cov | VaR, ES | `tests/test_backend.py`, `tests/test_es_confidence_split.py` |
 | Monte Carlo risk | `src/risk/monte_carlo.py` | Simulated VaR/ES | Historical or manual mean/cov, portfolio, option-vol shock settings | VaR, ES, losses | `tests/test_backend.py`, `tests/test_coverage_gaps.py` |
 | Backtesting | `src/risk/backtest.py` | Walk-forward VaR validation | History, model settings | Exceptions, Kupiec, diagnostics | `tests/test_backend.py`, `tests/test_backtest_extensions.py` |
@@ -193,6 +265,7 @@ This reduces duplicated logic and makes the path from user interaction to model 
 | CVA | `src/credit/cva.py` | Counterparty valuation adjustment | Exposure, PD, recovery | CVA | `tests/test_credit.py`, `tests/test_cva_mitigants.py` |
 | Regulatory | `src/risk/regulatory.py` | RWA, capital ratio, DFAST-style calculations | Assets, losses, RWA | Ratios, paths, stress metrics | `tests/test_regulatory.py`, `tests/test_dfast_pathing.py` |
 | Service | `src/services/risk_engine_service.py` | Orchestrate end-to-end core risk run | Portfolio, data, settings, calibration controls, vol-shock controls | Unified result object | `tests/test_backend.py`, `tests/integration_test.py` |
+| Demo presets | `src/demo_presets.py` | Reproducible front-end setups for the demo notebooks and screenshot evidence | Preset name | Populated UI state | `tests/test_ui_panels.py`, `submission/advanced_demo.ipynb` |
 | UI | `src/ui/*.py` | Streamlit display and input logic | User interaction | Rendered panels | `tests/test_ui_panels.py`, `tests/test_charts.py` |
 
 ### 5.2 Layer Responsibilities

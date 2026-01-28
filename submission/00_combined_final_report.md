@@ -426,7 +426,7 @@ Delta_call = e^{-qT} N(d1)
 Delta_put  = e^{-qT} (N(d1) - 1)
 ```
 
-Important limitation: the core VaR engines reprice options with user-supplied volatility but do not dynamically shock the volatility surface.
+Important limitation: the full-repricing engines can keep vol fixed or apply the simplified `underlying_beta` shock, but they still do not model a full implied-volatility surface.
 
 ### 6.4 Historical VaR and ES
 
@@ -551,12 +551,81 @@ These should be described as extension scope, not as a replacement for the core 
 ### 7.1 Architecture Overview
 
 ```mermaid
-flowchart TD
-    U["User"] --> UI["Streamlit UI<br/>app.py<br/>src/ui/*"]
-    UI --> SVC["Service Layer<br/>src/services/*"]
-    SVC --> DOM["Domain Layer<br/>src/schemas.py<br/>src/portfolio/*"]
-    DOM --> MOD["Model Layer<br/>src/pricing/*<br/>src/risk/*<br/>src/credit/*"]
-    MOD --> OUT["Outputs<br/>VaR/ES tables<br/>loss distributions<br/>backtest results<br/>JSON/CSV downloads"]
+flowchart TB
+    U["User"] --> APP["Streamlit app<br/>app.py"]
+
+    subgraph UI["UI layer"]
+        PE["portfolio_editor.py"]
+        MD["market_data_panel.py"]
+        RS["risk_settings.py"]
+        RP["results_panel.py"]
+        CP["credit_panel.py"]
+        CC["cds_cva_panel.py"]
+        KP["capital_panel.py"]
+        CH["charts.py"]
+    end
+
+    subgraph SVC["Service layer"]
+        RSE["risk_engine_service.py"]
+        CRS["credit_service.py"]
+        RGS["regulatory_service.py"]
+    end
+
+    subgraph CORE["Core project engine"]
+        DAT["data/market_data.py<br/>data/validation.py"]
+        SCH["schemas.py"]
+        PRT["portfolio/positions.py<br/>portfolio/portfolio.py"]
+        BSM["pricing/black_scholes.py"]
+        RSK["risk/returns.py<br/>risk/estimators.py<br/>risk/historical.py<br/>risk/parametric.py<br/>risk/normal.py<br/>risk/monte_carlo.py<br/>risk/backtest.py"]
+    end
+
+    subgraph EXT["Course extensions"]
+        LOG["risk/lognormal.py"]
+        CRD["credit/hazard.py<br/>credit/merton.py<br/>credit/cds.py<br/>credit/cva.py<br/>credit/mitigation.py"]
+        REG["risk/regulatory.py"]
+    end
+
+    subgraph VAL["Validation and evidence"]
+        TST["tests/*"]
+        NB["notebooks/*"]
+        SUB["submission/*"]
+    end
+
+    APP --> PE
+    APP --> MD
+    APP --> RS
+    APP --> RP
+    APP --> CP
+    APP --> CC
+    APP --> KP
+    RP --> CH
+
+    PE --> RSE
+    MD --> RSE
+    RS --> RSE
+    CP --> CRS
+    CC --> CRS
+    KP --> RGS
+
+    RSE --> DAT
+    RSE --> SCH
+    RSE --> PRT
+    PRT --> BSM
+    RSE --> RSK
+
+    CRS --> CRD
+    RGS --> REG
+    RSK --> LOG
+
+    RSE --> OUT["Market-risk outputs<br/>VaR/ES tables<br/>loss distributions<br/>backtests<br/>downloads"]
+    CRS --> OUT2["Credit outputs<br/>hazard, Merton, CDS, CVA"]
+    RGS --> OUT3["Capital and stress outputs"]
+
+    TST --> CORE
+    TST --> EXT
+    NB --> CORE
+    NB --> EXT
+    SUB --> TST
 ```
 
 The design is layered:
@@ -565,6 +634,8 @@ The design is layered:
 - the service layer orchestrates end-to-end runs,
 - the domain layer defines portfolio objects and valuation structures,
 - the model layer contains pricing, returns, risk, credit, and regulatory logic.
+
+The core brief sits on the market-risk branch from `risk_engine_service.py` through portfolio valuation, return estimation, VaR, ES, and backtesting. The credit and regulatory modules are still part of the repo, but they are extensions around that core path rather than the main grading boundary.
 
 ### 7.2 Data Flow and Control Flow
 
