@@ -2,7 +2,7 @@
 market_data.py
 Market data ingestion: CSV upload and yfinance download.
 
-Layers, from simplest to most robust:
+Layers, from simplest to most fault-tolerant:
 
     load_price_history_csv(file)
     download_adjusted_close(tickers, start, end)

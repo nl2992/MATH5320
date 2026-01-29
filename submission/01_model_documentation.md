@@ -30,9 +30,9 @@
 
 ## Executive Summary
 
-This report covers a Python and Streamlit portfolio risk system built for Columbia MATH GR 5320. It takes portfolios of stocks and European options as input, prices options with Black-Scholes, and computes Value at Risk (VaR) and Expected Shortfall (ES) under three methods: historical simulation, parametric delta-normal, and Monte Carlo. The system can be used through the Streamlit app or directly through the Python modules.
+We built a Python and Streamlit portfolio risk system for Columbia MATH GR 5320. It takes portfolios of stocks and European options as input, prices options with Black-Scholes, and computes Value at Risk (VaR) and Expected Shortfall (ES) under three methods: historical simulation, parametric delta-normal, and Monte Carlo. The system runs through the Streamlit app or directly from the Python modules.
 
-The intended workflow is: define a portfolio of stock and option positions, load historical price data from CSV or Yahoo Finance, configure risk parameters (lookback window, horizon, confidence levels, estimator type, Monte Carlo path count, and option-volatility shock mode), and run comparative risk analysis with walk-forward VaR backtesting. The main outputs are method-by-method VaR and ES estimates, loss distributions, correlation visualisations, backtest exception summaries, and downloadable results files.
+The workflow is: define a portfolio of stock and option positions, load historical price data from CSV or Yahoo Finance, configure risk parameters (lookback window, horizon, confidence levels, estimator type, Monte Carlo path count, and option-volatility shock mode), and run comparative risk analysis with walk-forward VaR backtesting. The main outputs are VaR and ES by method, loss distributions, correlation visualisations, backtest exception summaries, and downloadable results files.
 
 Three market-risk methodologies are implemented. Historical simulation and Monte Carlo use full portfolio repricing under shocked market states; both support a simplified `underlying_beta` option-volatility shock mode as well as the default fixed-vol mode. The parametric method is a first-order delta-normal approximation using estimated or manually supplied mean and covariance of log returns with an exposure vector of equity holdings and option delta-dollar positions. VaR backtesting uses walk-forward forecasting with Kupiec unconditional coverage testing; Christoffersen independence and conditional-coverage diagnostics are also available.
 
@@ -61,7 +61,7 @@ python -m pytest tests/ --cov=src --cov-report=term-missing \
 
 The coverage run reported `610 passed` with 96% statement coverage. The two live-data integration scripts were run separately and both passed.
 
-For the course brief, the system does what it needs to do. It computes and compares VaR and ES for mixed portfolios, validates the main formulas against course fixtures, and documents the main modeling choices and limits. The main limits are the use of historical log-return shocks, a first-order delta-normal approximation, a simplified option-volatility shock rather than a full implied-vol surface, multivariate normal Monte Carlo shocks, and credit and regulatory modules that are course extensions rather than production models.
+For the course brief, we did what was needed: compare VaR and ES for mixed portfolios, validate formula implementations against course fixtures, and document model choices and limits. The main limits are historical log-return shocks, first-order delta-normal parametric approximation, a simplified option-volatility shock rather than a full implied-vol surface, multivariate normal Monte Carlo shocks, and credit and regulatory modules that are course extensions rather than production models.
 
 ---
 
@@ -185,7 +185,7 @@ The last three tabs extend the product into course-specific modules for credit, 
 
 ### Intended User Experience
 
-The system is designed to be interactive but still modular. Streamlit is used only as the front end. Core logic is delegated to pricing, portfolio, risk, credit, and service modules. This separation reduces the amount of business logic inside the UI and makes the quantitative code reusable in tests and notebooks.
+The app is interactive but modular. Streamlit is used only as the front end. Core logic is delegated to pricing, portfolio, risk, credit, and service modules. This separation keeps business logic out of the UI and makes the quantitative code reusable in tests and notebooks.
 
 ### Input Schema
 
@@ -734,7 +734,7 @@ The validation program aims to establish:
 - Correct VaR and ES calculations under each methodology
 - Correct backtesting logic and exception diagnostics
 - Correct data loading and input validation behavior
-- Correct UI-service integration for the Streamlit application
+- Correct UI-service integration for the Streamlit app
 
 ### Validation Types
 
@@ -1031,7 +1031,7 @@ Based on the documented model methodology, implementation review, 610-test no-ne
 
 **Opinion: Approved with limitations for intended academic use.**
 
-The system correctly implements the required portfolio risk engine. The three VaR and ES methodologies produce results consistent with course-derived analytic fixtures. The backtesting framework correctly identifies model failure when exception rates exceed the expected rate. The credit, CVA, and regulatory extension modules produce results consistent with course homework benchmarks.
+We correctly implemented the required portfolio risk engine. All three VaR and ES methods produce results consistent with course-derived analytic fixtures. The backtesting framework correctly catches model failure when exception rates exceed the expected rate. The credit, CVA, and regulatory extension modules produce results consistent with course homework benchmarks.
 
 **The system is not approved for:**
 - production trading, desk-level risk reporting, or regulatory capital filing;
@@ -1061,11 +1061,11 @@ The system correctly implements the required portfolio risk engine. The three Va
 
 ### Conclusion
 
-The `MATH5320 Portfolio Risk Management System` meets its stated objectives for MATH GR 5320. The required stock-and-option risk engine is implemented, tested, and checked against course fixtures. The layered structure makes it easier to test and reuse in notebooks. The current suite, with 610 tests and 96% coverage, gives solid support for the core model claims.
+We met the stated objectives for MATH GR 5320. The required stock-and-option risk engine is implemented, tested, and validated against course fixtures. The layered architecture keeps testing straightforward and notebook reuse possible. At 610 tests with 96% coverage, the suite provides solid numerical evidence for the core model claims.
 
-The system goes beyond the baseline project requirements by including formula-sheet extension modules for credit risk, CVA, counterparty mitigation, and regulatory capital. These extensions are tested and documented but are not within the core grading scope.
+We also went beyond the baseline requirements by including extension modules for credit risk, CVA, counterparty mitigation, and regulatory capital. These are tested and documented but are not within the core grading scope.
 
-The principal constraints are the simplified option-volatility treatment, the first-order parametric approximation, the normal-distribution Monte Carlo assumption, and the dependence on Yahoo Finance data quality. These are appropriate for a course submission and are documented throughout.
+The main limits are the simplified option-volatility treatment, the first-order parametric approximation, the normal-distribution Monte Carlo assumption, and the dependence on Yahoo Finance data quality. These are appropriate for a course submission and are documented throughout.
 
 ### Recommendations
 

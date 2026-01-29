@@ -2,7 +2,7 @@
 
 **Columbia University · Spring 2026**
 
-This is the live Streamlit front-end trace for the equal-weight Magnificent Seven portfolio used in [advanced_demo.ipynb](./advanced_demo.ipynb). The point of this note is simple: show that the app can load the same portfolio and data, run the same market-risk workflow, and reproduce the notebook story on screen.
+This is the live Streamlit front-end trace for the equal-weight Magnificent Seven portfolio used in [advanced_demo.ipynb](./advanced_demo.ipynb). The point is simple: show that the app loads the same portfolio and data, runs the same market-risk workflow, and reproduces the notebook story on screen.
 
 The app was run locally at `http://localhost:8502`.
 

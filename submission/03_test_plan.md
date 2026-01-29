@@ -9,7 +9,7 @@ This test plan answers four questions:
 3. Against what benchmark is it being tested?
 4. What constitutes acceptable behavior?
 
-The `MATH5320` repository contains a broad test suite covering formula correctness, portfolio valuation, VaR/ES calculations, backtesting, market-data loading, UI behavior, and course-formula extensions. The plan below formalizes those tests into a model-risk-oriented validation program. It treats testing as part of model development and model governance, not just as proof that the application runs.
+The `MATH5320` repo has a test suite covering formula correctness, portfolio valuation, VaR/ES calculations, backtesting, market-data loading, UI behavior, and course-formula extensions. We formalized those tests into a model-risk-oriented validation program, treating testing as part of model development and governance, not just a check that the app runs.
 
 ---
 
@@ -22,7 +22,7 @@ The test plan validates:
 3. correctness of VaR/ES calculations under historical, parametric, and Monte Carlo methods;
 4. correctness of backtesting and exception logic;
 5. correctness of credit/regulatory formula-sheet extensions;
-6. robustness to invalid inputs, edge cases, and numerical failure modes;
+6. correct handling of invalid inputs, edge cases, and numerical failure modes;
 7. correct service-layer integration and UI behaviour;
 8. reproducibility through deterministic fixtures, seeded Monte Carlo, and coverage reporting.
 
@@ -465,7 +465,7 @@ Even before execution, the plan should flag areas that are likely to remain weak
 - Duplicate-date or stale-price handling is not as explicitly tested as basic missing-data and positivity checks.
 - Coverage target may remain unmet without additional branch-specific tests in CDS, hazard, historical absolute-shock branches, `risk/normal.py`, and selected UI/regulatory paths.
 
-This section is important because a good test plan should be honest about residual validation risk.
+A good test plan should be honest about residual validation risk.
 
 ---
 

@@ -21,7 +21,7 @@ The software architecture fits this project because it:
 
 ### 2.1 Purpose
 
-The system is an educational portfolio risk application for MATH GR 5320. Its core purpose is to let a user:
+The app is an educational portfolio risk tool for MATH GR 5320. Its core purpose is to let a user:
 
 - define a portfolio of stocks and European options,
 - load historical market data,
@@ -157,7 +157,7 @@ flowchart TB
 
 ### 3.2 Architecture Explanation
 
-The system uses a layered architecture.
+We used a layered architecture.
 
 - The UI layer collects inputs and displays results.
 - The service layer orchestrates calculations.

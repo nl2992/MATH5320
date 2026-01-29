@@ -2,9 +2,9 @@
 
 **Columbia University · Spring 2026**
 
-This document traces the Streamlit front-end alongside the notebook (`demo.ipynb`) for every formula-sheet section. Screenshots capture the exact UI state; each panel shows inputs and outputs side-by-side.
+This traces the Streamlit front-end alongside the notebook (`demo.ipynb`) for every formula-sheet section. Screenshots capture the exact UI state; each panel shows inputs and outputs side-by-side.
 
-The app runs at `localhost:8502`. All tabs share the same underlying `src/` modules - the notebook and the UI produce identical numbers.
+The app runs at `localhost:8502`. All tabs share the same underlying `src/` modules, so the notebook and UI produce identical numbers.
 
 ---
 
