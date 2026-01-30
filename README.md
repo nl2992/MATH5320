@@ -29,83 +29,57 @@ The credit, CVA, lognormal, and regulatory pieces are still part of the repo and
 
 ```mermaid
 flowchart TB
-    U["User"] --> APP["Streamlit app<br/>app.py"]
+    U["User"] --> APP["app.py · Streamlit entry point"]
 
-    subgraph UI["UI layer"]
-        PE["portfolio_editor.py"]
-        MD["market_data_panel.py"]
-        RS["risk_settings.py"]
-        RP["results_panel.py"]
-        CP["credit_panel.py"]
-        CC["cds_cva_panel.py"]
-        KP["capital_panel.py"]
-        CH["charts.py"]
+    subgraph UI["src/ui/ — UI panels"]
+        PE["portfolio_editor"]
+        MD["market_data_panel"]
+        RS["risk_settings"]
+        RP["results_panel · charts"]
+        XUI["credit_panel · cds_cva_panel · capital_panel"]
     end
 
-    subgraph SVC["Service layer"]
-        RSE["risk_engine_service.py"]
-        CRS["credit_service.py"]
-        RGS["regulatory_service.py"]
+    subgraph SVC["src/services/ — orchestration"]
+        RSE["risk_engine_service"]
+        CRS["credit_service"]
+        RGS["regulatory_service"]
     end
 
-    subgraph CORE["Core project engine"]
-        DAT["data/market_data.py<br/>data/validation.py"]
-        SCH["schemas.py"]
-        PRT["portfolio/positions.py<br/>portfolio/portfolio.py"]
-        BSM["pricing/black_scholes.py"]
-        RSK["risk/returns.py<br/>risk/estimators.py<br/>risk/historical.py<br/>risk/parametric.py<br/>risk/normal.py<br/>risk/monte_carlo.py<br/>risk/backtest.py"]
+    subgraph CORE["Core engine  ·  required by project brief"]
+        DAT["data/ · market_data · validation"]
+        CFG["schemas · config · demo_presets"]
+        PRT["portfolio/ · positions · portfolio"]
+        BSM["pricing/ · black_scholes"]
+        RSK["risk/ · returns · estimators · historical<br/>parametric · normal · monte_carlo · backtest"]
     end
 
     subgraph EXT["Course extensions"]
-        LOG["risk/lognormal.py"]
-        CRD["credit/hazard.py<br/>credit/merton.py<br/>credit/cds.py<br/>credit/cva.py<br/>credit/mitigation.py"]
-        REG["risk/regulatory.py"]
+        LOG["risk/lognormal"]
+        REG["risk/regulatory"]
+        CRD["credit/ · hazard · merton · cds · cva · mitigation"]
     end
 
-    subgraph VAL["Validation and evidence"]
-        TST["tests/*"]
-        NB["notebooks/*"]
-        SUB["submission/*"]
-    end
-
-    APP --> PE
-    APP --> MD
-    APP --> RS
-    APP --> RP
-    APP --> CP
-    APP --> CC
-    APP --> KP
-    RP --> CH
+    APP --> PE & MD & RS & RP & XUI
 
     PE --> RSE
     MD --> RSE
     RS --> RSE
-    CP --> CRS
-    CC --> CRS
-    KP --> RGS
+    XUI --> CRS & RGS
 
-    RSE --> DAT
-    RSE --> SCH
-    RSE --> PRT
+    RSE --> DAT & CFG & PRT & RSK
     PRT --> BSM
-    RSE --> RSK
-
     CRS --> CRD
     RGS --> REG
-    RSK --> LOG
 
-    RSE --> OUT["Market-risk outputs<br/>VaR/ES tables<br/>loss distributions<br/>backtests<br/>downloads"]
-    CRS --> OUT2["Credit outputs<br/>hazard, Merton, CDS, CVA"]
-    RGS --> OUT3["Capital and stress outputs"]
+    RSE --> MOUT["VaR/ES · loss distributions · backtest results · downloads"]
+    CRS --> COUT["hazard · Merton · CDS · CVA"]
+    RGS --> ROUT["RWA · capital · DFAST"]
 
-    TST --> CORE
-    TST --> EXT
-    NB --> CORE
-    NB --> EXT
-    SUB --> TST
+    TST["tests/ · 610 unit tests"] -. exercise .-> CORE & EXT
+    NB["notebooks/"] -. exercise .-> CORE & EXT
 ```
 
-The main design choice is straightforward: the Streamlit layer gathers inputs and renders outputs, while the pricing, risk, credit, and regulatory logic lives in reusable Python modules. That keeps the formulas testable outside the UI and makes the notebooks and test suite genuine evidence rather than separate one-off work.
+The main split is simple: `app.py` handles Streamlit rendering and calls services when the user clicks "Run". The services orchestrate the math modules. All quantitative logic (pricing, risk, credit, regulatory) lives in pure Python modules under `src/` with no Streamlit imports, so tests and notebooks can call them directly without running the app.
 
 ## Repository Layout
 

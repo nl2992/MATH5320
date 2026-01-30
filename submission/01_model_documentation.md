@@ -279,7 +279,63 @@ The packaged submission now includes representative screenshots from the live St
 
 ![Capital & Stress](../docs/screenshots/08_capital_stress.png)
 
+### Module Architecture
+
+The codebase is split into four layers. The Streamlit front end is isolated from all quantitative logic; services orchestrate the math modules; the core engine does everything required by the project brief; the extension modules cover additional course topics.
+
+```mermaid
+flowchart TB
+    U["User"] --> APP["app.py · Streamlit entry point"]
+
+    subgraph UI["src/ui/ — UI panels"]
+        PE["portfolio_editor"]
+        MD["market_data_panel"]
+        RS["risk_settings"]
+        RP["results_panel · charts"]
+        XUI["credit_panel · cds_cva_panel · capital_panel"]
+    end
+
+    subgraph SVC["src/services/ — orchestration"]
+        RSE["risk_engine_service"]
+        CRS["credit_service"]
+        RGS["regulatory_service"]
+    end
+
+    subgraph CORE["Core engine  ·  required by project brief"]
+        DAT["data/ · market_data · validation"]
+        CFG["schemas · config · demo_presets"]
+        PRT["portfolio/ · positions · portfolio"]
+        BSM["pricing/ · black_scholes"]
+        RSK["risk/ · returns · estimators · historical<br/>parametric · normal · monte_carlo · backtest"]
+    end
+
+    subgraph EXT["Course extensions"]
+        LOG["risk/lognormal"]
+        REG["risk/regulatory"]
+        CRD["credit/ · hazard · merton · cds · cva · mitigation"]
+    end
+
+    APP --> PE & MD & RS & RP & XUI
+
+    PE --> RSE
+    MD --> RSE
+    RS --> RSE
+    XUI --> CRS & RGS
+
+    RSE --> DAT & CFG & PRT & RSK
+    PRT --> BSM
+    CRS --> CRD
+    RGS --> REG
+
+    TST["tests/ · 610 unit tests"] -. exercise .-> CORE & EXT
+    NB["notebooks/"] -. exercise .-> CORE & EXT
+```
+
+All quantitative modules under `src/` are pure Python functions with no Streamlit imports. This means every formula can be called from `pytest` or a notebook without starting the app.
+
 ### Risk Engine Workflow
+
+For the core market-risk path specifically, the call sequence is:
 
 ```mermaid
 flowchart TD
