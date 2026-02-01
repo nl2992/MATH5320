@@ -77,6 +77,14 @@ def run_backtest(
     -------
     pd.DataFrame with columns:
         date, var_forecast, realized_loss, exception
+
+    Notes
+    -----
+    If an individual forecast date fails, the date is skipped but the failure
+    is recorded in ``DataFrame.attrs`` under:
+        skipped_forecasts      : list[dict]
+        n_skipped_forecasts    : int
+        skipped_forecast_dates : list[pd.Timestamp]
     """
     log_ret = compute_log_returns(prices)
     dates = log_ret.index  # dates for which we have a return
@@ -85,6 +93,7 @@ def run_backtest(
     underlyings = [u for u in underlyings if u in prices.columns]
 
     records = []
+    skipped_forecasts: list[dict[str, object]] = []
     # We need at least lookback_days of history before t,
     # and horizon_days of future returns after t.
     start_idx = lookback_days
@@ -125,7 +134,14 @@ def run_backtest(
                 option_vol_shock_beta=option_vol_shock_beta,
                 option_vol_shock_floor=option_vol_shock_floor,
             )
-        except Exception:
+        except Exception as exc:
+            skipped_forecasts.append(
+                {
+                    "date": t_date,
+                    "error": str(exc),
+                    "model": model,
+                }
+            )
             continue
 
         # Realised loss: portfolio value at t vs t+horizon
@@ -165,7 +181,18 @@ def run_backtest(
             }
         )
 
-    return pd.DataFrame(records)
+    backtest_df = pd.DataFrame(records)
+    backtest_df.attrs["skipped_forecasts"] = skipped_forecasts
+    backtest_df.attrs["n_skipped_forecasts"] = len(skipped_forecasts)
+    backtest_df.attrs["skipped_forecast_dates"] = [
+        item["date"] for item in skipped_forecasts
+    ]
+    if backtest_df.empty and skipped_forecasts:
+        backtest_df.attrs["reason"] = (
+            "Backtest produced no completed forecasts because every forecast date "
+            "failed. Inspect skipped_forecasts for the underlying errors."
+        )
+    return backtest_df
 
 
 def _forecast_var(

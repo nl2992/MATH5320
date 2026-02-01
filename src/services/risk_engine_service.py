@@ -145,6 +145,7 @@ class RiskEngineService:
             backtest_df  : pd.DataFrame — per-date results
             kupiec       : dict         — Kupiec test results
             model        : str
+            skipped_forecasts : list[dict] — per-date forecast failures, if any
         """
         bt_df = run_backtest(
             portfolio=self.portfolio,
@@ -186,4 +187,6 @@ class RiskEngineService:
             "kupiec": kupiec,
             "model": model,
             "reason": bt_df.attrs.get("reason") if bt_df.empty else None,
+            "skipped_forecasts": bt_df.attrs.get("skipped_forecasts", []),
+            "n_skipped_forecasts": int(bt_df.attrs.get("n_skipped_forecasts", 0)),
         }

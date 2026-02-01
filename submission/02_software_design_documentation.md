@@ -227,6 +227,8 @@ flowchart TD
 
 Backtesting is implemented as an out-of-sample walk-forward process in `src/risk/backtest.py`. The software should never use future data to estimate the VaR forecast at the current date. The implementation does this correctly by slicing prices up to the backtest date, fitting on that historical subset, then comparing forecast VaR with realized future loss over the chosen horizon.
 
+If a specific forecast date fails, the date is now recorded explicitly in backtest metadata rather than disappearing silently. The returned object carries a skipped-date count and error list so the user can distinguish "model passed" from "model ran on a reduced sample because some forecast dates failed."
+
 ### 4.4 Control-Flow Observations
 
 The control flow is deliberately centralized:

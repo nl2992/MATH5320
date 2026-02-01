@@ -153,7 +153,7 @@ streamlit run app.py
 2. **Market Data** - Download price history from Yahoo Finance or upload a CSV file.
 3. **Risk Settings** - Configure lookback window, horizon, VaR/ES confidence levels, estimator type (window or EWMA), and Monte Carlo simulation count.
 4. **Run Analysis** - Click "Run Risk Analysis" to compute all three VaR/ES models. Results include a comparison table, loss histograms, correlation heatmap, and download buttons.
-5. **Backtesting** - Select a model and click "Run Backtest" for walk-forward VaR backtesting with Kupiec test results.
+5. **Backtesting** - Select a model and click "Run Backtest" for walk-forward VaR backtesting with Kupiec test results. If any forecast dates fail, the app now reports how many dates were skipped instead of hiding them silently.
 
 ## Key Modelling Conventions
 

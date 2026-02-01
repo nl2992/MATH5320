@@ -178,8 +178,8 @@ class TestBacktestGaps:
         )
         assert not bt.empty or bt.attrs.get("reason") is not None
 
-    def test_run_backtest_swallows_forecast_errors(self, monkeypatch, sample_prices, pf_stocks):
-        """If _forecast_var raises, the date is skipped — line 118-119 branch."""
+    def test_run_backtest_records_forecast_errors(self, monkeypatch, sample_prices, pf_stocks):
+        """If _forecast_var raises, the date is skipped and the error is retained."""
         from src.risk import backtest as bt_mod
         original = bt_mod._forecast_var
         calls = {"n": 0}
@@ -196,6 +196,9 @@ class TestBacktestGaps:
             lookback_days=60, horizon_days=1, var_confidence=0.95, model="historical",
         )
         assert not df.empty  # other dates still ran
+        assert df.attrs["n_skipped_forecasts"] == 1
+        assert len(df.attrs["skipped_forecasts"]) == 1
+        assert "boom on first call" in df.attrs["skipped_forecasts"][0]["error"]
 
     def test_kupiec_zero_observations(self):
         out = kupiec_test(n_observations=0, n_exceptions=0, var_confidence=0.99)
@@ -365,6 +368,7 @@ class TestRiskEngineServiceGaps:
         res = svc.run_backtest(model="historical")
         assert res["model"] == "historical"
         assert res["kupiec"]["n_observations"] > 0
+        assert "n_skipped_forecasts" in res
 
 
 # ── normal.py — portfolio_delta_normal_mean_var ──────────────────────────────

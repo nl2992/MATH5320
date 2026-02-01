@@ -109,6 +109,7 @@ def _render_backtest_results(bt_result: dict, params: dict) -> None:
     bt_df: pd.DataFrame = bt_result["backtest_df"]
     kupiec: dict = bt_result["kupiec"]
     model: str = bt_result["model"]
+    n_skipped: int = int(bt_result.get("n_skipped_forecasts", 0))
 
     if bt_df.empty:
         st.warning(
@@ -117,7 +118,18 @@ def _render_backtest_results(bt_result: dict, params: dict) -> None:
                 "Not enough data for backtesting. Try a shorter lookback window.",
             )
         )
+        if n_skipped:
+            st.caption(
+                f"Skipped forecast dates: {n_skipped}. Download or inspect the "
+                "backtest metadata if you need the detailed failure list."
+            )
         return
+
+    if n_skipped:
+        st.warning(
+            f"Backtest completed with {n_skipped} skipped forecast date(s). "
+            "Those dates were excluded because the forecast step raised an error."
+        )
 
     # ── Realised loss vs VaR chart ─────────────────────────────────────────────
     st.plotly_chart(
