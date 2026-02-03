@@ -63,6 +63,7 @@ def load_price_history_csv(file_obj: Union[str, io.IOBase]) -> pd.DataFrame:
     df = df.dropna(how="all")
     if df.empty:
         raise ValueError("CSV parsed to an empty DataFrame.")
+    _assert_unique_datetime_index(df, source="CSV")
     return df
 
 
@@ -126,6 +127,7 @@ def download_adjusted_close(
 
     prices = prices.sort_index()
     prices = prices.dropna(how="all")
+    _assert_unique_datetime_index(prices, source="yfinance")
 
     if prices.empty:
         raise ValueError(
@@ -139,6 +141,19 @@ def download_adjusted_close(
         logger.warning("yfinance returned no data for: %s", missing)
 
     return prices
+
+
+def _assert_unique_datetime_index(df: pd.DataFrame, *, source: str) -> None:
+    """Reject duplicate timestamps explicitly so downstream return logic is stable."""
+    if not isinstance(df.index, pd.DatetimeIndex):
+        return
+    if df.index.has_duplicates:
+        dupes = df.index[df.index.duplicated()].unique()
+        sample = ", ".join(
+            str(ts.date()) if hasattr(ts, "date") else str(ts) for ts in dupes[:5]
+        )
+        suffix = " ..." if len(dupes) > 5 else ""
+        raise ValueError(f"{source} data contains duplicate dates: {sample}{suffix}")
 
 
 # ── yfinance path (cached + retry) ────────────────────────────────────────────

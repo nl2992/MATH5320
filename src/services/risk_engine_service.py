@@ -9,6 +9,7 @@ from datetime import date
 
 import pandas as pd
 
+from src.data.validation import validate_history_requirements, validate_price_dataframe
 from src.portfolio.portfolio import portfolio_value
 from src.risk.backtest import kupiec_test, run_backtest
 from src.risk.historical import historical_var_es
@@ -77,6 +78,18 @@ class RiskEngineService:
             var  : float
             es   : float
         """
+        price_errors = validate_price_dataframe(self.prices)
+        if price_errors:
+            raise ValueError("Invalid price history: " + " | ".join(price_errors))
+        history_errors = validate_history_requirements(
+            self.prices,
+            lookback_days=self.lookback_days,
+            horizon_days=self.horizon_days,
+            for_backtest=False,
+        )
+        if history_errors:
+            raise ValueError("Invalid risk run request: " + " | ".join(history_errors))
+
         hist = historical_var_es(
             portfolio=self.portfolio,
             prices=self.prices,
@@ -147,6 +160,10 @@ class RiskEngineService:
             model        : str
             skipped_forecasts : list[dict] — per-date forecast failures, if any
         """
+        price_errors = validate_price_dataframe(self.prices)
+        if price_errors:
+            raise ValueError("Invalid price history: " + " | ".join(price_errors))
+
         bt_df = run_backtest(
             portfolio=self.portfolio,
             prices=self.prices,

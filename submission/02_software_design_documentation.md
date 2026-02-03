@@ -495,8 +495,10 @@ The codebase uses both front-end and back-end validation. UI-level controls redu
 
 Lecture 5 emphasizes documenting the data used, assessing data quality, demonstrating suitability, identifying proxies, and documenting assumptions from cleaning or smoothing. In this repository, the relevant software-design responses are:
 
-- `src/data/validation.py` checks emptiness, index type, all-NaN columns, and positivity.
-- `src/data/market_data.py` handles CSV parsing, sorting, numeric coercion, Yahoo Finance retrieval, retry logic, and cache logic.
+- `src/data/validation.py` checks emptiness, index type, duplicate dates, active-column NaNs, and positivity.
+- `src/data/validation.py` also warns on unusually long unchanged price runs, which helps flag likely stale data without blocking the entire load path.
+- `src/data/market_data.py` handles CSV parsing, sorting, numeric coercion, duplicate-date rejection, Yahoo Finance retrieval, retry logic, and cache logic.
+- `src/services/risk_engine_service.py` checks that the loaded history is long enough for the requested lookback and horizon before a core risk run starts.
 - `src/ui/market_data_panel.py` surfaces errors immediately to the user rather than silently proceeding.
 
 ### 8.3 Error-Handling Observations
@@ -506,6 +508,8 @@ The repository is reasonably defensive:
 - pricing functions validate domain constraints,
 - hazard and Merton functions validate impossible parameter combinations,
 - backtesting returns a documented empty result when insufficient history exists,
+- duplicate dates and active-column NaNs are rejected before core risk runs,
+- suspiciously long unchanged price runs are surfaced as warnings,
 - UI panels display exceptions rather than swallowing them.
 
 This is the kind of visible failure behavior a model-risk-sensitive application should prefer. At the same time, the implementation is lighter than the idealized contract tables in this report, so the documentation should describe distributed enforcement rather than imply one strict centralized validation layer.

@@ -370,6 +370,19 @@ class TestRiskEngineServiceGaps:
         assert res["kupiec"]["n_observations"] > 0
         assert "n_skipped_forecasts" in res
 
+    def test_service_run_all_rejects_insufficient_history(self, sample_prices, pf_stocks):
+        svc = RiskEngineService(
+            portfolio=pf_stocks,
+            prices=sample_prices.tail(20),
+            pricing_date=date.today(),
+            lookback_days=60,
+            horizon_days=5,
+            var_confidence=0.95,
+            es_confidence=0.975,
+        )
+        with pytest.raises(ValueError, match="Insufficient history"):
+            svc.run_all()
+
 
 # ── normal.py — portfolio_delta_normal_mean_var ──────────────────────────────
 

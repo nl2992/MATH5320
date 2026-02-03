@@ -151,6 +151,7 @@ streamlit run app.py
 
 1. **Portfolio Input** - Add stock positions (ticker + quantity) and option positions (label, underlying, type, quantity, strike, maturity, vol, r, q, multiplier).
 2. **Market Data** - Download price history from Yahoo Finance or upload a CSV file.
+   The loader rejects duplicate dates, non-positive prices, and active columns with missing values. It also warns on suspiciously long stale-price runs.
 3. **Risk Settings** - Configure lookback window, horizon, VaR/ES confidence levels, estimator type (window or EWMA), and Monte Carlo simulation count.
 4. **Run Analysis** - Click "Run Risk Analysis" to compute all three VaR/ES models. Results include a comparison table, loss histograms, correlation heatmap, and download buttons.
 5. **Backtesting** - Select a model and click "Run Backtest" for walk-forward VaR backtesting with Kupiec test results. If any forecast dates fail, the app now reports how many dates were skipped instead of hiding them silently.
@@ -170,6 +171,8 @@ streamlit run app.py
 | **Parametric ES** | −m + s × φ(z) / α |
 | **Option pricing** | Black-Scholes with continuous dividends |
 | **Kupiec test** | LR_uc ~ χ²(1) |
+
+The service layer now validates that the loaded price history is structurally clean and long enough for the requested lookback and horizon before a risk run starts.
 
 ## Running Tests
 

@@ -41,6 +41,11 @@ class TestLoadCSV:
         with pytest.raises(ValueError, match="empty DataFrame"):
             market_data.load_price_history_csv(io.StringIO(csv))
 
+    def test_load_csv_duplicate_dates_raise(self):
+        csv = "Date,AAPL\n2024-01-02,100\n2024-01-02,101\n"
+        with pytest.raises(ValueError, match="duplicate dates"):
+            market_data.load_price_history_csv(io.StringIO(csv))
+
 
 # ── download_adjusted_close — mocked yfinance ─────────────────────────────────
 

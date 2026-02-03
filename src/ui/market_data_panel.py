@@ -16,6 +16,7 @@ from src.data.market_data import (
     load_price_history_csv,
 )
 from src.data.validation import validate_price_dataframe
+from src.data.validation import warn_price_dataframe
 
 
 def render_market_data_panel(portfolio_tickers: list[str]) -> pd.DataFrame | None:
@@ -68,6 +69,9 @@ def render_market_data_panel(portfolio_tickers: list[str]) -> pd.DataFrame | Non
             for err in errors:
                 st.error(err)
             return None
+        warnings = warn_price_dataframe(prices)
+        for warning in warnings:
+            st.warning(warning)
 
         st.success(
             f"Loaded {len(prices)} rows × {len(prices.columns)} tickers "

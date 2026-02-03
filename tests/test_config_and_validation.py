@@ -12,7 +12,12 @@ import pandas as pd
 import pytest
 
 import src.config as cfg
-from src.data.validation import validate_portfolio_tickers, validate_price_dataframe
+from src.data.validation import (
+    validate_history_requirements,
+    validate_portfolio_tickers,
+    validate_price_dataframe,
+    warn_price_dataframe,
+)
 from src.schemas import OptionPosition, Portfolio, StockPosition
 
 
@@ -65,10 +70,44 @@ class TestValidatePrices:
         errors = validate_price_dataframe(df)
         assert any("non-positive" in e for e in errors)
 
+    def test_duplicate_dates(self):
+        idx = pd.to_datetime(["2024-01-01", "2024-01-01"])
+        df = pd.DataFrame({"AAPL": [100.0, 101.0]}, index=idx)
+        errors = validate_price_dataframe(df)
+        assert any("duplicate dates" in e.lower() for e in errors)
+
+    def test_partial_missing_values(self):
+        idx = pd.date_range("2024-01-01", periods=3, freq="D")
+        df = pd.DataFrame({"AAPL": [100.0, None, 102.0]}, index=idx)
+        errors = validate_price_dataframe(df)
+        assert any("missing values in active columns" in e.lower() for e in errors)
+
     def test_good_frame_no_errors(self):
         idx = pd.date_range("2024-01-01", periods=3, freq="D")
         df = pd.DataFrame({"AAPL": [100.0, 101.0, 102.0]}, index=idx)
         assert validate_price_dataframe(df) == []
+
+    def test_warn_stale_price_runs(self):
+        idx = pd.date_range("2024-01-01", periods=12, freq="D")
+        df = pd.DataFrame({"AAPL": [100.0] * 12}, index=idx)
+        warnings = warn_price_dataframe(df, stale_run_limit=10)
+        assert any("stale-price runs" in w.lower() for w in warnings)
+
+
+class TestValidateHistoryRequirements:
+    def test_risk_run_insufficient_history(self):
+        idx = pd.date_range("2024-01-01", periods=20, freq="D")
+        df = pd.DataFrame({"AAPL": range(20)}, index=idx, dtype=float)
+        errors = validate_history_requirements(df, lookback_days=30, horizon_days=5)
+        assert any("insufficient history" in e.lower() for e in errors)
+
+    def test_backtest_insufficient_history(self):
+        idx = pd.date_range("2024-01-01", periods=20, freq="D")
+        df = pd.DataFrame({"AAPL": range(20)}, index=idx, dtype=float)
+        errors = validate_history_requirements(
+            df, lookback_days=15, horizon_days=5, for_backtest=True
+        )
+        assert any("backtest" in e.lower() for e in errors)
 
 
 # ── validate_portfolio_tickers ────────────────────────────────────────────────
