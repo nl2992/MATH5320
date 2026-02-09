@@ -150,6 +150,7 @@ streamlit run app.py
 ## Usage Workflow
 
 1. **Portfolio Input** - Add stock positions (ticker + quantity) and option positions (label, underlying, type, quantity, strike, maturity, vol, r, q, multiplier).
+   The schema layer now rejects structurally invalid positions before they reach pricing or risk code.
 2. **Market Data** - Download price history from Yahoo Finance or upload a CSV file.
    The loader rejects duplicate dates, non-positive prices, and active columns with missing values. It also warns on suspiciously long stale-price runs.
 3. **Risk Settings** - Configure lookback window, horizon, VaR/ES confidence levels, estimator type (window or EWMA), and Monte Carlo simulation count.

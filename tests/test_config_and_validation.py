@@ -141,3 +141,62 @@ class TestValidatePortfolioTickers:
         )
         errors = validate_portfolio_tickers(pf, ["AAPL"])
         assert any("ZZZ" in e and "underlying" in e for e in errors)
+
+
+class TestSchemaValidation:
+    def test_stock_position_empty_ticker_rejected(self):
+        with pytest.raises(ValueError, match="non-empty"):
+            StockPosition("", 10)
+
+    def test_option_position_invalid_type_rejected(self):
+        with pytest.raises(ValueError, match="call' or 'put"):
+            OptionPosition(
+                ticker="bad",
+                underlying_ticker="AAPL",
+                option_type="banana",
+                quantity=1,
+                strike=100,
+                maturity_date=date.today() + timedelta(days=30),
+                volatility=0.2,
+                risk_free_rate=0.04,
+            )
+
+    def test_option_position_nonpositive_strike_rejected(self):
+        with pytest.raises(ValueError, match="strike"):
+            OptionPosition(
+                ticker="bad",
+                underlying_ticker="AAPL",
+                option_type="call",
+                quantity=1,
+                strike=0,
+                maturity_date=date.today() + timedelta(days=30),
+                volatility=0.2,
+                risk_free_rate=0.04,
+            )
+
+    def test_option_position_nonpositive_vol_rejected(self):
+        with pytest.raises(ValueError, match="volatility"):
+            OptionPosition(
+                ticker="bad",
+                underlying_ticker="AAPL",
+                option_type="call",
+                quantity=1,
+                strike=100,
+                maturity_date=date.today() + timedelta(days=30),
+                volatility=0.0,
+                risk_free_rate=0.04,
+            )
+
+    def test_option_position_nonpositive_multiplier_rejected(self):
+        with pytest.raises(ValueError, match="contract_multiplier"):
+            OptionPosition(
+                ticker="bad",
+                underlying_ticker="AAPL",
+                option_type="call",
+                quantity=1,
+                strike=100,
+                maturity_date=date.today() + timedelta(days=30),
+                volatility=0.2,
+                risk_free_rate=0.04,
+                contract_multiplier=0,
+            )

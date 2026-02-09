@@ -239,6 +239,8 @@ The control flow is deliberately centralized:
 
 This reduces duplicated logic and makes the path from user interaction to model output easier to reason about.
 
+The domain objects are also checked earlier than before. `src/schemas.py` now enforces basic object-level invariants such as non-empty tickers, valid option type, positive strike, positive volatility, and positive contract multiplier. That keeps structurally invalid positions from leaking deeper into services, pricing helpers, or notebooks.
+
 ---
 
 ## 5. Module-by-Module Design
