@@ -10,8 +10,8 @@ A Streamlit application for portfolio risk analysis supporting stocks and Europe
 | **Parametric VaR / ES** | Delta-Normal with horizon scaling; window or EWMA estimator |
 | **Monte Carlo VaR / ES** | Full repricing under N(μ_h, Σ_h) simulated log-return shocks |
 | **Black-Scholes Pricing** | European calls and puts with continuous dividends |
-| **VaR Backtesting** | Walk-forward forecasting with Kupiec in the app and Christoffersen/Basel diagnostics in code |
-| **Downloads** | JSON risk summary, losses CSV, backtest CSV |
+| **VaR Backtesting** | Walk-forward forecasting with Kupiec, Christoffersen, Basel traffic-light, and exception-severity diagnostics |
+| **Downloads** | JSON risk summary with run metadata, tidy losses CSV, backtest CSV, backtest summary JSON |
 
 ## What Matters for the Brief
 

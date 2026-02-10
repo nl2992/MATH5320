@@ -108,6 +108,9 @@ def _render_backtest_results(bt_result: dict, params: dict) -> None:
     """Display backtest results inline."""
     bt_df: pd.DataFrame = bt_result["backtest_df"]
     kupiec: dict = bt_result["kupiec"]
+    conditional_coverage: dict = bt_result.get("conditional_coverage", {})
+    basel: dict | None = bt_result.get("basel")
+    severity: dict = bt_result.get("severity", {})
     model: str = bt_result["model"]
     n_skipped: int = int(bt_result.get("n_skipped_forecasts", 0))
 
@@ -177,6 +180,79 @@ def _render_backtest_results(bt_result: dict, params: dict) -> None:
         )
         st.table(kupiec_df)
 
+    st.subheader("Additional Diagnostics")
+    diag_rows = [
+        {
+            "Metric": "Christoffersen LR (independence)",
+            "Value": (
+                f"{conditional_coverage.get('lr_ind'):.4f}"
+                if conditional_coverage.get("lr_ind") == conditional_coverage.get("lr_ind")
+                else "N/A"
+            ),
+        },
+        {
+            "Metric": "Christoffersen p-value",
+            "Value": (
+                f"{conditional_coverage.get('p_value_ind'):.4f}"
+                if conditional_coverage.get("p_value_ind") == conditional_coverage.get("p_value_ind")
+                else "N/A"
+            ),
+        },
+        {
+            "Metric": "Conditional coverage LR",
+            "Value": (
+                f"{conditional_coverage.get('lr_cc'):.4f}"
+                if conditional_coverage.get("lr_cc") == conditional_coverage.get("lr_cc")
+                else "N/A"
+            ),
+        },
+        {
+            "Metric": "Conditional coverage p-value",
+            "Value": (
+                f"{conditional_coverage.get('p_value_cc'):.4f}"
+                if conditional_coverage.get("p_value_cc") == conditional_coverage.get("p_value_cc")
+                else "N/A"
+            ),
+        },
+        {
+            "Metric": "Reject conditional coverage at 5%?",
+            "Value": "Yes" if conditional_coverage.get("reject_cc") else "No",
+        },
+        {
+            "Metric": "Basel traffic-light zone",
+            "Value": basel["zone"] if basel else "N/A",
+        },
+        {
+            "Metric": "Basel capital multiplier",
+            "Value": f"{basel['capital_multiplier']:.2f}" if basel else "N/A",
+        },
+        {
+            "Metric": "Average exception gap",
+            "Value": (
+                f"{severity.get('exception_gap'):.2f}"
+                if severity.get("exception_gap") == severity.get("exception_gap")
+                else "N/A"
+            ),
+        },
+        {
+            "Metric": "Average exception loss",
+            "Value": (
+                f"{severity.get('average_exception_loss'):.2f}"
+                if severity.get("average_exception_loss") == severity.get("average_exception_loss")
+                else "N/A"
+            ),
+        },
+        {
+            "Metric": "Worst exception loss",
+            "Value": (
+                f"{severity.get('max_exception_loss'):.2f}"
+                if severity.get("max_exception_loss") == severity.get("max_exception_loss")
+                else "N/A"
+            ),
+        },
+    ]
+    st.table(pd.DataFrame(diag_rows))
+
     # ── Downloads ──────────────────────────────────────────────────────────────
     st.subheader("Downloads")
     col_d1, col_d2 = st.columns(2)
@@ -191,14 +267,38 @@ def _render_backtest_results(bt_result: dict, params: dict) -> None:
         )
 
     with col_d2:
-        kupiec_json = json.dumps(
-            {k: (v if v == v else None) for k, v in kupiec.items()},
+        skipped_forecasts = []
+        for item in bt_result.get("skipped_forecasts", []):
+            skipped_forecasts.append(
+                {
+                    **item,
+                    "date": (
+                        item.get("date").isoformat()
+                        if hasattr(item.get("date"), "isoformat")
+                        else item.get("date")
+                    ),
+                }
+            )
+        backtest_json = json.dumps(
+            {
+                "model": model,
+                "kupiec": {k: (v if v == v else None) for k, v in kupiec.items()},
+                "conditional_coverage": {
+                    k: (v if v == v else None) for k, v in conditional_coverage.items()
+                },
+                "basel": basel,
+                "severity": {
+                    k: (v if v == v else None) for k, v in severity.items()
+                },
+                "n_skipped_forecasts": n_skipped,
+                "skipped_forecasts": skipped_forecasts,
+            },
             indent=2,
         ).encode()
         st.download_button(
-            label="Download Kupiec Results JSON",
-            data=kupiec_json,
-            file_name="kupiec_test.json",
+            label="Download Backtest Summary JSON",
+            data=backtest_json,
+            file_name="backtest_summary.json",
             mime="application/json",
         )
 

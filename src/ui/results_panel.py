@@ -7,7 +7,6 @@ from __future__ import annotations
 import io
 import json
 
-import numpy as np
 import pandas as pd
 import streamlit as st
 
@@ -144,12 +143,14 @@ def render_results_panel(
 
     # ── Downloads ─────────────────────────────────────────────────────────────
     st.subheader("Downloads")
-    _render_downloads(results, portfolio_value, var_confidence, risk_params or {})
+    _render_downloads(results, portfolio_value, prices, lookback_days, var_confidence, risk_params or {})
 
 
 def _render_downloads(
     results: dict,
     portfolio_value: float,
+    prices: pd.DataFrame,
+    lookback_days: int,
     var_confidence: float,
     risk_params: dict,
 ) -> None:
@@ -159,9 +160,21 @@ def _render_downloads(
     # JSON summary
     summary = {
         "portfolio_value": portfolio_value,
+        "pricing_date": (
+            prices.index[-1].date().isoformat() if hasattr(prices.index[-1], "date") else None
+        ),
         "var_confidence": var_confidence,
+        "es_confidence": risk_params.get("es_confidence"),
+        "lookback_days": lookback_days,
+        "horizon_days": risk_params.get("horizon_days"),
+        "estimator": risk_params.get("estimator"),
+        "ewma_N": risk_params.get("ewma_N"),
+        "n_simulations": risk_params.get("n_simulations"),
         "calibration_mode": risk_params.get("calibration_mode", "historical"),
+        "manual_market_params_supplied": risk_params.get("manual_market_params") is not None,
         "option_vol_shock_mode": risk_params.get("option_vol_shock_mode", "fixed"),
+        "option_vol_shock_beta": risk_params.get("option_vol_shock_beta"),
+        "option_vol_shock_floor": risk_params.get("option_vol_shock_floor"),
         "historical": {
             "var": results["historical"]["var"],
             "es": results["historical"]["es"],
@@ -190,19 +203,28 @@ def _render_downloads(
         )
 
     # Losses CSV
-    losses_data: dict[str, np.ndarray] = {}
+    loss_rows: list[dict[str, object]] = []
     if "losses" in results["historical"]:
-        losses_data["historical_loss"] = results["historical"]["losses"]
+        for idx, loss in enumerate(results["historical"]["losses"], start=1):
+            loss_rows.append(
+                {
+                    "method": "historical",
+                    "scenario_id": idx,
+                    "loss": float(loss),
+                }
+            )
     if "losses" in results["monte_carlo"]:
-        losses_data["mc_loss"] = results["monte_carlo"]["losses"]
+        for idx, loss in enumerate(results["monte_carlo"]["losses"], start=1):
+            loss_rows.append(
+                {
+                    "method": "monte_carlo",
+                    "scenario_id": idx,
+                    "loss": float(loss),
+                }
+            )
 
-    if losses_data:
-        max_len = max(len(v) for v in losses_data.values())
-        padded = {
-            k: np.pad(v, (0, max_len - len(v)), constant_values=np.nan)
-            for k, v in losses_data.items()
-        }
-        losses_df = pd.DataFrame(padded)
+    if loss_rows:
+        losses_df = pd.DataFrame(loss_rows)
         csv_bytes = losses_df.to_csv(index=False).encode()
 
         with col2:

@@ -358,6 +358,7 @@ class TestRiskEngineServiceGaps:
         assert res["backtest_df"].empty
         assert res["kupiec"]["n_observations"] == 0
         assert res["reason"] is not None
+        assert res["basel"] is None
 
     def test_service_run_backtest_has_kupiec(self, sample_prices, pf_stocks):
         svc = RiskEngineService(
@@ -368,6 +369,9 @@ class TestRiskEngineServiceGaps:
         res = svc.run_backtest(model="historical")
         assert res["model"] == "historical"
         assert res["kupiec"]["n_observations"] > 0
+        assert "conditional_coverage" in res
+        assert "severity" in res
+        assert "basel" in res
         assert "n_skipped_forecasts" in res
 
     def test_service_run_all_rejects_insufficient_history(self, sample_prices, pf_stocks):

@@ -4,7 +4,7 @@
 
 The `MATH5320` repository is a modular Python and Streamlit risk engine for portfolios of stocks and European options. It keeps the UI, data loading, portfolio objects, pricing logic, risk models, orchestration, and tests separate. That is the right setup for this kind of project because the quantitative functions can be tested without the Streamlit layer, and the UI stays thin.
 
-The README describes the main application flow directly: portfolio input, market data loading, risk settings, risk analysis, and VaR backtesting. The code follows that same layout. `app.py` controls the top-level Streamlit flow, `src/ui/` contains the panel logic, `src/services/` handles orchestration, `src/portfolio/` and `src/schemas.py` define the portfolio objects, `src/pricing/` and `src/risk/` hold the analytical logic, and `tests/` validates the implementation.
+The README describes the main application flow directly: portfolio input, market data loading, risk settings, risk analysis, and VaR backtesting. The code follows that same layout. `app.py` controls the top-level Streamlit flow, `src/ui/` contains the panel logic, `src/services/` handles orchestration, `src/portfolio/` and `src/schemas.py` define the portfolio objects, `src/pricing/` and `src/risk/` hold the analytical logic, and `tests/` validates the implementation. The backtesting tab and download layer now expose the richer diagnostic set already present in the backend rather than reducing everything to Kupiec only.
 
 The software architecture fits this project because it:
 

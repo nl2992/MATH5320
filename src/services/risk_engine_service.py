@@ -11,7 +11,13 @@ import pandas as pd
 
 from src.data.validation import validate_history_requirements, validate_price_dataframe
 from src.portfolio.portfolio import portfolio_value
-from src.risk.backtest import kupiec_test, run_backtest
+from src.risk.backtest import (
+    basel_traffic_light,
+    conditional_coverage_test,
+    exception_severity,
+    kupiec_test,
+    run_backtest,
+)
 from src.risk.historical import historical_var_es
 from src.risk.monte_carlo import monte_carlo_var_es
 from src.risk.parametric import parametric_var_es
@@ -192,16 +198,45 @@ class RiskEngineService:
                 "n_observations": 0,
                 "n_exceptions": 0,
             }
+            conditional_coverage = {
+                **kupiec,
+                "n00": 0,
+                "n01": 0,
+                "n10": 0,
+                "n11": 0,
+                "pi_01": float("nan"),
+                "pi_11": float("nan"),
+                "pi_hat": float("nan"),
+                "lr_ind": float("nan"),
+                "p_value_ind": float("nan"),
+                "reject_independence": False,
+                "lr_cc": float("nan"),
+                "p_value_cc": float("nan"),
+                "reject_cc": False,
+            }
+            basel = None
         else:
             kupiec = kupiec_test(
                 n_observations=len(bt_df),
                 n_exceptions=int(bt_df["exception"].sum()),
                 var_confidence=self.var_confidence,
             )
+            conditional_coverage = conditional_coverage_test(
+                n_observations=len(bt_df),
+                n_exceptions=int(bt_df["exception"].sum()),
+                var_confidence=self.var_confidence,
+                exceptions=bt_df["exception"].to_numpy(),
+            )
+            basel = basel_traffic_light(int(bt_df["exception"].sum()))
+
+        severity = exception_severity(bt_df)
 
         return {
             "backtest_df": bt_df,
             "kupiec": kupiec,
+            "conditional_coverage": conditional_coverage,
+            "basel": basel,
+            "severity": severity,
             "model": model,
             "reason": bt_df.attrs.get("reason") if bt_df.empty else None,
             "skipped_forecasts": bt_df.attrs.get("skipped_forecasts", []),
