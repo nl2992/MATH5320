@@ -16,3 +16,4 @@ dist/
 build/
 .claude/
 MATH5320_report_backbone.docx
+submission/working/*.docx

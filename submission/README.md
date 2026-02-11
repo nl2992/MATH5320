@@ -17,6 +17,7 @@ This folder contains all deliverables and supporting evidence for the MATH GR 53
 | `demo.md` | Front-end workflow trace with screenshots |
 | `coverage_report/` | Coverage output generated from pytest-cov |
 | `test_artifacts/` | Captured test outputs and reproducibility artifacts |
+| `working/` | Local drafting notes only, not part of the graded package |
 
 ## Quick start
 
