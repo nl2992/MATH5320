@@ -75,7 +75,7 @@ flowchart TB
     CRS --> COUT["hazard · Merton · CDS · CVA"]
     RGS --> ROUT["RWA · capital · DFAST"]
 
-    TST["tests/ · 610 unit tests"] -. exercise .-> CORE & EXT
+    TST["tests/ · 622 unit tests"] -. exercise .-> CORE & EXT
     NB["notebooks/"] -. exercise .-> CORE & EXT
 ```
 

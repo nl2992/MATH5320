@@ -6,7 +6,7 @@ The test results show broad coverage across the repository’s no-network unit s
 
 Observed local no-network suite result:
 
-- `610 passed`
+- `622 passed`
 - `0 failed`
 - `0 skipped`
 
@@ -130,8 +130,8 @@ pip freeze > submission/test_artifacts/requirements_freeze.txt
 
 | Metric | Result |
 |---|---:|
-| No-network tests collected | 610 |
-| No-network tests passed | 610 |
+| No-network tests collected | 622 |
+| No-network tests passed | 622 |
 | No-network tests failed | 0 |
 | No-network tests skipped | 0 |
 | Total statement coverage | 96% |

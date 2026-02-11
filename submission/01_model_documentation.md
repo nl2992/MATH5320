@@ -25,6 +25,7 @@
 | 1.2 | May 2026 | `79111d8` | Raised test suite to 610 tests; improved coverage to 96%; added option-vol shock mode |
 | 1.3 | May 2026 | `23f39ba` | Final submission: removed stale root drafts; all reports consolidated under `submission/` |
 | 1.4 | May 2026 | `f154109` | Source state used for the refreshed evidence bundle and live integration reruns |
+| 1.5 | May 2026 | `754df26` | Test suite grown to 622 tests; architecture diagrams corrected; submission docs finalised |
 
 ---
 
@@ -327,7 +328,7 @@ flowchart TB
     CRS --> CRD
     RGS --> REG
 
-    TST["tests/ · 610 unit tests"] -. exercise .-> CORE & EXT
+    TST["tests/ · 622 unit tests"] -. exercise .-> CORE & EXT
     NB["notebooks/"] -. exercise .-> CORE & EXT
 ```
 
@@ -1078,12 +1079,12 @@ The following monitoring checks should be applied whenever the system is used wi
 | Covariance matrix eigenvalue stability | When switching data period | Confirm positive-semidefinite; check for near-singular matrices |
 | VaR sign check (VaR > 0) | Each model run | Indicates degenerate portfolio or calibration error; halt and inspect |
 | Price data freshness | Before each analysis run | Confirm data end date matches intended evaluation date |
-| Coverage report | After any code change | Rerun full test suite; confirm 610 tests pass and coverage >= 96% |
+| Coverage report | After any code change | Rerun full test suite; confirm 622 tests pass and coverage >= 96% |
 | Commit hash recorded | Before any report produced | Record hash in report header for traceability |
 
 ## Validation Opinion and Use Recommendation
 
-Based on the documented model methodology, implementation review, 610-test no-network unit suite (96% statement coverage), integration tests against live market data, and walk-forward backtesting evidence, the following validation opinion is issued.
+Based on the documented model methodology, implementation review, 622-test no-network unit suite (96% statement coverage), integration tests against live market data, and walk-forward backtesting evidence, the following validation opinion is issued.
 
 **Opinion: Approved with limitations for intended academic use.**
 
@@ -1105,7 +1106,7 @@ We correctly implemented the required portfolio risk engine. All three VaR and E
 
 **Required controls before any reuse of this system:**
 
-1. Rerun the full test suite (`python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py`) and confirm 610 tests pass.
+1. Rerun the full test suite (`python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py`) and confirm 622 tests pass.
 2. Record the commit hash in any report produced from this system.
 3. Review backtesting exception counts and Christoffersen clustering diagnostics before accepting VaR estimates.
 4. Disclose all manual calibration assumptions in any output.
@@ -1117,7 +1118,7 @@ We correctly implemented the required portfolio risk engine. All three VaR and E
 
 ### Conclusion
 
-We met the stated objectives for MATH GR 5320. The required stock-and-option risk engine is implemented, tested, and validated against course fixtures. The layered architecture keeps testing straightforward and notebook reuse possible. At 610 tests with 96% coverage, the suite provides solid numerical evidence for the core model claims.
+We met the stated objectives for MATH GR 5320. The required stock-and-option risk engine is implemented, tested, and validated against course fixtures. The layered architecture keeps testing straightforward and notebook reuse possible. At 622 tests with 96% coverage, the suite provides solid numerical evidence for the core model claims.
 
 We also went beyond the baseline requirements by including extension modules for credit risk, CVA, counterparty mitigation, and regulatory capital. These are tested and documented but are not within the core grading scope.
 

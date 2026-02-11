@@ -22,10 +22,10 @@ This folder contains all deliverables and supporting evidence for the MATH GR 53
 ## Quick start
 
 ```bash
-# Run all no-network unit tests (610 passed in the refreshed evidence run)
+# Run all no-network unit tests (622 pass as of final submission state)
 python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py
 
-# Run with coverage reporting (96% statement coverage in the refreshed evidence run)
+# Run with coverage reporting (96% statement coverage)
 python -m pytest tests/ --cov=src --cov-report=term-missing \
   --ignore=tests/integration_test.py \
   --ignore=tests/integration_test_formula_sheet.py
