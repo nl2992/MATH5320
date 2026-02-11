@@ -495,7 +495,7 @@ ES_alpha  = -m + s * phi(z_alpha) / (1 - alpha_es)
 
 where `alpha_es` is the ES confidence level and `z_alpha` is the normal quantile.
 
-Important implementation note: the code allows ES confidence to differ from VaR confidence. This should be documented because some simplified treatments silently assume a single common confidence level.
+Important implementation note: the code allows ES confidence to differ from VaR confidence. This is now labeled explicitly in the app and in exported summaries because some simplified treatments silently assume a single common confidence level.
 
 The current implementation uses corrected delta-dollar option exposure:
 

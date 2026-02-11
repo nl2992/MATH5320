@@ -111,6 +111,13 @@ def render_risk_settings(portfolio_tickers: list[str] | None = None) -> dict:
             disabled=(estimator == "window"),
         )
 
+    if abs(float(es_confidence) - float(var_confidence)) > 1e-12:
+        st.info(
+            "VaR and ES are currently using different confidence levels. "
+            "That is supported here, but ES should then be read as a separate "
+            "tail measure rather than 'average loss beyond the displayed VaR'."
+        )
+
     n_simulations = st.number_input(
         "Monte Carlo simulations",
         min_value=1_000,

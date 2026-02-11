@@ -43,6 +43,9 @@ def render_results_panel(
     var_confidence : float
         VaR confidence level.
     """
+    risk_params = risk_params or {}
+    es_confidence = float(risk_params.get("es_confidence", var_confidence))
+
     # ── Portfolio value ────────────────────────────────────────────────────────
     st.subheader("Portfolio Summary")
     col1, col2, col3 = st.columns(3)
@@ -52,9 +55,16 @@ def render_results_panel(
         f"${results['historical']['var']:,.2f}",
     )
     col3.metric(
-        f"Historical ES",
+        f"Historical ES ({es_confidence:.1%})",
         f"${results['historical']['es']:,.2f}",
     )
+
+    if abs(es_confidence - var_confidence) > 1e-12:
+        st.info(
+            f"VaR is shown at {var_confidence:.1%}, while ES is shown at "
+            f"{es_confidence:.1%}. In that case ES is not the mean tail loss "
+            "beyond the displayed VaR threshold."
+        )
 
     pv_ok = portfolio_value is not None and portfolio_value > 0
     if not pv_ok:
@@ -72,7 +82,7 @@ def render_results_panel(
             results["parametric"]["var"],
             results["monte_carlo"]["var"],
         ],
-        "ES ($)": [
+        f"ES ($, {es_confidence:.1%})": [
             results["historical"]["es"],
             results["parametric"]["es"],
             results["monte_carlo"]["es"],
@@ -85,7 +95,7 @@ def render_results_panel(
             results["monte_carlo"]["var"] / portfolio_value * 100,
         ]
     comparison_df = pd.DataFrame(comparison_cols)
-    fmt = {"VaR ($)": "${:,.2f}", "ES ($)": "${:,.2f}"}
+    fmt = {"VaR ($)": "${:,.2f}", f"ES ($, {es_confidence:.1%})": "${:,.2f}"}
     if pv_ok:
         fmt["VaR / Portfolio (%)"] = "{:.2f}%"
     st.dataframe(
@@ -143,7 +153,7 @@ def render_results_panel(
 
     # ── Downloads ─────────────────────────────────────────────────────────────
     st.subheader("Downloads")
-    _render_downloads(results, portfolio_value, prices, lookback_days, var_confidence, risk_params or {})
+    _render_downloads(results, portfolio_value, prices, lookback_days, var_confidence, risk_params)
 
 
 def _render_downloads(
@@ -165,6 +175,11 @@ def _render_downloads(
         ),
         "var_confidence": var_confidence,
         "es_confidence": risk_params.get("es_confidence"),
+        "es_semantics": (
+            "same_threshold_as_var"
+            if risk_params.get("es_confidence", var_confidence) == var_confidence
+            else "separate_es_confidence"
+        ),
         "lookback_days": lookback_days,
         "horizon_days": risk_params.get("horizon_days"),
         "estimator": risk_params.get("estimator"),

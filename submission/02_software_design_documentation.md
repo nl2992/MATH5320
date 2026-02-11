@@ -366,7 +366,7 @@ Important accuracy note: the schema tables below describe the intended input con
 | Lookback window | integer | Positive and sufficiently large | Positive value is expected; infeasible windows surface later as insufficient-history behavior |
 | Horizon | integer | Positive | Positive value is expected; return helpers reject invalid horizons |
 | VaR confidence | float | In `(0,1)` | Values in `(0,1)` are expected; behavior is covered in tests |
-| ES confidence | float | In `(0,1)` | Values in `(0,1)` are expected; separate-confidence behavior is covered in tests |
+| ES confidence | float | In `(0,1)` | Values in `(0,1)` are expected; separate-confidence behavior is covered in tests and labeled explicitly in the UI/exports |
 | Estimator type | enum | `window` or `ewma` | Supported values are assumed by orchestration |
 | EWMA control | numeric | Positive if used | Positive value is expected |
 | Calibration mode | enum | `historical` or `manual` | UI constrains choices and tests cover manual mode |
