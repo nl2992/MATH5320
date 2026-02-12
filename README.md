@@ -289,5 +289,3 @@ The final submission package is in `submission/`.
 | `submission/demo.md` | Front-end workflow trace with screenshots |
 | `submission/advanced_demo.ipynb` | Advanced demo: equal-weight M7 portfolio, §1-§10 including manual calibration and option-vol shock checks |
 | `submission/advanced_demo.md` | M7 portfolio front-end trace with screenshots plus notebook-only proof for prompt-sensitive checks |
-
-Local drafting files that are not part of the graded package live under `submission/working/`. If you see `MATH5320_report_backbone.docx`, that is just a private Word scaffold, not a submission artifact.
