@@ -56,35 +56,51 @@ def run_backtest(
     option_vol_shock_beta: float = 1.0,
     option_vol_shock_floor: float = 0.05,
 ) -> pd.DataFrame:
-    """
-    Walk-forward VaR backtest.
+    """Walk-forward VaR backtest with exception flagging.
 
-    For each date t in the test window:
-        - Fit the model on prices up to and including t.
-        - Forecast 1-step (horizon_days) VaR.
-        - Realised loss = V(t) − V(t + horizon_days).
-        - Exception = 1 if realised loss > VaR.
+    For each forecast date t in the test window:
+        1. Fit the model on all prices up to and including t.
+        2. Forecast VaR for a horizon of horizon_days trading days.
+        3. Compute realized loss = V(t) − V(t + horizon_days).
+        4. Flag exception = 1 if realized_loss > var_forecast.
 
-    The test window starts at index (lookback_days + horizon_days) so that
-    both the estimation window and the realised return window are fully available.
+    The test window starts at index lookback_days (so the first window has a
+    full lookback) and ends at len(dates) − horizon_days (so the last realized
+    return window is complete).
 
-    Parameters
-    ----------
-    model : str
-        "historical" | "parametric" | "monte_carlo"
+    Args:
+        portfolio (Portfolio): Stock and option positions to backtest.
+        prices (pd.DataFrame): Full aligned price history (DatetimeIndex × tickers).
+            Must cover at least lookback_days + horizon_days + 1 rows.
+        pricing_date (date): Fallback valuation date for option time-to-maturity
+            (used when a per-row date cannot be inferred from the index).
+        lookback_days (int): Estimation window size in trading days.
+        horizon_days (int): VaR forecast horizon in trading days (≥ 1).
+        var_confidence (float): VaR tail probability, e.g. 0.99 for 99% VaR.
+        model (str): Risk model to use. One of ``"historical"``, ``"parametric"``,
+            or ``"monte_carlo"``.
+        estimator (str): ``"window"`` or ``"ewma"`` — mean/cov estimator for
+            parametric and Monte Carlo models.
+        ewma_N (int): EWMA half-life parameter N; only used when estimator=``"ewma"``.
+        n_simulations (int): MC paths per forecast; only used when model=``"monte_carlo"``.
+        calibration_mode (str): ``"historical"`` or ``"manual"``.
+        manual_market_params (dict | None): Required when calibration_mode=``"manual"``.
+        option_vol_shock_mode (str): ``"fixed"`` or ``"underlying_beta"``.
+        option_vol_shock_beta (float): Beta for vol shock mode.
+        option_vol_shock_floor (float): Minimum shocked vol.
 
-    Returns
-    -------
-    pd.DataFrame with columns:
-        date, var_forecast, realized_loss, exception
+    Returns:
+        pd.DataFrame: One row per completed forecast date with columns:
+            - ``"date"`` (pd.Timestamp): Forecast date.
+            - ``"var_forecast"`` (float): Predicted VaR in dollars.
+            - ``"realized_loss"`` (float): Actual loss V(t) − V(t+h) in dollars.
+            - ``"exception"`` (int): 1 if realized_loss > var_forecast, else 0.
 
-    Notes
-    -----
-    If an individual forecast date fails, the date is skipped but the failure
-    is recorded in ``DataFrame.attrs`` under:
-        skipped_forecasts      : list[dict]
-        n_skipped_forecasts    : int
-        skipped_forecast_dates : list[pd.Timestamp]
+        If the backtest window is empty (not enough data), returns an empty
+        DataFrame with ``df.attrs["reason"]`` explaining why.
+        Skipped forecast dates (individual failures) are recorded in
+        ``df.attrs["skipped_forecasts"]``, ``df.attrs["n_skipped_forecasts"]``,
+        and ``df.attrs["skipped_forecast_dates"]``.
     """
     log_ret = compute_log_returns(prices)
     dates = log_ret.index  # dates for which we have a return
@@ -278,28 +294,29 @@ def kupiec_test(
     n_exceptions: int,
     var_confidence: float,
 ) -> dict:
-    """
-    Kupiec proportions-of-failures (POF) test.
+    """Kupiec proportions-of-failures (POF) unconditional coverage test.
 
-    Parameters
-    ----------
-    n_observations : int
-        Total number of VaR forecasts (N).
-    n_exceptions : int
-        Number of exceptions (x).
-    var_confidence : float
-        VaR confidence level, e.g. 0.99.
+    Tests H0: the true exception rate equals the nominal rate (1 − var_confidence).
+    The likelihood-ratio statistic LR_uc ~ χ²(1) under H0.
 
-    Returns
-    -------
-    dict with keys:
-        alpha            : float — expected exception rate
-        p_hat            : float — observed exception rate
-        lr_stat          : float — likelihood-ratio test statistic
-        p_value          : float — p-value under χ²(1)
-        reject_h0        : bool  — True if H0 rejected at 5% level
-        n_observations   : int
-        n_exceptions     : int
+    Args:
+        n_observations (int): Total number of VaR forecasts in the backtest window (N).
+        n_exceptions (int): Observed number of exceptions (x), where exception means
+            realized_loss > VaR_forecast.
+        var_confidence (float): VaR confidence level, e.g. 0.99 for 99% VaR.
+            The expected exception rate is α = 1 − var_confidence.
+
+    Returns:
+        dict: Test results with keys:
+            - ``"alpha"`` (float): Expected exception rate (1 − var_confidence).
+            - ``"p_hat"`` (float): Observed exception rate x / N.
+            - ``"lr_stat"`` (float): Kupiec LR test statistic (≥ 0).
+            - ``"p_value"`` (float): p-value under χ²(1); small = reject.
+            - ``"reject_h0"`` (bool): True if p_value < 0.05.
+            - ``"n_observations"`` (int): N passed in.
+            - ``"n_exceptions"`` (int): x passed in.
+
+        If N = 0, all numeric results are NaN and reject_h0 is False.
     """
     alpha = 1.0 - var_confidence  # expected exception rate
     N = n_observations
@@ -349,29 +366,27 @@ def kupiec_test(
 def christoffersen_test(
     exceptions: "np.ndarray | list[int]",
 ) -> dict:
-    """
-    Christoffersen (1998) independence test for VaR exception clustering.
+    """Christoffersen (1998) independence test for VaR exception clustering.
 
-    Tests whether consecutive exceptions are i.i.d. Bernoulli, i.e. that
-    exceptions are not clustered in time.
+    Tests H0: consecutive exception indicators are i.i.d. Bernoulli (no
+    clustering). The LR_ind statistic ~ χ²(1) under H0.
 
-    The test statistic LR_ind ~ χ²(1) under H0 (independent exceptions).
-    The combined conditional-coverage statistic LR_cc = LR_uc + LR_ind ~ χ²(2).
+    Args:
+        exceptions (array-like of int): Sequence of 0/1 exception indicators
+            ordered by date, as produced by the ``"exception"`` column of
+            ``run_backtest``.
 
-    Parameters
-    ----------
-    exceptions : array-like of 0/1
-        Sequence of exception indicators from the backtest.
+    Returns:
+        dict: Test results with keys:
+            - ``"n00"``, ``"n01"``, ``"n10"``, ``"n11"`` (int): Transition counts.
+            - ``"pi_01"`` (float): P(exception | previous non-exception).
+            - ``"pi_11"`` (float): P(exception | previous exception).
+            - ``"pi_hat"`` (float): Unconditional exception rate.
+            - ``"lr_ind"`` (float): Independence LR statistic (≥ 0).
+            - ``"p_value_ind"`` (float): p-value under χ²(1).
+            - ``"reject_independence"`` (bool): True if p_value_ind < 0.05.
 
-    Returns
-    -------
-    dict with keys:
-        n00, n01, n10, n11  : int  — transition counts
-        pi_01, pi_11        : float — conditional exception rates
-        pi_hat              : float — unconditional exception rate
-        lr_ind              : float — independence LR statistic ~ χ²(1)
-        p_value_ind         : float — p-value for independence test
-        reject_independence : bool  — True if H0 rejected at 5%
+        Returns NaN statistics if fewer than 2 observations are provided.
     """
     exc = np.asarray(exceptions, dtype=int)
     n = len(exc)
@@ -433,17 +448,23 @@ def conditional_coverage_test(
     var_confidence: float,
     exceptions: "np.ndarray | list[int]",
 ) -> dict:
-    """
-    Christoffersen (1998) conditional-coverage test.
+    """Christoffersen (1998) conditional-coverage test (joint UC + independence).
 
-    Combines the Kupiec unconditional-coverage test (LR_uc ~ χ²(1)) and the
-    independence test (LR_ind ~ χ²(1)) into a joint test:
-        LR_cc = LR_uc + LR_ind ~ χ²(2)
+    Combines the Kupiec unconditional-coverage LR_uc ~ χ²(1) and the
+    Christoffersen independence LR_ind ~ χ²(1) into:
+        LR_cc = LR_uc + LR_ind ~ χ²(2) under H0.
 
-    Returns a dict merging the Kupiec and Christoffersen results, plus:
-        lr_cc        : float — combined statistic
-        p_value_cc   : float — p-value under χ²(2)
-        reject_cc    : bool  — True if H0 rejected at 5%
+    Args:
+        n_observations (int): Total forecast count (N).
+        n_exceptions (int): Total exception count (x).
+        var_confidence (float): VaR confidence level.
+        exceptions (array-like of int): Ordered 0/1 exception sequence.
+
+    Returns:
+        dict: Merged result of ``kupiec_test`` and ``christoffersen_test``, plus:
+            - ``"lr_cc"`` (float): Combined conditional-coverage LR statistic.
+            - ``"p_value_cc"`` (float): p-value under χ²(2).
+            - ``"reject_cc"`` (bool): True if p_value_cc < 0.05.
     """
     kupiec = kupiec_test(n_observations, n_exceptions, var_confidence)
     christo = christoffersen_test(exceptions)
@@ -472,31 +493,26 @@ def conditional_coverage_test(
 # ── Basel Traffic-Light Classification ────────────────────────────────────────
 
 def basel_traffic_light(n_exceptions: int) -> dict:
-    """
-    Basel II/III traffic-light classification of VaR model quality.
+    """Basel II/III traffic-light zone and capital multiplier for a VaR model.
 
-    Based on the number of exceptions in a 250-day window:
-        0–4  : GREEN  — model likely adequate
-        5–9  : YELLOW — model under scrutiny; capital multiplier raised
-        10+  : RED    — model rejected; internal model approval revoked
+    Classifies model quality based on exception count in a 250-day window:
+        0–4  → GREEN  (model acceptable, multiplier 3.00)
+        5–9  → YELLOW (model under scrutiny, multiplier 3.40–3.85)
+        10+  → RED    (model rejected, multiplier 4.00)
 
-    The capital multiplier m_c is given by the Basel table:
-        GREEN  : m_c = 3.00
-        YELLOW : m_c ranges from 3.40 (5 exceptions) to 3.85 (9 exceptions)
-        RED    : m_c = 4.00
+    Args:
+        n_exceptions (int): Number of VaR exceptions observed in the 250-day
+            backtesting window (must be ≥ 0).
 
-    Parameters
-    ----------
-    n_exceptions : int
-        Number of VaR exceptions in the 250-day observation window.
+    Returns:
+        dict: Classification with keys:
+            - ``"n_exceptions"`` (int): Input exception count.
+            - ``"zone"`` (str): ``"GREEN"``, ``"YELLOW"``, or ``"RED"``.
+            - ``"capital_multiplier"`` (float): Basel capital add-on multiplier.
+            - ``"description"`` (str): Plain-English interpretation.
 
-    Returns
-    -------
-    dict with keys:
-        n_exceptions      : int
-        zone              : str  — "GREEN", "YELLOW", or "RED"
-        capital_multiplier: float
-        description       : str
+    Raises:
+        ValueError: If n_exceptions < 0.
     """
     _yellow_multipliers = {
         5: 3.40, 6: 3.50, 7: 3.65, 8: 3.75, 9: 3.85,
@@ -529,28 +545,31 @@ def basel_traffic_light(n_exceptions: int) -> dict:
 # ── Exception Severity Diagnostics ───────────────────────────────────────────
 
 def exception_severity(backtest_df: pd.DataFrame) -> dict:
-    """
-    Compute summary statistics for VaR exceptions.
+    """Summary statistics describing how bad the VaR exceptions were.
 
-    Parameters
-    ----------
-    backtest_df : pd.DataFrame
-        Output of ``run_backtest`` with columns:
-        ``var_forecast``, ``realized_loss``, ``exception``.
+    Supplements the exception count with gap and loss severity metrics, which
+    are useful for understanding whether exceptions were marginal or extreme.
 
-    Returns
-    -------
-    dict with keys:
-        n_observations          : int
-        n_exceptions            : int
-        exception_rate          : float  — observed / expected ratio
-        expected_exceptions     : float  — always = n_obs * (1 - conf) but
-                                           conf is inferred from mean VaR
-                                           sign pattern; here raw count
-        exception_gap           : float  — mean (loss − VaR) across exceptions
-        average_exception_loss  : float  — mean realized_loss on exception days
-        max_exception_loss      : float  — worst realized loss on exception days
-        mean_loss_given_exception: float — average_exception_loss (alias)
+    Args:
+        backtest_df (pd.DataFrame): Output of ``run_backtest`` containing at
+            minimum the columns ``"var_forecast"``, ``"realized_loss"``,
+            and ``"exception"`` (0/1 integer).
+
+    Returns:
+        dict: Severity statistics with keys:
+            - ``"n_observations"`` (int): Total forecast rows.
+            - ``"n_exceptions"`` (int): Number of exception days.
+            - ``"exception_rate"`` (float): n_exceptions / n_observations.
+            - ``"exception_gap"`` (float): Mean of (realized_loss − var_forecast)
+              on exception days — how far losses exceeded the VaR forecast.
+            - ``"average_exception_loss"`` (float): Mean realized_loss on
+              exception days.
+            - ``"max_exception_loss"`` (float): Worst realized_loss on any
+              exception day.
+            - ``"mean_loss_given_exception"`` (float): Alias for
+              average_exception_loss.
+
+        Returns zeros / NaN for all numeric fields if backtest_df is empty.
     """
     if backtest_df.empty:
         return {

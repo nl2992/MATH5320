@@ -24,25 +24,28 @@ def cva_discrete(
     marginal_default_probs: Sequence[float],
     R: float,
 ) -> float:
-    """
-    Discrete CVA.
+    """Discrete counterparty valuation adjustment (formula-sheet §11).
 
-        CVA = (1 − R) Σ_i E_i p_i
+    CVA = (1 − R) Σ_i E_i · p_i
 
-    Parameters
-    ----------
-    exposures : sequence[float]
-        Positive exposure at each grid point. Must be non-negative; typically
-        ``max(0, mark-to-market)`` at each future time.
-    marginal_default_probs : sequence[float]
-        Per-interval marginal default probability. Must be non-negative and
-        consistent with some survival curve (sum ≤ 1).
-    R : float
-        Recovery rate in [0, 1].
+    where E_i is the expected-positive exposure at time bucket i and p_i is
+    the marginal default probability for that interval.
 
-    Returns
-    -------
-    CVA in the same units as ``exposures``.
+    Args:
+        exposures (Sequence[float]): Expected-positive exposure at each grid
+            point.  Typically E_i = max(MtM_i, 0).  Must be non-negative;
+            length must match ``marginal_default_probs``.
+        marginal_default_probs (Sequence[float]): Per-interval marginal
+            default probability P(t_{i-1} < τ ≤ t_i).  Must be non-negative
+            and sum to ≤ 1.
+        R (float): Recovery rate ∈ [0, 1].
+
+    Returns:
+        float: CVA in the same currency units as ``exposures``.
+
+    Raises:
+        ValueError: If array lengths differ, any exposure is negative, the
+            default probs are invalid, or ``R`` outside [0, 1].
     """
     exp_arr = np.asarray(exposures, dtype=float)
     pd_arr = np.asarray(marginal_default_probs, dtype=float)
@@ -72,31 +75,33 @@ def risky_bond_price(
     R: float,
     notional: float = 100.0,
 ) -> float:
-    """
-    Discrete approximation to the §11 risky coupon-bond price.
+    """Discrete approximation to the §11 risky coupon-bond price.
 
-    Parameters
-    ----------
-    coupon : float
-        Annual coupon rate (e.g. 0.05 for 5%).
-    freq : int
-        Coupon payments per year (e.g. 2 for semi-annual).
-    times : sequence[float]
-        Coupon payment dates in years, strictly increasing; the final entry is
-        the bond's maturity.
-    r : float
-        Flat continuously-compounded discount rate.
-    survival_of_t : sequence[float]
-        Survival probability at each time in ``times``. Same length.
-    R : float
-        Recovery rate (paid on notional at default, approximated midpoint on
-        each coupon interval).
-    notional : float
-        Face amount.
+    V = Σ_i (C/f) D(t_i) s(t_i) + N D(t_n) s(t_n) + recovery integral
 
-    Returns
-    -------
-    Present value of the risky bond.
+    where the recovery integral is approximated by a midpoint sum over each
+    coupon interval.
+
+    Args:
+        coupon (float): Annual coupon rate as a decimal (e.g. 0.05 for 5%).
+        freq (int): Coupon payments per year (e.g. 2 = semi-annual).
+            Must be > 0.
+        times (Sequence[float]): Coupon payment dates in years, strictly
+            increasing; the final entry is the bond maturity.
+        r (float): Flat continuously-compounded risk-free discount rate.
+        survival_of_t (Sequence[float]): Survival probability at each entry
+            in ``times``.  Must have the same length and all values in [0, 1].
+        R (float): Recovery rate on notional, paid at default mid-interval.
+            Must be in [0, 1].
+        notional (float): Bond face value (default 100.0).
+
+    Returns:
+        float: Present value of the risky coupon bond.
+
+    Raises:
+        ValueError: If ``times`` and ``survival_of_t`` differ in length,
+            ``times`` is not strictly increasing, survival values are outside
+            [0, 1], ``R`` outside [0, 1], or ``freq ≤ 0``.
     """
     t = np.asarray(times, dtype=float)
     s = np.asarray(survival_of_t, dtype=float)
@@ -138,23 +143,20 @@ def epe_profile_from_mc(
     V_paths: np.ndarray,
     V0: float,
 ) -> np.ndarray:
-    """
-    Build an expected-positive-exposure profile from simulated portfolio values.
+    """Build an expected-positive-exposure (EPE) profile from simulated portfolio values.
 
-    Parameters
-    ----------
-    V_paths : np.ndarray
-        Array of simulated future portfolio values at one or more horizons —
-        shape ``(n_paths,)`` for a single horizon, or ``(n_paths, n_horizons)``
-        for a time profile.
-    V0 : float
-        Current portfolio value.
+    EPE_i = E[max(V_{T_i} − V0, 0)]
 
-    Returns
-    -------
-    np.ndarray
-        EPE at each horizon: ``E[max(V_T − V0, 0)]``, length ``n_horizons``.
-        For a 1-D input, returns a length-1 array.
+    Args:
+        V_paths (np.ndarray): Simulated future portfolio values.  Shape
+            ``(n_paths,)`` for a single horizon, or ``(n_paths, n_horizons)``
+            for a term structure of EPE.
+        V0 (float): Current portfolio mark-to-market value used as the
+            "at-the-money" reference.
+
+    Returns:
+        np.ndarray: EPE at each horizon — shape ``(n_horizons,)`` or a
+            length-1 array for 1-D input.
     """
     arr = np.asarray(V_paths, dtype=float)
     if arr.ndim == 1:
@@ -164,15 +166,28 @@ def epe_profile_from_mc(
 
 
 def positive_exposure(values: np.ndarray) -> np.ndarray:
-    """max(V, 0) element-wise."""
+    """Clip portfolio values to their positive part element-wise.
+
+    Args:
+        values (np.ndarray): Array of mark-to-market values.
+
+    Returns:
+        np.ndarray: max(V, 0) for each element; same shape as ``values``.
+    """
     return np.maximum(np.asarray(values, dtype=float), 0.0)
 
 
 def epe(exposure_paths: np.ndarray) -> np.ndarray:
-    """
-    Expected positive exposure.
-    exposure_paths shape: (n_scenarios, n_times) or (n_scenarios,).
-    Returns mean(max(exposure, 0)) along axis 0 → shape (n_times,) or scalar.
+    """Compute expected positive exposure from a matrix of scenario exposures.
+
+    Args:
+        exposure_paths (np.ndarray): Scenario exposures.  Shape
+            ``(n_scenarios, n_times)`` for a term structure, or
+            ``(n_scenarios,)`` for a single horizon.
+
+    Returns:
+        np.ndarray | float: mean(max(exposure, 0)) along the scenario axis.
+            Shape ``(n_times,)`` for 2-D input, or a scalar float for 1-D.
     """
     arr = np.asarray(exposure_paths, dtype=float)
     if arr.ndim == 1:
@@ -186,17 +201,25 @@ def cva_discounted(
     discount_factors: Sequence[float],
     R: float,
 ) -> float:
-    """
-    Discounted discrete CVA.
+    """Discounted discrete CVA (§11 with risk-free discounting).
 
-        CVA = (1 − R) Σ_i D_i · E_i · p_i
+    CVA = (1 − R) Σ_i D_i · E_i · p_i
 
-    Parameters
-    ----------
-    exposures : EPE at each time bucket (non-negative).
-    marginal_default_probs : per-interval marginal PD.
-    discount_factors : risk-free discount factor D(t_i) = exp(−r·t_i).
-    R : recovery rate in [0, 1].
+    Args:
+        exposures (Sequence[float]): EPE at each time bucket (must be ≥ 0).
+        marginal_default_probs (Sequence[float]): Per-interval marginal
+            default probability (must be ≥ 0, sum ≤ 1).
+        discount_factors (Sequence[float]): Risk-free discount factor
+            D(t_i) = exp(−r·t_i) ∈ (0, 1].  Same length as ``exposures``.
+        R (float): Recovery rate ∈ [0, 1].
+
+    Returns:
+        float: Discounted CVA in the same currency as ``exposures``.
+
+    Raises:
+        ValueError: If array lengths differ, any exposure is negative, default
+            probs sum > 1, discount factors are outside (0, 1], or ``R``
+            outside [0, 1].
     """
     exp_arr = np.asarray(exposures, dtype=float)
     pd_arr  = np.asarray(marginal_default_probs, dtype=float)
@@ -221,13 +244,27 @@ def cva_continuous_constant_exposure(
     R: float,
     r: float = 0.0,
 ) -> float:
-    """
-    Closed-form CVA for constant exposure K under constant hazard lam.
+    """Closed-form CVA for constant exposure K under constant hazard rate.
 
     r = 0:
         CVA = (1−R) · K · (1 − exp(−lam·T))
     r > 0:
-        CVA = (1−R) · K · lam/(r+lam) · (1 − exp(−(r+lam)·T))
+        CVA = (1−R) · K · lam / (r+lam) · (1 − exp(−(r+lam)·T))
+
+    Args:
+        K (float): Constant positive exposure (must be ≥ 0).
+        lam (float): Constant hazard rate λ (must be ≥ 0).
+        T (float): CVA horizon in years (must be > 0).
+        R (float): Recovery rate ∈ [0, 1].
+        r (float): Continuously-compounded risk-free rate for discounting
+            (default 0.0 = no discounting).
+
+    Returns:
+        float: CVA in the same currency units as ``K``.
+
+    Raises:
+        ValueError: If ``K < 0``, ``lam < 0``, ``T ≤ 0``, ``R`` outside
+            [0, 1], or ``r < 0``.
     """
     if K < 0:
         raise ValueError(f"K must be non-negative (got {K}).")

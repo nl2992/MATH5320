@@ -32,15 +32,22 @@ def risk_weighted_assets(
     asset_values: Sequence[float],
     risk_weights: Sequence[float],
 ) -> float:
-    """
+    """Compute total risk-weighted assets.
+
     RWA = Σ_i w_i · A_i
 
-    Parameters
-    ----------
-    asset_values : sequence[float]
-        Dollar exposures to each asset.
-    risk_weights : sequence[float]
-        Corresponding risk weights (typically in [0, 1.5]).
+    Args:
+        asset_values (Sequence[float]): Dollar exposures to each asset.
+            Lengths must match ``risk_weights``.
+        risk_weights (Sequence[float]): Corresponding Basel-style risk
+            weights (typically in [0, 1.5]). Must be non-negative.
+
+    Returns:
+        float: Total risk-weighted assets in dollars.
+
+    Raises:
+        ValueError: If ``asset_values`` and ``risk_weights`` have different
+            lengths, or if any weight is negative.
     """
     a = np.asarray(asset_values, dtype=float)
     w = np.asarray(risk_weights, dtype=float)
@@ -58,16 +65,23 @@ CAPITAL_RATIO_FLOOR = 0.08  # Basel Tier-1-style minimum used in §12.
 
 
 def capital_ratio(equity: float, rwa: float) -> dict:
-    """
-    Capital adequacy ratio.
+    """Compute the capital adequacy ratio and Basel pass/fail flag.
 
         ratio = equity / RWA
         PASS iff ratio > 0.08
 
-    Returns
-    -------
-    dict
-        ``{"ratio": float, "pass": bool, "floor": 0.08}``
+    Args:
+        equity (float): Tier-1 capital in dollars.
+        rwa (float): Risk-weighted assets in dollars (must be > 0).
+
+    Returns:
+        dict: Capital result with keys:
+            - ``"ratio"`` (float): equity / rwa.
+            - ``"pass"`` (bool): True iff ratio > 0.08.
+            - ``"floor"`` (float): The Basel minimum used (0.08).
+
+    Raises:
+        ValueError: If ``rwa <= 0``.
     """
     if rwa <= 0:
         raise ValueError(f"rwa must be positive (got {rwa}).")
@@ -87,22 +101,23 @@ def apply_stress_scenario(
     shock_map: Mapping[str, float],
     pricing_date: date,
 ) -> dict:
-    """
-    Apply a multiplicative price shock to the portfolio and report PnL.
+    """Apply a multiplicative price shock to the portfolio and report PnL.
 
-    Parameters
-    ----------
-    portfolio : Portfolio
-    current_prices : pd.Series
-        Current spot prices indexed by ticker.
-    shock_map : mapping[ticker -> multiplicative shock]
-        e.g. ``{"AAPL": -0.30}`` for a 30% drop. Missing tickers are unshocked.
-    pricing_date : date
+    Args:
+        portfolio (Portfolio): Stock and option positions to be re-priced.
+        current_prices (pd.Series): Current spot prices indexed by ticker
+            symbol.
+        shock_map (Mapping[str, float]): Per-ticker multiplicative return
+            shock, e.g. ``{"AAPL": -0.30}`` for a 30% price drop.
+            Tickers absent from the map are left unshocked.
+        pricing_date (date): Option pricing date (used by Black-Scholes).
 
-    Returns
-    -------
-    dict
-        ``{"V_pre": float, "V_post": float, "pnl": float, "pnl_pct": float}``
+    Returns:
+        dict: Stress-scenario summary with keys:
+            - ``"V_pre"`` (float): Portfolio value before shock.
+            - ``"V_post"`` (float): Portfolio value after shock.
+            - ``"pnl"`` (float): V_post − V_pre (negative = loss).
+            - ``"pnl_pct"`` (float): pnl / V_pre, or NaN if V_pre == 0.
     """
     V_pre = reprice_portfolio(portfolio, current_prices, pricing_date)
 
@@ -149,9 +164,20 @@ def build_equity_shock_map(
     portfolio: Portfolio,
     equity_shock: float,
 ) -> dict[str, float]:
-    """
-    Build a per-ticker multiplicative shock map that applies ``equity_shock``
-    to every underlying ticker referenced by the portfolio.
+    """Build a per-ticker multiplicative shock map from a single equity shock.
+
+    Applies ``equity_shock`` uniformly to every underlying ticker referenced
+    by the portfolio (stocks and option underlyings).
+
+    Args:
+        portfolio (Portfolio): Stock and option positions whose underlying
+            tickers will be enumerated.
+        equity_shock (float): Multiplicative return shock to apply, e.g.
+            ``-0.30`` for a 30% price decline.
+
+    Returns:
+        dict[str, float]: Mapping ``{ticker: equity_shock}`` covering all
+            unique underlying tickers in the portfolio.
     """
     tickers: set[str] = set()
     for pos in portfolio.stocks:
@@ -197,19 +223,23 @@ class StressQuarter:
 
 
 def project_capital_one_quarter(state: CapitalState, shock: StressQuarter) -> CapitalState:
-    """
-    Advance capital by one stress quarter.
+    """Advance the bank's capital position by one stress quarter.
 
         capital_next = capital
                        + pre_provision_net_revenue
-                       − credit_loss
-                       − trading_loss
-                       − counterparty_loss
-                       − provisions
-                       − dividends
-                       − buybacks
-
+                       − credit_loss − trading_loss − counterparty_loss
+                       − provisions − dividends − buybacks
         rwa_next = rwa + rwa_change
+
+    Args:
+        state (CapitalState): Capital snapshot at the start of the quarter.
+        shock (StressQuarter): P&L and balance-sheet changes for this quarter.
+
+    Returns:
+        CapitalState: Updated capital snapshot after applying all charges.
+
+    Raises:
+        ValueError: If the resulting RWA is non-positive.
     """
     capital_next = (
         state.tier1_capital
@@ -231,11 +261,16 @@ def project_capital_path(
     initial_state: CapitalState,
     shocks: list[StressQuarter],
 ) -> list[dict]:
-    """
-    Project capital over multiple stress quarters.
+    """Project capital over multiple stress quarters.
 
-    Returns a list of dicts with keys:
-        quarter, tier1_capital, rwa, capital_ratio
+    Args:
+        initial_state (CapitalState): Starting capital and RWA.
+        shocks (list[StressQuarter]): Ordered list of quarterly shocks; each
+            element advances the state by one quarter.
+
+    Returns:
+        list[dict]: One dict per quarter with keys ``"quarter"``,
+            ``"tier1_capital"``, ``"rwa"``, ``"capital_ratio"``.
     """
     path: list[dict] = []
     state = initial_state
@@ -252,19 +287,47 @@ def project_capital_path(
 
 
 def min_capital_ratio(path: list[dict]) -> float:
-    """Minimum capital ratio across a projected path."""
+    """Return the minimum capital ratio across a projected capital path.
+
+    Args:
+        path (list[dict]): Output of :func:`project_capital_path` — each
+            dict must contain a ``"capital_ratio"`` key.
+
+    Returns:
+        float: Minimum capital_ratio value across all quarters.
+
+    Raises:
+        ValueError: If ``path`` is empty.
+    """
     if not path:
         raise ValueError("path is empty.")
     return float(min(row["capital_ratio"] for row in path))
 
 
 def passes_stress(path: list[dict], hurdle: float = 0.08) -> bool:
-    """True if the minimum capital ratio across the path meets the hurdle."""
+    """Return True if the minimum capital ratio across the path meets the hurdle.
+
+    Args:
+        path (list[dict]): Output of :func:`project_capital_path`.
+        hurdle (float): Minimum acceptable capital ratio threshold
+            (default 0.08 for Basel Tier-1).
+
+    Returns:
+        bool: True iff ``min_capital_ratio(path) >= hurdle``.
+    """
     return bool(min_capital_ratio(path) >= hurdle)
 
 
 def apply_global_market_shock(state: CapitalState, trading_loss: float) -> CapitalState:
-    """Apply a one-time global-market-shock trading loss."""
+    """Apply a one-time global-market-shock trading loss to capital.
+
+    Args:
+        state (CapitalState): Current capital snapshot.
+        trading_loss (float): Dollar trading loss to deduct from Tier-1 capital.
+
+    Returns:
+        CapitalState: Updated snapshot with capital reduced by ``trading_loss``.
+    """
     return CapitalState(
         tier1_capital=state.tier1_capital - trading_loss,
         rwa=state.rwa,
@@ -274,7 +337,16 @@ def apply_global_market_shock(state: CapitalState, trading_loss: float) -> Capit
 def apply_counterparty_default_component(
     state: CapitalState, counterparty_loss: float
 ) -> CapitalState:
-    """Apply a one-time counterparty-default loss."""
+    """Apply a one-time counterparty-default loss to capital.
+
+    Args:
+        state (CapitalState): Current capital snapshot.
+        counterparty_loss (float): Dollar loss from counterparty default.
+
+    Returns:
+        CapitalState: Updated snapshot with capital reduced by
+            ``counterparty_loss``.
+    """
     return CapitalState(
         tier1_capital=state.tier1_capital - counterparty_loss,
         rwa=state.rwa,
@@ -314,20 +386,24 @@ def run_dfast_scenarios(
     scenarios: dict[str, list[StressQuarter]] | None = None,
     hurdle: float = 0.08,
 ) -> list[dict]:
-    """
-    Run three DFAST-style scenarios and return summary rows.
+    """Run DFAST-style stress scenarios and return per-scenario summary rows.
 
-    Parameters
-    ----------
-    initial_state : CapitalState
-    scenarios : dict mapping scenario name → list of StressQuarter.
-        Defaults to 9 identical quarters built from DFAST_ILLUSTRATIVE_SCENARIOS.
-    hurdle : capital-ratio pass threshold.
+    Args:
+        initial_state (CapitalState): Starting Tier-1 capital and RWA.
+        scenarios (dict[str, list[StressQuarter]] | None): Mapping of
+            scenario name to a list of quarterly shocks.  Defaults to 9
+            identical quarters built from ``DFAST_ILLUSTRATIVE_SCENARIOS``
+            (baseline / adverse / severely_adverse).
+        hurdle (float): Minimum capital ratio pass threshold (default 0.08).
 
-    Returns
-    -------
-    list of dicts: scenario, ending_capital, ending_rwa,
-                   ending_capital_ratio, min_capital_ratio, passes.
+    Returns:
+        list[dict]: One dict per scenario with keys:
+            - ``"scenario"`` (str): Scenario name.
+            - ``"ending_capital"`` (float): Tier-1 capital at quarter 9.
+            - ``"ending_rwa"`` (float): RWA at quarter 9.
+            - ``"ending_capital_ratio"`` (float): Ratio at quarter 9.
+            - ``"min_capital_ratio"`` (float): Worst ratio across all quarters.
+            - ``"passes"`` (bool): True iff min ratio ≥ hurdle.
     """
     if scenarios is None:
         scenarios = {}
@@ -364,19 +440,20 @@ def run_dfast_scenarios(
 # ── Balance-sheet helpers (§12 / HW XII) ─────────────────────────────────────
 
 def balance_sheet_equity(assets: float, liabilities: float) -> float:
-    """
-    Equity = Assets − Liabilities  (balance-sheet identity).
+    """Compute book equity using the balance-sheet identity.
 
-    Parameters
-    ----------
-    assets : float
-        Total book-value assets (non-negative).
-    liabilities : float
-        Total book-value liabilities (non-negative).
+    Equity = Assets − Liabilities
 
-    Returns
-    -------
-    float  — may be negative (insolvent entity).
+    Args:
+        assets (float): Total book-value assets (must be ≥ 0).
+        liabilities (float): Total book-value liabilities (must be ≥ 0).
+
+    Returns:
+        float: Book equity in the same currency units; may be negative for
+            an insolvent entity.
+
+    Raises:
+        ValueError: If ``assets < 0`` or ``liabilities < 0``.
     """
     if assets < 0:
         raise ValueError(f"assets must be non-negative (got {assets}).")
@@ -388,14 +465,25 @@ def balance_sheet_equity(assets: float, liabilities: float) -> float:
 def balance_sheet_after_asset_loss(
     assets: float, liabilities: float, loss: float
 ) -> dict:
-    """
-    Post-stress balance sheet after an asset write-down of `loss`.
+    """Compute the post-stress balance sheet after an asset write-down.
 
-    Returns a dict with keys:
-        assets_post   — original assets minus the loss
-        liabilities   — unchanged (liabilities not affected by market loss)
-        equity_post   — assets_post − liabilities
-        solvent       — True iff equity_post >= 0
+    Assets absorb the loss; liabilities are unchanged (market losses do not
+    affect the liability side).
+
+    Args:
+        assets (float): Pre-stress total book-value assets (must be ≥ 0).
+        liabilities (float): Total book-value liabilities (must be ≥ 0).
+        loss (float): Dollar write-down to deduct from assets (must be ≥ 0).
+
+    Returns:
+        dict: Post-stress balance sheet with keys:
+            - ``"assets_post"`` (float): assets − loss.
+            - ``"liabilities"`` (float): unchanged liabilities.
+            - ``"equity_post"`` (float): assets_post − liabilities.
+            - ``"solvent"`` (bool): True iff equity_post ≥ 0.
+
+    Raises:
+        ValueError: If ``assets < 0``, ``liabilities < 0``, or ``loss < 0``.
     """
     if assets < 0:
         raise ValueError(f"assets must be non-negative (got {assets}).")
@@ -414,13 +502,20 @@ def balance_sheet_after_asset_loss(
 
 
 def leverage_ratio(equity: float, assets: float) -> float:
-    """
-    Simple leverage ratio = equity / assets.
+    """Compute the simple leverage ratio (equity / assets).
 
-    Basel III leverage ratio uses Tier-1 capital over exposure measure;
-    here we use the textbook approximation: equity / total assets.
+    Basel III uses Tier-1 capital over a broader exposure measure; this
+    function uses the textbook approximation equity / total assets.
 
-    Raises ValueError if assets <= 0.
+    Args:
+        equity (float): Tier-1 capital or book equity in dollars.
+        assets (float): Total assets in dollars (must be > 0).
+
+    Returns:
+        float: Leverage ratio (dimensionless; e.g. 0.08 = 8%).
+
+    Raises:
+        ValueError: If ``assets <= 0``.
     """
     if assets <= 0:
         raise ValueError(f"assets must be positive (got {assets}).")

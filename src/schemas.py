@@ -16,6 +16,11 @@ class StockPosition:
     quantity: float  # positive = long, negative = short
 
     def __post_init__(self) -> None:
+        """Normalise fields and validate invariants.
+
+        Raises:
+            ValueError: If ticker is empty, or quantity is not finite.
+        """
         self.ticker = str(self.ticker).strip().upper()
         self.quantity = float(self.quantity)
         if not self.ticker:
@@ -39,6 +44,13 @@ class OptionPosition:
     contract_multiplier: float = 100.0  # shares per contract
 
     def __post_init__(self) -> None:
+        """Normalise fields and validate all option-position invariants.
+
+        Raises:
+            ValueError: If any field fails type, sign, or finiteness checks.
+                Specifically: empty label/underlying, option_type not 'call'/'put',
+                non-date maturity, non-finite or non-positive strike/vol/multiplier.
+        """
         self.ticker = str(self.ticker).strip()
         self.underlying_ticker = str(self.underlying_ticker).strip().upper()
         self.option_type = str(self.option_type).strip().lower()
@@ -78,5 +90,6 @@ class Portfolio:
     options: list[OptionPosition] = field(default_factory=list)
 
     def __post_init__(self) -> None:
+        """Coerce stocks and options to plain lists (accepts any iterable)."""
         self.stocks = list(self.stocks)
         self.options = list(self.options)

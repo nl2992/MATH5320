@@ -10,9 +10,22 @@ from src.schemas import Portfolio
 
 
 def validate_price_dataframe(prices: pd.DataFrame) -> list[str]:
-    """
-    Return a list of validation error messages for a price DataFrame.
-    Empty list means the data is valid.
+    """Validate a price DataFrame and return a list of error messages.
+
+    Checks performed (each generates an independent error string if violated):
+        - DataFrame is not None or empty.
+        - Index is a DatetimeIndex without duplicate dates in ascending order.
+        - No column is entirely NaN.
+        - No column has any partial NaN values.
+        - All prices are strictly positive.
+
+    Args:
+        prices (pd.DataFrame): Price history to validate; expected shape is
+            DatetimeIndex × ticker columns with positive numeric values.
+
+    Returns:
+        list[str]: Validation error messages.  An empty list means the
+            DataFrame passes all checks.
     """
     errors: list[str] = []
 
@@ -51,11 +64,20 @@ def validate_price_dataframe(prices: pd.DataFrame) -> list[str]:
 
 
 def warn_price_dataframe(prices: pd.DataFrame, stale_run_limit: int = 10) -> list[str]:
-    """
-    Return non-fatal data-quality warnings for a price DataFrame.
+    """Return non-fatal data-quality warnings for a price DataFrame.
 
-    Current warnings focus on unusually long runs of unchanged prices, which can
-    indicate stale data even when the series remains positive and complete.
+    Currently checks for unusually long runs of unchanged prices in any
+    column, which may indicate stale or frozen data feeds even when the
+    series is positive and complete.
+
+    Args:
+        prices (pd.DataFrame): Price history to inspect.
+        stale_run_limit (int): Minimum consecutive unchanged-price days
+            that triggers a warning (default 10).
+
+    Returns:
+        list[str]: Warning messages (non-fatal; an empty list means no
+            quality issues detected).
     """
     warnings: list[str] = []
     if prices is None or prices.empty:
@@ -85,8 +107,22 @@ def validate_history_requirements(
     *,
     for_backtest: bool = False,
 ) -> list[str]:
-    """
-    Validate that a price history is long enough for the requested calculation.
+    """Validate that price history is long enough for the requested calculation.
+
+    For a VaR run: requires at least ``lookback_days + horizon_days`` rows.
+    For a backtest: requires ``lookback_days + horizon_days + 2`` rows to
+    allow at least one walk-forward step.
+
+    Args:
+        prices (pd.DataFrame): Price history to check.
+        lookback_days (int): Number of trailing observations for estimation.
+        horizon_days (int): Risk horizon in trading days.
+        for_backtest (bool): If True, applies the stricter backtest minimum
+            (default False = VaR run check).
+
+    Returns:
+        list[str]: Error messages.  Empty list means the history is
+            sufficient.
     """
     errors: list[str] = []
     if prices is None or prices.empty:
@@ -128,9 +164,19 @@ def _longest_constant_run(series: pd.Series) -> int:
 
 
 def validate_portfolio_tickers(portfolio: Portfolio, price_columns: list[str]) -> list[str]:
-    """
-    Ensure every underlying ticker in the portfolio exists in the price data.
-    Returns a list of error messages.
+    """Validate that every portfolio underlying has price data available.
+
+    Checks both stock tickers and option underlying tickers against the
+    list of available price columns.
+
+    Args:
+        portfolio (Portfolio): Portfolio whose positions to validate.
+        price_columns (list[str]): Available ticker columns from the price
+            DataFrame.
+
+    Returns:
+        list[str]: Error messages for each missing ticker.  An empty list
+            means all underlyings are covered.
     """
     errors: list[str] = []
     available = set(price_columns)

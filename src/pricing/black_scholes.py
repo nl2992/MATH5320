@@ -50,30 +50,30 @@ def bs_price(
     sigma: float,
     option_type: str,
 ) -> float:
-    """
-    Black-Scholes price for a European option.
+    """Black-Scholes price for a European call or put.
 
-    Parameters
-    ----------
-    S : float
-        Current spot price of the underlying.
-    K : float
-        Strike price.
-    T : float
-        Time to maturity in years.
-    r : float
-        Continuously compounded risk-free rate.
-    q : float
-        Continuous dividend yield.
-    sigma : float
-        Annualised volatility.
-    option_type : str
-        "call" or "put".
+    Uses the Garman-Kohlhagen form with a continuous dividend yield q:
+        C = S e^{-qT} N(d1) - K e^{-rT} N(d2)
+        P = K e^{-rT} N(-d2) - S e^{-qT} N(-d1)
 
-    Returns
-    -------
-    float
-        Option price per share.
+    Args:
+        S (float): Current spot price of the underlying (must be > 0).
+        K (float): Strike price (must be > 0).
+        T (float): Time to maturity in years (must be > 0).
+        r (float): Continuously compounded risk-free rate (annualised).
+        q (float): Continuous dividend yield (annualised; use 0.0 if none).
+        sigma (float): Annualised implied volatility (must be > 0).
+        option_type (str): ``"call"`` or ``"put"`` (case-insensitive).
+
+    Returns:
+        float: Option price per underlying share (not per contract).
+
+    Raises:
+        ValueError: If T <= 0, sigma <= 0, S <= 0, or option_type is unknown.
+
+    Example:
+        >>> round(bs_price(S=100, K=100, T=1, r=0.05, q=0.0, sigma=0.20, option_type="call"), 4)
+        10.4506
     """
     d1, d2 = _d1_d2(S, K, T, r, q, sigma)
     disc_q = math.exp(-q * T)
@@ -96,17 +96,29 @@ def bs_delta(
     sigma: float,
     option_type: str,
 ) -> float:
-    """
-    Black-Scholes delta for a European option.
+    """Black-Scholes delta (∂V/∂S) for a European call or put.
 
-    Parameters
-    ----------
-    (same as bs_price)
+        Call delta : Δ = e^{-qT} N(d1)      ∈ (0, 1)
+        Put  delta : Δ = e^{-qT} (N(d1)−1)  ∈ (-1, 0)
 
-    Returns
-    -------
-    float
-        Delta (∂V/∂S per share).
+    Args:
+        S (float): Current spot price of the underlying (must be > 0).
+        K (float): Strike price (must be > 0).
+        T (float): Time to maturity in years (must be > 0).
+        r (float): Continuously compounded risk-free rate (annualised).
+        q (float): Continuous dividend yield (annualised).
+        sigma (float): Annualised implied volatility (must be > 0).
+        option_type (str): ``"call"`` or ``"put"`` (case-insensitive).
+
+    Returns:
+        float: Delta ∂V/∂S per underlying share.
+
+    Raises:
+        ValueError: If T <= 0, sigma <= 0, S <= 0, or option_type is unknown.
+
+    Example:
+        >>> round(bs_delta(S=100, K=100, T=1, r=0.05, q=0.0, sigma=0.20, option_type="call"), 4)
+        0.6368
     """
     d1, _ = _d1_d2(S, K, T, r, q, sigma)
     disc_q = math.exp(-q * T)

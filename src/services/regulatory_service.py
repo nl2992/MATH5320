@@ -36,19 +36,30 @@ def compute_rwa_and_ratio(
     equity: float,
     pricing_date: date,
 ) -> dict:
-    """
-    Compute RWA and capital ratio for the given portfolio.
+    """Compute risk-weighted assets (RWA) and the Basel capital ratio.
 
-    Per-ticker dollar exposure is computed via :func:`portfolio_exposure`
-    (delta-dollar for equities + BS-delta for options, grouped by underlying).
-    The user supplies ``risk_weights`` per ticker; missing tickers default to 1.0.
+    Dollar exposures are computed via :func:`portfolio_exposure` (delta-dollar
+    for stocks + BS-delta-dollar for options, grouped by underlying ticker).
+    Missing tickers in ``risk_weights`` default to 1.0.
 
-    Returns
-    -------
-    dict
-        ``{"exposures": {ticker: dollars}, "weights": {ticker: w},
-           "rwa": float, "V": float, "equity": equity, "ratio": float,
-           "pass": bool, "floor": 0.08}``
+    Args:
+        portfolio (Portfolio): Stock and option positions.
+        prices (pd.Series): Current spot prices indexed by ticker.
+        risk_weights (Mapping[str, float]): Per-ticker Basel risk weights;
+            missing tickers default to 1.0.
+        equity (float): Tier-1 capital or book equity in dollars.
+        pricing_date (date): Option pricing date for Black-Scholes delta.
+
+    Returns:
+        dict: Regulatory capital result with keys:
+            - ``"exposures"`` (dict[str, float]): Dollar exposure per ticker.
+            - ``"weights"`` (dict[str, float]): Risk weight per ticker.
+            - ``"rwa"`` (float): Total risk-weighted assets.
+            - ``"V"`` (float): Current portfolio mark-to-market value.
+            - ``"equity"`` (float): Equity capital echoed.
+            - ``"ratio"`` (float): equity / rwa.
+            - ``"pass"`` (bool): True iff ratio > 0.08.
+            - ``"floor"`` (float): The Basel minimum used (0.08).
     """
     from src.portfolio.portfolio import portfolio_exposure
 
@@ -90,17 +101,28 @@ def run_dfast(
     prices: pd.Series,
     pricing_date: date,
 ) -> dict:
-    """
-    Run the three textbook DFAST-style scenarios against the portfolio.
+    """Run the three textbook DFAST-style equity stress scenarios.
 
-    For each scenario we apply the ``equity`` multiplicative shock uniformly
-    to every underlying in the portfolio (rate shocks are recorded but not
-    applied — the portfolio priced here contains no explicit rate instruments).
+    Applies a uniform multiplicative equity shock to every underlying in the
+    portfolio for each of the three scenarios (baseline / adverse /
+    severely_adverse).  Rate shocks from ``DFAST_SCENARIOS`` are recorded in
+    the output but not applied — the portfolio contains no explicit rate
+    instruments.
 
-    Returns
-    -------
-    dict
-        ``{scenario_name: {V_pre, V_post, pnl, pnl_pct, equity_shock, rates_bp}}``
+    Args:
+        portfolio (Portfolio): Stock and option positions to stress-test.
+        prices (pd.Series): Current spot prices indexed by ticker.
+        pricing_date (date): Option pricing date for Black-Scholes repricing.
+
+    Returns:
+        dict: Mapping ``{scenario_name: result_dict}`` where each result
+            contains:
+            - ``"V_pre"`` (float): Pre-shock portfolio value.
+            - ``"V_post"`` (float): Post-shock portfolio value.
+            - ``"pnl"`` (float): V_post − V_pre (negative = loss).
+            - ``"pnl_pct"`` (float): pnl / V_pre.
+            - ``"equity_shock"`` (float): Multiplicative shock applied.
+            - ``"rates_bp"`` (float): Rate shock in bps (informational).
     """
     results: dict[str, dict] = {}
     for name, params in DFAST_SCENARIOS.items():
@@ -118,7 +140,20 @@ def run_custom_stress(
     shock_map: Mapping[str, float],
     pricing_date: date,
 ) -> dict:
-    """User-defined per-ticker multiplicative shock scenario."""
+    """Apply a user-defined per-ticker multiplicative stress scenario.
+
+    Args:
+        portfolio (Portfolio): Stock and option positions to be stressed.
+        prices (pd.Series): Current spot prices indexed by ticker.
+        shock_map (Mapping[str, float]): Per-ticker multiplicative return
+            shocks (e.g. ``{"AAPL": -0.20}`` for a 20% drop).  Tickers
+            absent from the map are left unshocked.
+        pricing_date (date): Option pricing date.
+
+    Returns:
+        dict: Stress result with keys ``"V_pre"``, ``"V_post"``, ``"pnl"``,
+            ``"pnl_pct"`` — see :func:`apply_stress_scenario`.
+    """
     return apply_stress_scenario(portfolio, prices, dict(shock_map), pricing_date)
 
 

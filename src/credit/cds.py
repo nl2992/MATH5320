@@ -24,12 +24,23 @@ from src.credit.hazard import survival_piecewise
 
 
 def cds_par_spread_constant_hazard(lam: float, R: float) -> float:
-    """
-    Constant-hazard approximation to the CDS par spread.
+    """Constant-hazard approximation to the CDS par spread (formula-sheet §10).
 
-        C ≈ (1 − R) λ
+    C ≈ (1 − R) λ = LGD · λ
 
-    Returned as a decimal (e.g. 0.018 = 180 bps).
+    This is the landmark approximation from §10: at λ = 3%, R = 40% the
+    result is ≈ 180 bps.
+
+    Args:
+        lam (float): Constant hazard rate λ (must be ≥ 0).
+        R (float): Recovery rate ∈ [0, 1].
+
+    Returns:
+        float: Approximate CDS par spread as a decimal
+            (e.g. 0.018 = 180 bps).
+
+    Raises:
+        ValueError: If ``lam < 0`` or ``R`` outside [0, 1].
     """
     if lam < 0:
         raise ValueError(f"lambda must be non-negative (got {lam}).")
@@ -46,30 +57,32 @@ def cds_par_spread(
     accrual: bool = True,
     n_sub: int = 20,
 ) -> float:
-    """
-    Discrete approximation to the §10 par-spread formula with piecewise-constant hazard.
+    """Compute CDS par spread via numerical integration with piecewise-constant hazard.
 
-    Parameters
-    ----------
-    payment_times : sequence[float]
-        Premium payment dates t_1 < t_2 < … < t_n (years). Final t_n = T.
-    hazards : sequence[float]
-        Piecewise-constant hazard levels — ``len(hazards) == len(payment_times)``.
-        hazards[i] applies to the interval (t_{i-1}, t_i] with t_0 = 0.
-    r : float
-        Flat continuously-compounded discount rate.
-    R : float
-        Recovery rate.
-    accrual : bool
-        If True, include the accrued-premium-at-default term in the denominator
-        (mid-period approximation a*(u) ≈ Δt_i / 2).
-    n_sub : int
-        Sub-steps per premium interval used to integrate the protection leg
-        and the accrual term numerically (simple midpoint rule).
+    Implements the §10 formula numerically using a midpoint-rule quadrature.
 
-    Returns
-    -------
-    Par spread as a decimal (e.g. 0.018 = 180 bps).
+    Args:
+        payment_times (Sequence[float]): Premium payment dates t₁ < t₂ < … < tₙ
+            in years; the final entry tₙ = T is the CDS maturity.  All values
+            must be strictly positive and increasing.
+        hazards (Sequence[float]): Piecewise-constant hazard rates, one per
+            payment interval.  ``len(hazards)`` must equal
+            ``len(payment_times)``; hazards[i] applies to (t_{i-1}, t_i]
+            with t_0 = 0.
+        r (float): Flat continuously-compounded risk-free discount rate.
+        R (float): Recovery rate ∈ [0, 1].
+        accrual (bool): If True, include the accrued-premium-at-default term
+            in the premium-leg denominator (mid-period approximation).
+        n_sub (int): Midpoint-rule sub-steps per premium interval for
+            numerically integrating the protection leg and accrual term.
+
+    Returns:
+        float: CDS par spread as a decimal (e.g. 0.018 = 180 bps).
+
+    Raises:
+        ValueError: If ``payment_times`` are not strictly positive/increasing,
+            ``len(hazards) != len(payment_times)``, ``R`` outside [0, 1], or
+            the premium-leg denominator is non-positive.
     """
     payment_times = np.asarray(payment_times, dtype=float)
     hazards = np.asarray(hazards, dtype=float)
@@ -131,22 +144,37 @@ def cds_par_spread_constant_full_closed_form(
     R: float,
     accrual: bool = True,
 ) -> float:
-    """
-    Exact CDS par spread under constant hazard with discrete premium payments.
+    """Exact CDS par spread under constant hazard with discrete premium payments.
 
-    Protection leg (exact integral):
+    Closed-form expressions for each leg:
+
+    *Protection leg* (exact integral):
         (1−R) · lam / (r+lam) · (1 − exp(−(r+lam)·T))
 
-    Premium leg (exact sum):
-        dt · Σ_{i=1}^{n} exp(−(r+lam)·t_i)  where dt=1/freq, t_i = i*dt
+    *Premium leg* (exact sum at each t_i = i/freq):
+        dt · Σ_{i=1}^{n} exp(−(r+lam)·t_i)
 
-    Accrual term (exact per-period integral of (u−t_{i-1})·lam·exp(−(r+lam)u)):
-        For each period [t_prev, t_i] with dt = t_i − t_prev, q = r+lam:
-        lam · exp(−q·t_prev) · [(1−exp(−q·dt))/q² − dt·exp(−q·dt)/q]
+    *Accrual term* (exact per-period integral):
+        Σ_i  lam · exp(−q·t_{i-1}) · [(1−exp(−q·dt))/q² − dt·exp(−q·dt)/q]
 
-    Note: approximation cds_par_spread_constant_hazard() gives ~180 bps;
-    this function gives ~184.55 bps for lam=3%, R=40%, T=5, freq=1.
-    Do not force them to match.
+    Note: the simple approximation :func:`cds_par_spread_constant_hazard` gives
+    ≈ 180 bps; this exact formula gives ≈ 184.55 bps for λ=3%, R=40%, T=5,
+    freq=1. The two are not intended to match.
+
+    Args:
+        T (float): CDS maturity in years (must be > 0).
+        freq (float): Premium payments per year, e.g. 1 = annual, 4 = quarterly.
+        r (float): Flat continuously-compounded risk-free rate.
+        lam (float): Constant hazard rate λ (must be ≥ 0).
+        R (float): Recovery rate ∈ [0, 1].
+        accrual (bool): Include the accrued-premium-at-default term.
+
+    Returns:
+        float: CDS par spread as a decimal (e.g. 0.018 = 180 bps).
+
+    Raises:
+        ValueError: If ``lam < 0``, ``R`` outside [0, 1], ``T ≤ 0``,
+            ``freq ≤ 0``, or the denominator is non-positive.
     """
     if lam < 0:
         raise ValueError(f"lambda must be non-negative (got {lam}).")
@@ -204,13 +232,23 @@ def cds_spread_curve(
     premium_freq: float = 1.0,
     accrual: bool = True,
 ) -> list[tuple[float, float]]:
-    """
-    Build a par-spread curve under a flat hazard ``lam``.
+    """Build a CDS par-spread curve under a flat hazard rate.
 
-    Each point uses quarterly/annual premium payments based on ``premium_freq``
-    (payments per year).
+    Evaluates :func:`cds_par_spread` at each requested tenor using a uniform
+    payment schedule with ``premium_freq`` payments per year.
 
-    Returns a list of ``(tenor, spread)`` pairs, spread as decimal.
+    Args:
+        tenors (Sequence[float]): CDS maturities in years at which to
+            evaluate the par spread (e.g. ``[1, 2, 3, 5, 7, 10]``).
+        lam (float): Flat constant hazard rate λ (must be ≥ 0).
+        r (float): Flat continuously-compounded risk-free rate.
+        R (float): Recovery rate ∈ [0, 1].
+        premium_freq (float): Premium payments per year (default 1 = annual).
+        accrual (bool): Include accrued-premium-at-default term.
+
+    Returns:
+        list[tuple[float, float]]: List of ``(tenor, spread)`` pairs where
+            spread is in decimal (e.g. 0.018 = 180 bps).
     """
     out: list[tuple[float, float]] = []
     for T in tenors:

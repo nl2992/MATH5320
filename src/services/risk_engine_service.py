@@ -25,9 +25,32 @@ from src.schemas import Portfolio
 
 
 class RiskEngineService:
-    """
-    Stateless service that runs risk calculations for a given portfolio
-    and market data snapshot.
+    """Stateless service that orchestrates all VaR/ES and backtest calculations.
+
+    Streamlit UI panels call only this class; they never import risk modules
+    directly.  All three VaR models (historical simulation, parametric
+    delta-normal, Monte Carlo full repricing) share a single set of
+    parameters captured at construction time.
+
+    Args:
+        portfolio (Portfolio): Stock and option positions to be risk-managed.
+        prices (pd.DataFrame): Price history; DatetimeIndex × ticker columns.
+        pricing_date (date): Valuation date for Black-Scholes option pricing.
+        lookback_days (int): Trailing price rows to use for return estimation.
+        horizon_days (int): Risk horizon h in trading days.
+        var_confidence (float): VaR confidence level, e.g. 0.99.
+        es_confidence (float): ES averaging threshold, e.g. 0.975.
+        estimator (str): ``"window"`` or ``"ewma"`` for mean/cov estimation.
+        ewma_N (int): EWMA half-life parameter; only used when
+            estimator=``"ewma"`` (default 60).
+        n_simulations (int): Monte Carlo path count (default 10 000).
+        calibration_mode (str): ``"historical"`` or ``"manual"``; see
+            ``manual_market_params``.
+        manual_market_params (dict | None): Required when
+            calibration_mode=``"manual"``; see :func:`manual_mean_cov`.
+        option_vol_shock_mode (str): ``"fixed"`` or ``"underlying_beta"``.
+        option_vol_shock_beta (float): Beta for ``"underlying_beta"`` mode.
+        option_vol_shock_floor (float): Minimum post-shock option volatility.
     """
 
     def __init__(
@@ -67,22 +90,34 @@ class RiskEngineService:
     # ── Current portfolio value ────────────────────────────────────────────────
 
     def portfolio_value(self) -> float:
-        """Return current mark-to-market portfolio value."""
+        """Return the current mark-to-market portfolio value.
+
+        Uses the last row of ``self.prices`` as the spot-price vector.
+
+        Returns:
+            float: Portfolio value in dollars; may be negative for a net-short
+                book.
+        """
         spots = self.prices.iloc[-1]
         return portfolio_value(self.portfolio, spots, self.pricing_date)
 
     # ── Main risk run ──────────────────────────────────────────────────────────
 
     def run_all(self) -> dict:
-        """
-        Run all three VaR/ES models and return a unified results dict.
+        """Run all three VaR/ES models and return a unified results dict.
 
-        Returns
-        -------
-        dict with keys "historical", "parametric", "monte_carlo".
-        Each sub-dict contains at minimum:
-            var  : float
-            es   : float
+        Validates price history before delegating to :func:`historical_var_es`,
+        :func:`parametric_var_es`, and :func:`monte_carlo_var_es`.
+
+        Returns:
+            dict: Results with keys ``"historical"``, ``"parametric"``, and
+                ``"monte_carlo"``.  Each sub-dict contains at minimum:
+                    - ``"var"`` (float): VaR in dollars.
+                    - ``"es"`` (float): ES in dollars.
+
+        Raises:
+            ValueError: If the price DataFrame fails validation, or the
+                history is too short for the requested lookback + horizon.
         """
         price_errors = validate_price_dataframe(self.prices)
         if price_errors:
@@ -150,21 +185,29 @@ class RiskEngineService:
     # ── Backtesting ────────────────────────────────────────────────────────────
 
     def run_backtest(self, model: str = "historical") -> dict:
-        """
-        Run walk-forward VaR backtest and Kupiec test.
+        """Run walk-forward VaR backtest, Kupiec POF test, and Basel traffic light.
 
-        Parameters
-        ----------
-        model : str
-            "historical" | "parametric" | "monte_carlo"
+        Args:
+            model (str): VaR model to backtest — ``"historical"``,
+                ``"parametric"``, or ``"monte_carlo"``.
 
-        Returns
-        -------
-        dict with keys:
-            backtest_df  : pd.DataFrame — per-date results
-            kupiec       : dict         — Kupiec test results
-            model        : str
-            skipped_forecasts : list[dict] — per-date forecast failures, if any
+        Returns:
+            dict: Backtest output with keys:
+                - ``"backtest_df"`` (pd.DataFrame): Per-date realized losses,
+                  VaR forecasts, and exception flags.
+                - ``"kupiec"`` (dict): Kupiec unconditional coverage test.
+                - ``"conditional_coverage"`` (dict): Christoffersen CC test.
+                - ``"basel"`` (dict | None): Basel traffic-light zone, or
+                  None if the backtest produced no observations.
+                - ``"severity"`` (dict): Exception severity statistics.
+                - ``"model"`` (str): Model name echoed back.
+                - ``"reason"`` (str | None): Reason string if backtest_df
+                  is empty.
+                - ``"skipped_forecasts"`` (list[dict]): Per-date failures.
+                - ``"n_skipped_forecasts"`` (int): Count of skipped days.
+
+        Raises:
+            ValueError: If the price DataFrame fails validation.
         """
         price_errors = validate_price_dataframe(self.prices)
         if price_errors:

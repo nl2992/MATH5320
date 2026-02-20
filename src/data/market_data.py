@@ -43,18 +43,28 @@ BENCHMARK_TICKERS: dict[str, str] = {
 # ── CSV path ──────────────────────────────────────────────────────────────────
 
 def load_price_history_csv(file_obj: Union[str, io.IOBase]) -> pd.DataFrame:
-    """
-    Load adjusted-close price history from a CSV file.
+    """Load adjusted-close price history from a wide-format CSV file.
 
-    Expected CSV format (wide):
+    Expected CSV format:
         Date,AAPL,MSFT,SPY
         2020-01-02,300.1,150.2,320.5
         ...
 
-    Returns
-    -------
-    pd.DataFrame
-        Index: DatetimeIndex (ascending), Columns: ticker symbols, Values: prices.
+    The first column must be parseable as dates; subsequent columns are ticker
+    symbols.  All non-numeric values are coerced to NaN; rows with all-NaN
+    prices are dropped.
+
+    Args:
+        file_obj (str | io.IOBase): File path string or any file-like object
+            accepted by :func:`pandas.read_csv`.
+
+    Returns:
+        pd.DataFrame: DatetimeIndex (ascending) × ticker columns;
+            values are adjusted-close prices.
+
+    Raises:
+        ValueError: If the CSV parses to an empty DataFrame or the index
+            contains duplicate dates.
     """
     df = pd.read_csv(file_obj, index_col=0, parse_dates=True)
     df.index = pd.to_datetime(df.index)
@@ -74,27 +84,23 @@ def download_adjusted_close(
     start: str,
     end: str,
 ) -> pd.DataFrame:
-    """
-    Download adjusted-close prices from Yahoo Finance.
+    """Download adjusted-close prices from Yahoo Finance (plain, no cache).
 
-    Parameters
-    ----------
-    tickers : list[str]
-        List of ticker symbols, e.g. ["AAPL", "MSFT"].
-    start : str
-        Start date in "YYYY-MM-DD" format.
-    end : str
-        End date in "YYYY-MM-DD" format.
+    Args:
+        tickers (list[str]): Ticker symbols, e.g. ``["AAPL", "MSFT"]``.
+            Benchmark tickers such as ``"^GSPC"`` and ``"^TNX"`` are
+            accepted by yfinance.
+        start (str): Start date in ``"YYYY-MM-DD"`` format (inclusive).
+        end (str): End date in ``"YYYY-MM-DD"`` format (exclusive).
 
-    Returns
-    -------
-    pd.DataFrame
-        Index: DatetimeIndex, Columns: ticker symbols, Values: adjusted close prices.
+    Returns:
+        pd.DataFrame: DatetimeIndex (ascending) × ticker columns;
+            values are adjusted-close prices.
 
-    Raises
-    ------
-    ValueError
-        If yfinance returns no rows or the expected columns are missing.
+    Raises:
+        ValueError: If ``tickers`` is empty, yfinance returns no rows,
+            the ``"Close"`` column/level is missing, all prices are NaN,
+            or the index contains duplicate dates.
     """
     if not tickers:
         raise ValueError("tickers list is empty.")
@@ -172,28 +178,34 @@ def download_adjusted_close_cached(
     max_retries: int = 3,
     use_cache: bool = True,
 ) -> pd.DataFrame:
-    """
-    Robust price downloader: parquet cache, retry with exponential backoff,
-    per-ticker fallback if the batch call fails.
+    """Fault-tolerant price downloader with parquet cache and retry logic.
 
-    Parameters
-    ----------
-    tickers : list[str]
-        List of symbols. May include benchmarks like "^GSPC", "^TNX".
-    start, end : str
-        YYYY-MM-DD.
-    cache_dir : str | Path | None
-        Directory for the parquet cache. Pass None to disable caching.
-    max_retries : int
-        Number of attempts on the batch call before falling back to per-ticker.
-    use_cache : bool
-        If False, ignore any existing cache entry and re-download (but still
-        write to cache on success).
+    Extends :func:`download_adjusted_close` with:
+    - **Parquet cache**: responses are stored keyed on a hash of
+      ``(sorted(tickers), start, end)``; cache hits avoid network calls.
+    - **Exponential backoff**: up to ``max_retries`` batch attempts with
+      waits of 1, 2, 4… seconds between failures.
+    - **Per-ticker fallback**: if all batch attempts fail, downloads each
+      ticker individually and concatenates results.
 
-    Returns
-    -------
-    pd.DataFrame
-        Same shape as download_adjusted_close().
+    Args:
+        tickers (list[str]): Ticker symbols; may include benchmarks such as
+            ``"^GSPC"`` or ``"^TNX"``.
+        start (str): Start date ``"YYYY-MM-DD"`` (inclusive).
+        end (str): End date ``"YYYY-MM-DD"`` (exclusive).
+        cache_dir (str | Path | None): Directory for the parquet cache.
+            Pass ``None`` to disable caching entirely.
+        max_retries (int): Batch download attempts before falling back to
+            per-ticker downloads (default 3).
+        use_cache (bool): If ``False``, bypass the cache read (but still
+            write on success).
+
+    Returns:
+        pd.DataFrame: Same shape as :func:`download_adjusted_close`.
+
+    Raises:
+        ValueError: If ``tickers`` is empty, or all download attempts fail
+            for every ticker.
     """
     if not tickers:
         raise ValueError("tickers list is empty.")
@@ -260,14 +272,26 @@ def fetch_risk_free_rate(
     fallback: float = 0.04,
     cache_dir: Union[str, Path, None] = ".cache/prices",
 ) -> float:
-    """
-    Fetch a risk-free rate proxy from Yahoo's ^TNX (10-year Treasury yield).
+    """Fetch a risk-free rate proxy from Yahoo Finance's ^TNX series.
 
-    ^TNX is quoted as yield × 100 (e.g. 4.25% is reported as 42.50), so we
-    divide by 100 to return a decimal rate suitable for Black-Scholes.
+    ^TNX is the CBOE 10-year Treasury yield index, quoted as yield × 100
+    (e.g. 4.25% appears as 42.50).  This function divides by 100 to return
+    a decimal rate suitable for Black-Scholes and discounting.
 
-    On any failure — network error, empty response, missing data — returns
-    the ``fallback`` value with a log warning.
+    On any failure (network error, empty response, sanity-range violation)
+    the ``fallback`` rate is returned with a ``WARNING``-level log entry so
+    that downstream calculations are never blocked.
+
+    Args:
+        asof (date): Date for which to retrieve the rate.  A 14-day look-back
+            buffer is used to handle weekends and holidays.
+        fallback (float): Rate to return on failure (default 0.04 = 4%).
+        cache_dir (str | Path | None): Parquet cache directory passed to
+            :func:`download_adjusted_close_cached` (default ``".cache/prices"``).
+
+    Returns:
+        float: Risk-free rate as a decimal in [0, 0.25], or ``fallback`` on
+            any error.
     """
     try:
         start = (asof - timedelta(days=14)).isoformat()  # small buffer for weekends

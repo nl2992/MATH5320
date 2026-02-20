@@ -37,17 +37,44 @@ def parametric_var_es(
     calibration_mode: str = "historical",
     manual_market_params: dict | None = None,
 ) -> dict:
-    """
-    Compute Parametric (Delta-Normal) VaR and ES.
+    """Parametric (Delta-Normal) VaR and ES.
 
-    Returns
-    -------
-    dict with keys:
-        var         : float — VaR in dollars
-        es          : float — ES in dollars
-        portfolio_mean : float — m
-        portfolio_vol  : float — s
-        exposure    : pd.Series — dollar-delta exposure per underlying
+    The delta-normal method approximates the portfolio P&L as a linear function
+    of underlying log returns. Given the exposure vector x (dollar-delta per
+    underlying) and scaled distribution N(μ_h, Σ_h):
+        m = x' μ_h,   s = sqrt(x' Σ_h x)
+        VaR = -m + s × Φ⁻¹(var_confidence)
+        ES  = -m + s × φ(z_es) / (1 − es_confidence)
+
+    Args:
+        portfolio (Portfolio): Stock and option positions. Options contribute
+            via their Black-Scholes delta-dollar exposure only (no repricing).
+        prices (pd.DataFrame): Aligned price history (DatetimeIndex × tickers).
+        pricing_date (date): Valuation date for computing option deltas.
+        lookback_days (int): Trailing observations for mean/cov estimation.
+        horizon_days (int): Risk horizon h; μ_h = μ×h, Σ_h = Σ×h.
+        var_confidence (float): VaR confidence level, e.g. 0.99.
+        es_confidence (float): ES averaging confidence, e.g. 0.975.
+        estimator (str): ``"window"`` (simple rolling) or ``"ewma"`` (exponentially
+            weighted). Default ``"window"``.
+        ewma_N (int): EWMA half-life parameter N; λ = (N-1)/(N+1). Only used
+            when estimator=``"ewma"``.
+        calibration_mode (str): ``"historical"`` (estimate from prices) or
+            ``"manual"`` (supply μ and Σ directly via manual_market_params).
+        manual_market_params (dict | None): Required when calibration_mode=``"manual"``.
+            Must contain ``"mu_daily"`` (pd.Series) and ``"cov_daily"`` (pd.DataFrame)
+            keyed by underlying ticker.
+
+    Returns:
+        dict: Result dictionary with keys:
+            - ``"var"`` (float): Parametric VaR in dollars.
+            - ``"es"`` (float): Parametric ES in dollars.
+            - ``"var_confidence"`` (float): var_confidence passed in.
+            - ``"es_confidence"`` (float): es_confidence passed in.
+            - ``"portfolio_mean"`` (float): m = x' μ_h.
+            - ``"portfolio_vol"`` (float): s = sqrt(x' Σ_h x).
+            - ``"exposure"`` (pd.Series): Dollar-delta exposure vector x.
+            - ``"calibration_mode"`` (str): Mode used.
     """
     # Current spots
     spots_0 = prices.iloc[-1]

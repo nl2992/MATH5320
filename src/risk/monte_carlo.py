@@ -41,16 +41,48 @@ def monte_carlo_var_es(
     option_vol_shock_beta: float = 1.0,
     option_vol_shock_floor: float = 0.05,
 ) -> dict:
-    """
-    Compute Monte Carlo VaR and ES.
+    """Monte Carlo VaR and ES via full portfolio repricing.
 
-    Returns
-    -------
-    dict with keys:
-        var        : float
-        es         : float
-        losses     : np.ndarray — simulated loss distribution
-        n_simulations : int
+    Algorithm:
+        1. Estimate daily μ and Σ from trailing lookback_days log returns.
+        2. Scale to horizon: μ_h = μ×h, Σ_h = Σ×h.
+        3. Draw R_sim ~ N(μ_h, Σ_h) for n_simulations paths.
+        4. For each path: S_sim = S0 × exp(R_sim), reprice full portfolio.
+        5. loss_i = V0 − V_sim_i.
+        6. VaR = quantile(losses, var_confidence).
+        7. ES  = mean(losses | loss ≥ quantile(losses, es_confidence)).
+
+    Args:
+        portfolio (Portfolio): Stock and option positions.
+        prices (pd.DataFrame): Aligned price history (DatetimeIndex × tickers).
+        pricing_date (date): Valuation date for option pricing.
+        lookback_days (int): Trailing observations for mean/cov estimation.
+        horizon_days (int): Risk horizon h in trading days.
+        var_confidence (float): VaR tail probability, e.g. 0.99.
+        es_confidence (float): ES averaging threshold, e.g. 0.975.
+        n_simulations (int): Number of Monte Carlo paths. Default 10 000.
+        estimator (str): ``"window"`` or ``"ewma"`` for mean/cov estimation.
+        ewma_N (int): EWMA half-life parameter; only used when estimator=``"ewma"``.
+        random_seed (int | None): Seed for the numpy RNG for reproducibility.
+            Pass None for a random seed.
+        calibration_mode (str): ``"historical"`` (estimate from data) or
+            ``"manual"`` (supply μ and Σ via manual_market_params).
+        manual_market_params (dict | None): Required when calibration_mode=``"manual"``.
+            Must contain ``"mu_daily"`` and ``"cov_daily"`` keyed by ticker.
+        option_vol_shock_mode (str): ``"fixed"`` or ``"underlying_beta"``.
+        option_vol_shock_beta (float): Beta for ``"underlying_beta"`` mode.
+        option_vol_shock_floor (float): Minimum shocked vol.
+
+    Returns:
+        dict: Result dictionary with keys:
+            - ``"var"`` (float): Monte Carlo VaR in dollars.
+            - ``"es"`` (float): Monte Carlo ES in dollars.
+            - ``"var_confidence"`` (float): var_confidence passed in.
+            - ``"es_confidence"`` (float): es_confidence passed in.
+            - ``"losses"`` (np.ndarray): Simulated loss distribution (length n_simulations).
+            - ``"n_simulations"`` (int): n_simulations used.
+            - ``"calibration_mode"`` (str): Mode used.
+            - ``"option_vol_shock_mode"`` (str): Vol shock mode used.
     """
     if random_seed is not None:
         rng = np.random.default_rng(random_seed)

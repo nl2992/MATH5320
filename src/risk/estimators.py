@@ -19,12 +19,29 @@ def manual_mean_cov(
     manual_market_params: dict,
     underlyings: list[str],
 ) -> tuple[pd.Series, pd.DataFrame]:
-    """
-    Build daily mean / covariance inputs from a manual parameter bundle.
+    """Extract and validate manually supplied daily mean and covariance.
 
-    Expected keys in ``manual_market_params``:
-        mu_daily : pd.Series-like indexed by ticker
-        cov_daily: pd.DataFrame-like square covariance matrix
+    Allows the user to bypass historical estimation and supply μ and Σ directly
+    (e.g. from an external calibration or course homework inputs).
+
+    Args:
+        manual_market_params (dict): Must contain two keys:
+            - ``"mu_daily"``: daily mean log-return vector, indexable by ticker
+              (pd.Series or dict or array-like that pd.Series accepts).
+            - ``"cov_daily"``: daily covariance matrix, indexable by ticker
+              (pd.DataFrame or dict of dicts).
+        underlyings (list[str]): Ordered list of ticker symbols required. The
+            returned μ and Σ are aligned to this order.
+
+    Returns:
+        tuple[pd.Series, pd.DataFrame]: (mu, cov) — daily mean vector and
+            daily covariance matrix, both aligned to ``underlyings``.
+
+    Raises:
+        ValueError: If manual_market_params is not a dict, is missing required
+            keys, is missing any ticker in ``underlyings``, contains non-finite
+            values, is asymmetric, has negative diagonal entries, or fails the
+            positive-semidefinite check.
     """
     if not isinstance(manual_market_params, dict):
         raise ValueError("manual_market_params must be a dict.")
@@ -146,15 +163,24 @@ def get_mean_cov(
     estimator: str = "window",
     ewma_N: int = 60,
 ) -> tuple[pd.Series, pd.DataFrame]:
-    """
-    Dispatcher: choose window or EWMA estimator.
+    """Dispatcher: estimate daily mean and covariance using the chosen method.
 
-    Parameters
-    ----------
-    estimator : str
-        "window" or "ewma".
-    ewma_N : int
-        EWMA parameter N (only used when estimator="ewma").
+    Args:
+        returns (pd.DataFrame): Full daily log-return history (all rows available).
+            Only the last ``lookback_days`` rows are used.
+        lookback_days (int): Number of trailing observations to include.
+        estimator (str): ``"window"`` for simple rolling sample statistics,
+            ``"ewma"`` for exponentially weighted estimates. Default ``"window"``.
+        ewma_N (int): EWMA half-life parameter N; λ = (N−1)/(N+1).
+            Only used when estimator=``"ewma"``. Default 60.
+
+    Returns:
+        tuple[pd.Series, pd.DataFrame]: (mu, cov) — daily mean log-return vector
+            and daily covariance matrix, indexed by ticker.
+
+    Raises:
+        ValueError: If estimator is not ``"window"`` or ``"ewma"`` (raised by
+            the downstream estimator functions).
     """
     if estimator == "ewma":
         return estimate_ewma_mean_cov(returns, lookback_days, ewma_N)

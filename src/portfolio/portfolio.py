@@ -29,23 +29,28 @@ def portfolio_value(
     option_vol_shock_beta: float = 1.0,
     option_vol_shock_floor: float = 0.05,
 ) -> float:
-    """
-    Compute total portfolio market value.
+    """Total mark-to-market value of the portfolio.
 
-    V = Σ stock_values + Σ option_values
+    V = Σ_i (quantity_i × spot_i)          [stocks]
+      + Σ_j (qty_j × mult_j × BS_price_j)  [options, Black-Scholes]
 
-    Parameters
-    ----------
-    portfolio : Portfolio
-    spots : pd.Series
-        Current spot prices indexed by ticker symbol.
-    pricing_date : date
-        Date used for time-to-maturity calculation.
+    Args:
+        portfolio (Portfolio): Collection of stock and option positions.
+        spots (pd.Series): Current spot prices indexed by ticker symbol (dollars).
+        pricing_date (date): Valuation date, used to compute option time-to-maturity.
+        underlying_returns (pd.Series | dict | None): Per-underlying log returns for
+            this scenario. Required only when option_vol_shock_mode != ``"fixed"``
+            to compute the shocked implied vol. Pass None to use fixed vols.
+        option_vol_shock_mode (str): ``"fixed"`` (default) or ``"underlying_beta"``.
+            See ``shocked_option_volatility`` for details.
+        option_vol_shock_beta (float): Beta coefficient for ``"underlying_beta"`` mode.
+        option_vol_shock_floor (float): Minimum shocked volatility for option positions.
 
-    Returns
-    -------
-    float
-        Total portfolio value in dollars.
+    Returns:
+        float: Total portfolio value in dollars. Negative is possible for net short books.
+
+    Raises:
+        KeyError: If spots is missing a ticker required by the portfolio.
     """
     total = 0.0
 
@@ -83,9 +88,25 @@ def reprice_portfolio(
     option_vol_shock_beta: float = 1.0,
     option_vol_shock_floor: float = 0.05,
 ) -> float:
-    """
-    Re-value the portfolio under a shocked spot price vector.
-    Identical to portfolio_value but named separately for clarity in risk loops.
+    """Re-value the portfolio under a shocked spot price vector.
+
+    Alias for ``portfolio_value`` with shocked_spots. Named separately so
+    risk-loop code reads clearly: ``V0 = portfolio_value(...)``,
+    ``V_scenario = reprice_portfolio(..., shocked_spots)``.
+
+    Args:
+        portfolio (Portfolio): Collection of stock and option positions.
+        shocked_spots (pd.Series): Spot prices after applying a market scenario shock
+            (dollars), indexed by ticker symbol.
+        pricing_date (date): Valuation date for option time-to-maturity.
+        underlying_returns (pd.Series | dict | None): Per-underlying log returns
+            of this scenario (used for vol shocks when mode != ``"fixed"``).
+        option_vol_shock_mode (str): ``"fixed"`` or ``"underlying_beta"``.
+        option_vol_shock_beta (float): Beta for ``"underlying_beta"`` mode.
+        option_vol_shock_floor (float): Minimum shocked vol.
+
+    Returns:
+        float: Portfolio value at the shocked spot prices (dollars).
     """
     return portfolio_value(
         portfolio,
@@ -105,17 +126,23 @@ def portfolio_exposure(
     spots: pd.Series,
     pricing_date: date,
 ) -> pd.Series:
-    """
-    Compute the net delta-dollar exposure vector x_i for each underlying.
+    """Net dollar-delta exposure vector across all underlyings.
 
-    For each underlying i:
-        Δ_i = stock_quantity_i + Σ (option_deltas for underlying i)
-        x_i = Δ_i × S_i
+    For each underlying i in the portfolio:
+        x_i = (stock_quantity_i × spot_i) + Σ_j (option_delta_exposure_j)
 
-    Returns
-    -------
-    pd.Series
-        Dollar-delta exposure indexed by underlying ticker.
+    This vector is used by the parametric (delta-normal) VaR engine as the
+    exposure multiplier in the quadratic form  x' Σ_h x.
+
+    Args:
+        portfolio (Portfolio): Collection of stock and option positions.
+        spots (pd.Series): Current spot prices indexed by ticker (dollars).
+        pricing_date (date): Valuation date, used for option delta computation.
+
+    Returns:
+        pd.Series: Dollar-delta exposure indexed by underlying ticker symbol.
+            Stock contribution: quantity × spot.
+            Option contribution: quantity × multiplier × BS_delta × spot.
     """
     underlyings = _all_underlyings(portfolio)
     exposure = pd.Series(0.0, index=underlyings)

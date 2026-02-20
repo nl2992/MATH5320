@@ -43,32 +43,42 @@ def historical_var_es(
     option_vol_shock_beta: float = 1.0,
     option_vol_shock_floor: float = 0.05,
 ) -> dict:
-    """
-    Compute Historical VaR and ES.
+    """Historical simulation VaR and ES via full portfolio repricing.
 
-    Parameters
-    ----------
-    portfolio : Portfolio
-    prices : pd.DataFrame
-        Full price history (index: DatetimeIndex, columns: tickers).
-    pricing_date : date
-        The "today" date for option time-to-maturity.
-    lookback_days : int
-        Number of daily observations to include in the lookback window.
-    horizon_days : int
-        Risk horizon h in trading days.
-    var_confidence : float
-        VaR confidence level, e.g. 0.99.
-    es_confidence : float
-        ES confidence level, e.g. 0.975.
+    Algorithm:
+        1. Compute daily log returns from ``prices``.
+        2. Build overlapping h-day horizon returns from the last lookback_days obs.
+        3. For each scenario row R:  S_shocked = S0 × exp(R)
+        4. Reprice the full portfolio (Black-Scholes for options).
+        5. loss = V0 − V_scenario.
+        6. VaR = empirical quantile(losses, var_confidence).
+        7. ES  = mean(losses | loss ≥ quantile(losses, es_confidence)).
 
-    Returns
-    -------
-    dict with keys:
-        var        : float  — VaR in dollars (positive = loss)
-        es         : float  — ES in dollars  (positive = loss)
-        losses     : np.ndarray — full loss distribution (dollars)
-        n_scenarios: int    — number of scenarios used
+    Args:
+        portfolio (Portfolio): Stock and option positions to evaluate.
+        prices (pd.DataFrame): Aligned price history; index DatetimeIndex,
+            columns are ticker symbols. Must cover at least
+            lookback_days + horizon_days rows.
+        pricing_date (date): Valuation date for option time-to-maturity.
+        lookback_days (int): Number of trailing daily obs in the lookback window.
+        horizon_days (int): Risk horizon h in trading days (≥ 1).
+        var_confidence (float): VaR tail probability, e.g. 0.99 for 99% VaR.
+        es_confidence (float): ES averaging threshold, e.g. 0.975 for ES97.5%.
+        shock_type (str): ``"log"`` (default) for log-return shocks,
+            ``"absolute"`` for dollar-change shocks.
+        option_vol_shock_mode (str): ``"fixed"`` or ``"underlying_beta"``.
+        option_vol_shock_beta (float): Beta for vol shock under ``"underlying_beta"``.
+        option_vol_shock_floor (float): Minimum shocked vol (default 0.05).
+
+    Returns:
+        dict: Result dictionary with keys:
+            - ``"var"`` (float): VaR in dollars (positive = loss).
+            - ``"es"`` (float): ES in dollars (positive = loss).
+            - ``"var_confidence"`` (float): var_confidence passed in.
+            - ``"es_confidence"`` (float): es_confidence passed in.
+            - ``"losses"`` (np.ndarray): Full loss distribution, one value per scenario.
+            - ``"n_scenarios"`` (int): Number of scenarios used.
+            - ``"option_vol_shock_mode"`` (str): Mode used.
     """
     # Current spot prices (last available row)
     spots_0 = prices.iloc[-1]

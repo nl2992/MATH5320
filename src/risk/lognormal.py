@@ -21,12 +21,30 @@ from scipy.stats import norm
 # ── Long position ──────────────────────────────────────────────────────────────
 
 def var_long_lognormal(V0: float, mu: float, sigma: float, h: float, p: float) -> float:
-    """
-    Exact long-position VaR under GBM (§4).
+    """Exact long-position VaR under GBM (formula-sheet §4).
 
-        VaR_long(p, h) = V₀ [ 1 − exp( m_h + s_h · z_{1−p} ) ]
+    VaR_long(p, h) = V₀ × [ 1 − exp( m_h + s_h × z_{1−p} ) ]
 
-    where ``z_{1−p}`` is negative for p > 0.5 (tail quantile).
+    where  m_h = (μ − ½σ²) h  and  s_h = σ √h.
+    z_{1−p} = Φ⁻¹(1−p) is negative for p > 0.5, making the loss positive.
+
+    Args:
+        V0 (float): Current portfolio value in dollars (must be > 0).
+        mu (float): Annualised arithmetic drift of the log-normal process.
+        sigma (float): Annualised volatility (must be > 0).
+        h (float): Horizon in years (must be > 0; use h = days/252 for trading days).
+        p (float): VaR confidence level, e.g. 0.99 (must be in (0, 1)).
+
+    Returns:
+        float: VaR in dollars (positive = loss). Returns a negative value only when
+            the drift is so large that the loss quantile is a gain.
+
+    Raises:
+        ValueError: If V0 ≤ 0, sigma ≤ 0, h ≤ 0, or p not in (0, 1).
+
+    Example:
+        >>> round(var_long_lognormal(V0=100_000, mu=0.08, sigma=0.20, h=5/252, p=0.99), 2)
+        5893.36
     """
     _validate(V0, sigma, h, p)
     m_h = (mu - 0.5 * sigma ** 2) * h
@@ -36,10 +54,24 @@ def var_long_lognormal(V0: float, mu: float, sigma: float, h: float, p: float) -
 
 
 def es_long_lognormal(V0: float, mu: float, sigma: float, h: float, p: float) -> float:
-    """
-    Exact long-position ES under GBM (§4).
+    """Exact long-position ES under GBM (formula-sheet §4).
 
-        ES_long(p, h) = V₀ [ 1 − exp(m_h + ½ s_h²) · N(z_{1−p} − s_h) / (1 − p) ]
+    ES_long(p, h) = V₀ × [ 1 − exp(m_h + ½ s_h²) × N(z_{1−p} − s_h) / (1 − p) ]
+
+    where  m_h = (μ − ½σ²) h,  s_h = σ √h,  z_{1−p} = Φ⁻¹(1−p).
+
+    Args:
+        V0 (float): Current portfolio value in dollars (must be > 0).
+        mu (float): Annualised arithmetic drift.
+        sigma (float): Annualised volatility (must be > 0).
+        h (float): Horizon in years (must be > 0).
+        p (float): ES averaging confidence level, e.g. 0.975 (must be in (0, 1)).
+
+    Returns:
+        float: ES in dollars (positive = loss). Always ≥ the VaR at the same p.
+
+    Raises:
+        ValueError: If V0 ≤ 0, sigma ≤ 0, h ≤ 0, or p not in (0, 1).
     """
     _validate(V0, sigma, h, p)
     m_h = (mu - 0.5 * sigma ** 2) * h
@@ -52,12 +84,27 @@ def es_long_lognormal(V0: float, mu: float, sigma: float, h: float, p: float) ->
 # ── Short position ─────────────────────────────────────────────────────────────
 
 def var_short_lognormal(V0: float, mu: float, sigma: float, h: float, p: float) -> float:
-    """
-    Exact short-position VaR under GBM (§7).
+    """Exact short-position VaR under GBM (formula-sheet §7).
 
-        VaR_short(p, h) = V₀ [ exp( m_h + z_p σ √h ) − 1 ]
+    For a short position of value V₀ in a GBM asset, losses come from upward moves.
+    The VaR is the loss at the p-th upper quantile of the return distribution:
 
-    where m_h = (μ − ½σ²) h is the log-return drift (NOT the arithmetic drift μ h).
+    VaR_short(p, h) = V₀ × [ exp( m_h + z_p × σ √h ) − 1 ]
+
+    where  m_h = (μ − ½σ²) h  and  z_p = Φ⁻¹(p).
+
+    Args:
+        V0 (float): Absolute value of the short position in dollars (must be > 0).
+        mu (float): Annualised arithmetic drift of the underlying.
+        sigma (float): Annualised volatility (must be > 0).
+        h (float): Horizon in years (must be > 0).
+        p (float): VaR confidence level, e.g. 0.99 (must be in (0, 1)).
+
+    Returns:
+        float: VaR in dollars (positive = loss for the short holder).
+
+    Raises:
+        ValueError: If V0 ≤ 0, sigma ≤ 0, h ≤ 0, or p not in (0, 1).
     """
     _validate(V0, sigma, h, p)
     m_h = (mu - 0.5 * sigma ** 2) * h
@@ -67,12 +114,25 @@ def var_short_lognormal(V0: float, mu: float, sigma: float, h: float, p: float) 
 
 
 def es_short_lognormal(V0: float, mu: float, sigma: float, h: float, p: float) -> float:
-    """
-    Exact short-position ES under GBM (§7).
+    """Exact short-position ES under GBM (formula-sheet §7).
 
-        ES_short(p, h) = V₀ [ exp(m_h + ½s_h²) · N( s_h − z_p ) / (1 − p) − 1 ]
+    ES_short(p, h) = V₀ × [ exp(m_h + ½ s_h²) × N(s_h − z_p) / (1 − p) − 1 ]
 
-    Note: m_h + ½s_h² = (μ − ½σ²)h + ½σ²h = μ h, so this simplifies to exp(μ h).
+    Note: m_h + ½ s_h² = (μ − ½σ²)h + ½σ²h = μ h, so the exponential term
+    simplifies to exp(μ h) — the expected growth of the underlying.
+
+    Args:
+        V0 (float): Absolute value of the short position in dollars (must be > 0).
+        mu (float): Annualised arithmetic drift of the underlying.
+        sigma (float): Annualised volatility (must be > 0).
+        h (float): Horizon in years (must be > 0).
+        p (float): ES confidence level, e.g. 0.975 (must be in (0, 1)).
+
+    Returns:
+        float: ES in dollars (positive = loss). Always ≥ VaR_short at the same p.
+
+    Raises:
+        ValueError: If V0 ≤ 0, sigma ≤ 0, h ≤ 0, or p not in (0, 1).
     """
     _validate(V0, sigma, h, p)
     m_h = (mu - 0.5 * sigma ** 2) * h
