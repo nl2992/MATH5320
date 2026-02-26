@@ -129,7 +129,7 @@ MATH5320/
 │       ├── cds_cva_panel.py        # CDS / CVA panel
 │       ├── capital_panel.py        # Capital and stress panel
 │       └── charts.py               # Plotly chart helpers
-├── tests/                          # 610 no-network unit and regression tests
+├── tests/                          # 622 no-network unit and regression tests
 ├── notebooks/                      # Course walkthrough notebooks
 ├── docs/
 │   ├── references/
@@ -142,6 +142,9 @@ MATH5320/
 ```bash
 # Install dependencies
 pip install -r requirements.txt
+
+# Or install the packaged distribution once published
+pip install math5320-portfolio-risk-system
 
 # Run the app
 streamlit run app.py
