@@ -1,0 +1,746 @@
+% ─────────────────────────────────────────────────────────────────────────────
+% Deliverable 2 — Software Design Documentation
+% MATH5320 Portfolio Risk Management System
+% Columbia University, MATH GR 5320 Financial Risk Management, Spring 2026
+% ─────────────────────────────────────────────────────────────────────────────
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs,longtable,array,ragged2e}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{fancyvrb}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  citecolor=blue,
+  pdftitle={Software Design Documentation — MATH5320},
+  pdfauthor={Nigel Li, Michael Adegbite, Stella}
+}
+
+\setlist[itemize]{topsep=3pt,itemsep=2pt,parsep=0pt,leftmargin=1.6em}
+\setlist[enumerate]{topsep=3pt,itemsep=2pt,parsep=0pt,leftmargin=1.6em}
+\newcolumntype{L}[1]{>{\RaggedRight\arraybackslash}p{#1}}
+\newcommand{\code}[1]{\texttt{#1}}
+
+% Compact verbatim for shell commands
+\DefineVerbatimEnvironment{shellcode}{Verbatim}{fontsize=\small,xleftmargin=1em}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{document}
+
+% ── Cover page ────────────────────────────────────────────────────────────────
+\begin{titlepage}
+\centering
+\vspace*{2cm}
+{\LARGE\bfseries Software Design Documentation\par}
+\vspace{0.4cm}
+{\large MATH GR 5320 Portfolio Risk Management System\par}
+\vspace{0.4cm}
+{\large Columbia University — Financial Risk Management, Spring 2026\par}
+\vspace{1.4cm}
+
+\begin{tabular}{ll}
+\toprule
+\textbf{Field} & \textbf{Value} \\
+\midrule
+Deliverable & 2 of 5 (15 points) \\
+Authors & Nigel Li, Michael Adegbite, Stella \\
+Reference Commit & \texttt{5841589e3f3d2dbd3c1e38b08642eccce201a6a2} \\
+Submission Date & May 12, 2026 \\
+Python Version & 3.12.2 \\
+Test Suite & 610 tests, 0 failures \\
+Statement Coverage & 96\% \\
+\bottomrule
+\end{tabular}
+
+\vspace{1.4cm}
+\begin{minipage}{0.78\linewidth}
+\small\itshape
+This document describes the architecture, module design, data flow,
+validation strategy, and known limitations of the MATH5320 risk engine.
+It is structured to satisfy the pre-deployment model-risk management
+documentation requirements discussed in Lecture 5.
+\end{minipage}
+\end{titlepage}
+
+\tableofcontents
+\clearpage
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Executive Summary}
+
+The \code{MATH5320} repository implements a modular Python and Streamlit
+risk engine for portfolios of stocks and European options.  The design
+separates user-interface code, data loading, portfolio representation,
+pricing logic, risk models, orchestration, and validation tests into
+distinct layers.  This separation is deliberate: it keeps quantitative
+functions testable independently of the Streamlit interface, and treats
+the UI as a thin presentation layer over a reusable analytical core.
+
+The system workflow — portfolio input, market data loading, risk
+parameter configuration, risk analysis, and VaR backtesting — is
+reflected directly in the codebase structure.  \code{app.py} controls
+the top-level Streamlit flow; \code{src/ui/} contains panel-level logic;
+\code{src/services/} orchestrates end-to-end computations;
+\code{src/portfolio/} and \code{src/schemas.py} define the domain model;
+\code{src/pricing/} and \code{src/risk/} hold the analytical core; and
+\code{tests/} provides comprehensive validation coverage.
+
+The design satisfies all five Lecture~5 pre-deployment requirements:
+clear statement of purpose, design documentation, data analysis,
+testing, and system analysis and testing.  The software architecture is
+well suited to a model-risk-sensitive context precisely because it keeps
+analytical logic inspectable, testable, and independent of the
+user-interface layer.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{System Purpose and Scope}
+
+\subsection{Purpose}
+
+The system is an educational portfolio risk application for MATH GR~5320.
+Its core purpose is to enable a user to:
+
+\begin{itemize}
+  \item define a portfolio of stocks and European options;
+  \item load historical market data via CSV upload or Yahoo Finance;
+  \item compute Value at Risk and Expected Shortfall under historical
+    simulation, delta-normal parametric, and Monte Carlo methods;
+  \item choose historical or manual calibration of market-risk parameters;
+  \item compare methods under common data and parameter assumptions;
+  \item run walk-forward VaR backtests with Kupiec and Christoffersen diagnostics;
+  \item inspect supporting analytics and download structured outputs.
+\end{itemize}
+
+The repository also contains extension modules for exact GBM/lognormal
+risk, hazard-rate credit, Merton structural default, CDS, CVA,
+counterparty mitigation, and illustrative regulatory capital calculations.
+These are explicitly documented as course-formula extensions, not
+production supervisory models.
+
+\subsection{Scope}
+
+\textbf{In scope:}
+stocks; European calls and puts; historical, parametric, and Monte Carlo
+VaR and ES; walk-forward VaR backtesting with Kupiec and Christoffersen
+diagnostics; CSV and Yahoo Finance data loading; downloadable risk outputs;
+and course-formula validation modules.
+
+\textbf{Out of scope:}
+production trading or risk management; enterprise authorization, audit,
+and access control; American or path-dependent option pricing; full
+volatility-surface or stochastic-volatility repricing; official
+supervisory DFAST/CCAR modeling; and production XVA systems.
+
+\subsection{Lecture~5 Design Compliance Matrix}
+
+\begin{center}
+\begin{tabular}{L{6.5cm}L{7.5cm}}
+\toprule
+\textbf{Lecture~5 / model-risk design requirement} & \textbf{Where this report satisfies it} \\
+\midrule
+Clear statement of purpose        & Section~2, System Purpose and Scope \\
+Design documentation              & Sections 3–5 with diagrams and module inventories \\
+Data analysis                     & Sections 4, 6, and 8 \\
+Testing                           & Section 10 and cross-references to test files \\
+System analysis and testing       & Sections 4, 7, and 10 \\
+Module documentation              & Section~5 with purpose, inputs, outputs, test evidence \\
+Data-flow documentation           & Section~4 with portfolio-to-output diagrams \\
+Code review concerns              & Sections 8, 9, and 12 \\
+Separation of concerns            & Sections 3 and 7 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Software Architecture}
+
+\subsection{Layered Architecture}
+
+The system follows a strict layered architecture in which each layer has
+a single responsibility and well-defined interfaces with adjacent layers:
+
+\begin{center}
+\fbox{\begin{minipage}{0.88\linewidth}
+\centering
+\textbf{User}\\[0.4em]
+$\downarrow$\\[0.4em]
+\textbf{UI Layer} \quad \code{app.py}, \code{src/ui/*}\\[0.4em]
+$\downarrow$\\[0.4em]
+\textbf{Service Layer} \quad \code{src/services/risk\_engine\_service.py}\\[0.4em]
+$\downarrow$\\[0.4em]
+\textbf{Domain Layer} \quad \code{src/schemas.py}, \code{src/portfolio/*}\\[0.4em]
+$\downarrow$\\[0.4em]
+\textbf{Model Layer} \quad \code{src/pricing/*}, \code{src/risk/*}, \code{src/credit/*}\\[0.4em]
+$\downarrow$\\[0.4em]
+\textbf{Outputs} \quad VaR/ES tables, loss distributions, backtest results, CSV/JSON downloads
+\end{minipage}}
+\end{center}
+
+\subsection{Why This Architecture Fits a Risk Engine}
+
+A layered architecture is appropriate for a model-risk-sensitive
+codebase for several interconnected reasons.  Pure model functions can
+be called directly from the test suite and from the Jupyter notebook
+environment without any Streamlit state, which makes independent
+validation straightforward.  Module responsibilities are narrow enough
+to be read and understood in isolation.  Extension modules — credit,
+CVA, regulatory — can be added without modifying the application shell
+or the core stock-and-option risk path.
+
+\subsection{Separation of Concerns}
+
+A key design decision is that the repository does not mix data
+gathering, calibration, computation, and presentation within the same
+module.  That discipline matters because model logic buried inside UI
+callbacks or data-loading functions becomes difficult to validate and
+govern.  The table below makes the separation explicit.
+
+\begin{center}
+\begin{tabular}{L{2.5cm}L{5.5cm}L{5.5cm}}
+\toprule
+\textbf{Layer} & \textbf{Responsibility} & \textbf{Must not do} \\
+\midrule
+Data layer      & Load, parse, clean, align, and validate prices & Compute VaR or ES \\
+Estimator layer & Estimate means, volatilities, and covariances & Download data or render UI \\
+Pricing layer   & Price stocks/options; compute option sensitivities & Portfolio-level workflow decisions \\
+Portfolio layer & Aggregate positions, values, and exposures & Estimate risk-model parameters \\
+Risk layer      & Compute VaR, ES, scenarios, and backtests & Render charts or collect user input \\
+Service layer   & Orchestrate the end-to-end workflow & Hide quantitative formulas in UI code \\
+UI layer        & Collect inputs and display outputs & Mutate model logic or silently change assumptions \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Data Flow and Control Flow}
+
+\subsection{End-to-End Data-Flow Diagram}
+
+\begin{center}
+\fbox{\begin{minipage}{0.88\linewidth}
+\centering
+\textbf{Portfolio input} (stocks and European options)\\[0.35em]
+$\downarrow$\\[0.35em]
+\textbf{Input validation} (schemas and data checks)\\[0.35em]
+$\downarrow$\\[0.35em]
+\textbf{Market data loading} (CSV/Yahoo Finance, date alignment, missing-data checks)\\[0.35em]
+$\downarrow$\\[0.35em]
+\textbf{Current valuation} (stock value, option repricing, total portfolio value)\\[0.35em]
+$\downarrow$\\[0.35em]
+\textbf{Return and parameter estimation} (log returns, horizon returns, rolling/EWMA mean-covariance)\\[0.35em]
+$\downarrow$\\[0.35em]
+\textbf{Risk models:} \quad Historical VaR/ES \qquad Parametric VaR/ES \qquad Monte Carlo VaR/ES\\[0.35em]
+$\downarrow$\\[0.35em]
+\textbf{Outputs:} comparison table, losses CSV, JSON summary, plots, backtesting diagnostics
+\end{minipage}}
+\end{center}
+
+\subsection{Core Modeling Conventions}
+
+The software design follows the conventions documented in the README and
+implemented in \code{src/risk/}:
+
+\begin{itemize}
+  \item Daily log returns: $r_{i,t} = \log(S_{i,t}/S_{i,t-1})$
+  \item Overlapping horizon returns: $R_t^{(h)} = \sum_{k=0}^{h-1} r_{t-k}$
+  \item Price shock: $S_{\mathrm{shocked}} = S_0 \cdot e^R$
+  \item Portfolio PnL: $V_T - V_0$; loss: $V_0 - V_T$
+  \item Horizon scaling: $\mu_h = \mu \cdot h$, $\Sigma_h = \Sigma \cdot h$
+  \item Option pricing: Black-Scholes with continuous dividends
+  \item Kupiec backtest statistic: $\mathrm{LR}_{\mathrm{uc}} \sim \chi^2_1$
+\end{itemize}
+
+These conventions define the data structures that flow between modules.
+Historical and Monte Carlo engines consume shocked spot vectors and
+full portfolio repricing, while the parametric engine consumes
+delta-dollar exposure vectors and estimated covariance matrices.
+
+\subsection{Backtesting Control-Flow Diagram}
+
+\begin{center}
+\fbox{\begin{minipage}{0.88\linewidth}
+\centering
+\textbf{Historical market data}\\[0.35em]
+$\downarrow$\\[0.35em]
+\textbf{Rolling estimation window:} use only data available at each forecast date\\[0.35em]
+$\downarrow$\\[0.35em]
+\textbf{VaR forecast}\\[0.35em]
+$\downarrow$\\[0.35em]
+\textbf{Realized future loss}\\[0.35em]
+$\downarrow$\\[0.35em]
+\textbf{Exception sequence:} record breach when realized loss exceeds VaR\\[0.35em]
+$\downarrow$\\[0.35em]
+\textbf{Diagnostics:} exception count, exception rate, Kupiec LR, Christoffersen LR, traffic-light zone
+\end{minipage}}
+\end{center}
+
+Backtesting is implemented as an out-of-sample walk-forward process in
+\code{src/risk/backtest.py}.  The implementation never uses future data
+to estimate the VaR forecast at the current date: it slices prices up to
+the forecast date, fits on that historical subset, and then compares the
+resulting VaR with the realized future loss over the chosen horizon.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Module-by-Module Design}
+
+\subsection{Module Inventory}
+
+\begin{center}
+\footnotesize
+\begin{tabular}{L{2.4cm}L{3.8cm}L{2.4cm}L{2.2cm}L{2.4cm}}
+\toprule
+\textbf{Module} & \textbf{Purpose} & \textbf{Inputs} & \textbf{Outputs} & \textbf{Test evidence} \\
+\midrule
+Schemas & Define stock, option, and portfolio objects & User inputs & Structured portfolio objects & \code{test\_config\_and\_validation.py} \\
+Market data & CSV and Yahoo Finance loading & Tickers, dates, CSVs & Aligned price data & \code{test\_market\_data.py} \\
+Data validation & Validate price and input data & Prices, settings & Errors or clean acceptance & \code{test\_config\_and\_validation.py} \\
+Black-Scholes & European option pricing and delta & $S,K,T,r,q,\sigma$, type & Price, delta & \code{test\_backend.py}, \code{test\_homework\_cases.py} \\
+Position valuation & Per-position value, vol shock, delta-dollar sensitivity & Position and market inputs & Value, exposure & \code{test\_backend.py} \\
+Portfolio valuation & Aggregate positions and exposures & Portfolio, spot vector & Total value, exposure vector & \code{test\_backend.py} \\
+Returns & Log and horizon return construction & Price matrix & Return matrix & \code{test\_backend.py}, \code{test\_coverage\_gaps.py} \\
+Estimators & Rolling, EWMA, and manual covariance assembly & Return matrix or manual params & Mean, covariance & \code{test\_backend.py}, \code{test\_homework\_cases.py} \\
+Historical risk & Historical VaR/ES with full repricing and vol shock & Portfolio, history, settings & VaR, ES, losses & \code{test\_backend.py}, \code{test\_course\_validation.py} \\
+Parametric risk & Delta-normal VaR/ES & Exposure vector, covariance & VaR, ES & \code{test\_backend.py}, \code{test\_es\_confidence\_split.py} \\
+Monte Carlo risk & Simulated VaR/ES & Mean/cov, portfolio, vol-shock settings & VaR, ES, losses & \code{test\_backend.py}, \code{test\_coverage\_gaps.py} \\
+Backtesting & Walk-forward VaR validation & History, model settings & Exceptions, Kupiec, Christoffersen & \code{test\_backend.py}, \code{test\_backtest\_extensions.py} \\
+Exact GBM & Formula-sheet GBM VaR/ES & GBM parameters & Exact VaR, ES & \code{test\_lognormal.py}, \code{test\_course\_validation.py} \\
+Hazard & Reduced-form default & Hazard, recovery, maturity & Survival, density, spread & \code{test\_credit.py}, \code{test\_course\_validation.py} \\
+Merton & Structural default & $V_0,B,T,r,\mu,\sigma$ & PD, equity, debt & \code{test\_credit.py}, \code{test\_course\_validation.py} \\
+CDS & Par spread calculation & Hazard, recovery, discounting & Spread, protection/premium values & \code{test\_credit.py}, \code{test\_course\_validation.py} \\
+CVA & Counterparty valuation adjustment & Exposure, PD, recovery & CVA & \code{test\_credit.py}, \code{test\_cva\_mitigants.py} \\
+Regulatory & RWA, capital ratio, DFAST-style calculations & Assets, losses, weights & Ratios, stress metrics & \code{test\_regulatory.py}, \code{test\_dfast\_pathing.py} \\
+Service & Orchestrate end-to-end core risk run & Portfolio, data, settings & Unified result object & \code{test\_backend.py}, \code{integration\_test.py} \\
+UI & Streamlit display and input logic & User interaction & Rendered panels & \code{test\_ui\_panels.py}, \code{test\_charts.py} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Public Interfaces and Contracts}
+
+The main public interfaces define the contracts between the UI/service
+layer and the model layer.
+
+\begin{center}
+\begin{tabular}{L{3.5cm}L{4.5cm}L{3.0cm}L{2.5cm}}
+\toprule
+\textbf{Interface} & \textbf{Inputs} & \textbf{Outputs} & \textbf{Failure mode} \\
+\midrule
+\code{black\_scholes\_price} & $S,K,T,\sigma,r,q$, option type & Option price & Reject invalid type or numerical domain \\
+\code{black\_scholes\_delta} & Same inputs & Delta & Reject invalid type or numerical domain \\
+\code{portfolio\_value} & Portfolio object, spot vector & Portfolio value & Fail visibly if required underlying missing \\
+\code{portfolio\_delta\_dollar} & Portfolio, spot vector & Exposure vector & Fail visibly if option input inconsistent \\
+\code{historical\_var\_es} & Portfolio, price history, horizon, confidences & VaR, ES, losses & Return explicit reason if history insufficient \\
+\code{parametric\_var\_es} & Exposure vector, mean/covariance, horizon & VaR, ES & Reject invalid covariance or confidence \\
+\code{monte\_carlo\_var\_es} & Portfolio, mean/cov, paths, seed & VaR, ES, losses & Reject invalid covariance or path count \\
+\code{run\_backtest} & Portfolio, price history, model choice, lookback & Exception series, summary & Return explicit no-result reason when infeasible \\
+\code{RiskEngineService} & Portfolio, prices, pricing date, settings & Unified result dict & Surface errors to the UI rather than swallowing \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Core Data Structures}
+
+\begin{center}
+\begin{tabular}{L{3.5cm}L{5.5cm}L{4.5cm}}
+\toprule
+\textbf{Object} & \textbf{Main fields} & \textbf{Design role} \\
+\midrule
+\code{StockPosition}      & Ticker, quantity (signed) & Represents signed equity holdings \\
+\code{OptionPosition}     & Underlying, type, strike, maturity, volatility, rate, dividend yield, multiplier, quantity & Represents European option contracts \\
+\code{Portfolio}          & Stock positions, option positions & Single object passed through valuation and risk workflows \\
+Risk settings bundle      & Lookback, horizon, confidences, estimator type, calibration mode, MC paths, vol-shock controls & Standardizes user configuration across risk engines \\
+\code{ManualMarketParams} & Daily mean vector, volatility/covariance inputs & Allows parameter-driven parametric and MC runs \\
+Risk result dictionary    & Method-level VaR, ES, losses, portfolio value, chart payloads & Feeds the UI and test artifacts \\
+\code{BacktestResult}     & Forecast dates, realized losses, VaR forecasts, exceptions, diagnostics & Records outcome-analysis evidence \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Operational Paths}
+
+\textbf{Current risk run:}
+\begin{enumerate}
+  \item Validate portfolio and market-data availability.
+  \item Compute current stock and option values.
+  \item Estimate or accept market-risk parameters.
+  \item Run historical, parametric, and Monte Carlo models.
+  \item Aggregate VaR, ES, losses, and charts into one result object.
+\end{enumerate}
+
+\textbf{Backtest run:}
+\begin{enumerate}
+  \item Move through time using a rolling estimation window.
+  \item Re-estimate the selected model at each date.
+  \item Forecast VaR using only information available at that date.
+  \item Observe the realized future loss.
+  \item Record exceptions and compute Kupiec and Christoffersen diagnostics.
+\end{enumerate}
+
+\textbf{Formula-sheet extension run:}
+\begin{enumerate}
+  \item Call pure modules directly from notebooks or service helpers.
+  \item Compare actual output with a deterministic course fixture.
+  \item Assert equality within the documented numerical tolerance.
+  \item Record the result in the validation artifacts.
+\end{enumerate}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Input and Output Schemas}
+
+Input enforcement is distributed across Streamlit UI controls,
+\code{src/data/validation.py}, and numerical domain checks inside
+pricing and model functions.  This section documents the intended
+contract; specific enforcement layers are noted where relevant.
+
+\subsection{Stock Input}
+
+\begin{center}
+\begin{tabular}{llL{4cm}L{5cm}}
+\toprule
+\textbf{Field} & \textbf{Type} & \textbf{Rule} & \textbf{Validation behaviour} \\
+\midrule
+\code{ticker}   & string  & Non-empty symbol             & UI prevents empty ticker \\
+\code{quantity} & numeric & Positive or negative (signed) & Numeric handling enforced in data-entry flow \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Option Input}
+
+\begin{center}
+\begin{tabular}{llL{3.5cm}L{4.5cm}}
+\toprule
+\textbf{Field} & \textbf{Type} & \textbf{Rule} & \textbf{Validation behaviour} \\
+\midrule
+\code{label}/\code{ticker}    & string & Non-empty & UI avoids blank partial rows \\
+\code{underlying\_ticker}      & string & Must exist in price data & Explicit ticker-existence check implemented \\
+\code{option\_type}           & string & \code{call} or \code{put} & Pricing layer rejects unknown types \\
+\code{quantity}               & numeric & Signed & Numeric handling enforced \\
+\code{strike}                 & numeric & Positive & Invalid values fail in pricing \\
+\code{maturity}               & date    & Future-dated for live pricing & Expired options handled; malformed dates fail upstream \\
+\code{volatility}             & numeric & Positive decimal & Pricing layer rejects non-positive volatility \\
+\code{risk\_free\_rate}       & numeric & Numeric decimal & Numeric input expected \\
+\code{dividend\_yield}        & numeric & Numeric decimal & Numeric input expected \\
+\code{multiplier}             & numeric & Positive & Expected positive; no central validator for all paths \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Risk Settings}
+
+\begin{center}
+\begin{tabular}{llL{3cm}L{4.5cm}}
+\toprule
+\textbf{Field} & \textbf{Type} & \textbf{Rule} & \textbf{Validation behaviour} \\
+\midrule
+Lookback window   & integer & Positive, sufficiently large & Infeasible windows surface as insufficient-history error \\
+Horizon           & integer & Positive                    & Return helpers reject invalid horizons \\
+VaR confidence    & float   & $(0,1)$                     & Domain covered in tests \\
+ES confidence     & float   & $(0,1)$                     & Separate-confidence tests exist \\
+Estimator type    & enum    & \code{window} or \code{ewma} & UI constrains; orchestration assumes supported values \\
+Calibration mode  & enum    & \code{historical} or \code{manual} & UI constrains; tests cover manual mode \\
+MC simulations    & integer & Positive                    & Positive value expected \\
+Random seed       & integer or \code{None} & Fixed for reproducibility & Both fixed and unfixed usage supported \\
+Vol shock mode    & enum    & \code{fixed} or \code{underlying\_beta} & UI constrains; unknown modes raise visibly \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Output Schema}
+
+\begin{center}
+\begin{tabular}{lL{9.5cm}}
+\toprule
+\textbf{Output} & \textbf{Contents} \\
+\midrule
+Risk summary (JSON) & Method, VaR, ES, VaR/ES confidence levels, horizon, portfolio value, assumptions \\
+Losses CSV          & Scenario id or date, method, loss under convention $V_0 - V_T$ \\
+Backtest CSV        & Model, observations, exceptions, expected exceptions, exception rate, Kupiec LR, p-value \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Risk Engine Orchestration}
+
+The core orchestration path is implemented in
+\code{src/services/risk\_engine\_service.py}.
+
+\subsection{Core Steps}
+
+\begin{enumerate}
+  \item Accept a validated \code{Portfolio}, aligned \code{prices} DataFrame,
+    a \code{pricing\_date}, and a risk-settings bundle.
+  \item Compute current portfolio value from the latest spot vector.
+  \item Dispatch to \code{historical\_var\_es}, \code{parametric\_var\_es},
+    and \code{monte\_carlo\_var\_es}.
+  \item Aggregate results into a single dictionary keyed by method.
+  \item On backtest requests, call \code{run\_backtest} and then
+    \code{kupiec\_test}.
+  \item Return service-level objects to the UI for display and download.
+\end{enumerate}
+
+The settings bundle carries: \code{calibration\_mode}, optional
+\code{manual\_market\_params} for mean/covariance overrides,
+\code{option\_vol\_shock\_mode}, \code{option\_vol\_shock\_beta}, and
+\code{option\_vol\_shock\_floor}.
+
+\subsection{Why the Service Layer Matters}
+
+The service layer isolates each Streamlit panel from knowledge of
+portfolio repricing, return estimation, scenario generation, output
+aggregation, and error conditions.  Embedding those responsibilities
+in the UI would increase duplication and coupling.  Acting as a single
+orchestration boundary makes the application more maintainable and its
+model governance more tractable.
+
+\subsection{Extension Orchestration}
+
+Credit and regulatory logic use separate service modules —
+\code{src/services/credit\_service.py} and
+\code{src/services/regulatory\_service.py} — which keeps the required
+stock/option risk workflow independent from the course-formula extensions.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Data Validation and Error Handling}
+
+The codebase uses both front-end and back-end validation.  UI-level
+controls reduce obvious user errors, while data- and model-layer checks
+protect against invalid numerical states.
+
+\subsection{Error-Handling Table}
+
+\begin{center}
+\begin{tabular}{L{4.5cm}L{3.5cm}L{5.5cm}}
+\toprule
+\textbf{Error case} & \textbf{Detection layer} & \textbf{Required behaviour} \\
+\midrule
+Missing ticker in price history  & Data validation & Raise or display explicit error \\
+Too few observations              & Risk module & Return explicit empty reason in backtest paths; fail visibly in calculation paths \\
+Negative or zero prices           & Data validation & Reject explicitly \\
+Duplicate dates                   & Data loader & Reject explicitly; not all cases are centrally normalized \\
+NaN prices                        & Data loader/validation & All-NaN columns flagged; broader handling is workflow-dependent \\
+Invalid option maturity           & Schema/pricing & Expired options handled; malformed values fail visibly \\
+Negative volatility               & Schema/pricing & Pricing fails visibly when repricing attempted \\
+Invalid confidence                & Risk settings & Constrained by UI or fails visibly if misused \\
+Non-PSD covariance                & Estimator/MC & Manual inputs rejected explicitly; auto-repair not the primary path \\
+Empty portfolio                   & Schema/service & Prevented or fails visibly \\
+Download failure                  & Data layer/UI & Clear user-facing error message \\
+Monte Carlo seed missing          & MC layer & Randomize and record, or require seed for regression \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Data Validation Design}
+
+Lecture~5 emphasizes documenting data quality, proxies, and cleaning
+assumptions.  We address these requirements at three layers:
+
+\begin{itemize}
+  \item \code{src/data/validation.py} checks emptiness, index type,
+    all-NaN columns, positive prices, and stale-price runs.
+  \item \code{src/data/market\_data.py} handles CSV parsing, numeric
+    coercion, Yahoo Finance retrieval, exponential-backoff retry, and
+    parquet caching.
+  \item \code{src/ui/market\_data\_panel.py} surfaces errors immediately
+    to the user rather than silently proceeding.
+\end{itemize}
+
+Visible failure behavior is mandatory for a model-risk-sensitive
+application.  Enforcement is distributed across the UI, data loaders,
+validators, and numerical modules; this document distinguishes the
+intended input contract from the specific layer where each check is applied.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Numerical Implementation Controls}
+
+Floating-point outputs are compared with tolerances rather than exact
+equality throughout the test suite.  Domains are validated before
+formulas are evaluated.  Monte Carlo regression tests use fixed seeds.
+Covariance matrices are checked for shape, symmetry, and positive
+semi-definiteness via estimator tests, and edge cases are exercised to
+confirm finite outputs or controlled failures.
+
+\begin{center}
+\begin{tabular}{L{6cm}L{7.5cm}}
+\toprule
+\textbf{Numerical risk} & \textbf{Control} \\
+\midrule
+Floating-point equality             & \code{pytest.approx} / \code{np.isclose} in all tests \\
+Overflow in lognormal shocks        & Validate inputs; use analytical formulas where available \\
+Underflow in deep OTM option prices & Permit small positive values; reject negative option prices \\
+Catastrophic cancellation           & Prefer analytical Greeks over unstable finite differences \\
+Non-PSD covariance                  & Test structure and document error or repair expectations \\
+Monte Carlo randomness              & Fixed seed for all regression-style tests \\
+Stale or missing data               & Validate before calculation \\
+Wrong loss sign                     & Explicit PnL/loss conventions plus sign-aware tests \\
+VaR/ES confidence confusion         & Separate-confidence tests in \code{test\_es\_confidence\_split.py} \\
+Delta/exposure unit mismatch        & Dedicated regression test confirms delta-dollar convention with spot \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Testing and Coverage}
+
+Testing is integral to the design of the repository, not a sidecar
+to the application.
+
+\subsection{Test Integration by Layer}
+
+\begin{itemize}
+  \item Formula modules are validated by analytical and course-derived tests.
+  \item Service orchestration is validated by backend integration tests.
+  \item UI panels are validated with Streamlit panel tests.
+  \item Market-data wrappers are validated independently from the risk engine.
+  \item Integration scripts exercise end-to-end behavior with live market data.
+\end{itemize}
+
+\subsection{Test Execution Summary}
+
+No-network unit test command:
+\begin{shellcode}
+python -m pytest tests/ \
+  --ignore=tests/integration_test.py \
+  --ignore=tests/integration_test_formula_sheet.py -v
+\end{shellcode}
+
+Recorded result (2026-05-11 03:00:09 EDT, commit \code{5841589e}):
+\textbf{610 passed, 0 failed, 0 skipped}.
+
+Coverage command:
+\begin{shellcode}
+python -m pytest tests/ --cov=src --cov-report=term-missing \
+  --cov-report=html:submission/coverage_report \
+  --cov-report=xml:submission/coverage_report/coverage.xml \
+  --ignore=tests/integration_test.py \
+  --ignore=tests/integration_test_formula_sheet.py
+\end{shellcode}
+
+Recorded result: \textbf{96\% statement coverage}.  Remaining untested
+lines are concentrated in UI branch paths, selected credit-service
+helpers, and defensive validation branches.
+
+\subsection{Coverage and Remediation Plan}
+
+The model-critical paths — pricing formulas, VaR/ES formulas, covariance
+handling, backtesting diagnostics, credit formulas, and regulatory
+arithmetic — are all tested directly.
+
+\begin{center}
+\begin{tabular}{L{3.5cm}L{5.5cm}L{4.5cm}}
+\toprule
+\textbf{Area} & \textbf{Remaining gap} & \textbf{Planned remediation} \\
+\midrule
+Streamlit panel branches  & Some UI display paths require live Streamlit/browser state & Add headless browser or Streamlit component tests as a future enhancement \\
+Credit-service helpers    & Some orchestration branches are lower value than pure formula branches & Add service-level synthetic workflows \\
+Defensive validation      & Some invalid states are hard to trigger from the UI & Add direct unit tests against validators \\
+Historical edge paths     & Some insufficient-history and absolute-shock branches are method-specific & Add synthetic price matrices with controlled missing or short history \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Deployment and Reproducibility}
+
+\subsection{Core Commands}
+
+Install dependencies:
+\begin{shellcode}
+pip install -r requirements.txt
+\end{shellcode}
+
+Run the application:
+\begin{shellcode}
+streamlit run app.py
+\end{shellcode}
+
+Run the no-network test suite:
+\begin{shellcode}
+python -m pytest tests/ \
+  --ignore=tests/integration_test.py \
+  --ignore=tests/integration_test_formula_sheet.py
+\end{shellcode}
+
+\subsection{Recorded Test Environment}
+
+\begin{itemize}
+  \item Date/time: 2026-05-11 03:00:09 EDT
+  \item Git commit: \code{5841589e3f3d2dbd3c1e38b08642eccce201a6a2}
+  \item Python: 3.12.2 \quad OS: Darwin 24.5.0 arm64
+  \item Key packages: \code{streamlit 1.37.1}, \code{numpy 1.26.4},
+    \code{pandas 3.0.2}, \code{scipy 1.17.1}, \code{plotly 5.24.1},
+    \code{yfinance 1.2.0}, \code{pytest 7.4.4}, \code{pytest-cov 7.1.0}
+\end{itemize}
+
+\subsection{Reproducibility Assessment}
+
+Reproducibility is strong for deterministic and no-network paths:
+analytical modules are deterministic, Monte Carlo defaults to a fixed
+seed for regression-stable tests, and the application depends on
+explicit settings objects.  Reproducibility is inherently weaker for
+live-data integration because Yahoo Finance data may update, market
+data availability can change, and external dependencies may vary.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Known Software Limitations}
+
+\begin{center}
+\begin{tabular}{L{4cm}L{4.5cm}L{5cm}}
+\toprule
+\textbf{Limitation} & \textbf{Consequence} & \textbf{Mitigation} \\
+\midrule
+Streamlit app is not production software & No enterprise auth, audit, or access controls & Academic use only; limitations are explicitly documented \\
+Yahoo Finance / yfinance data can be imperfect & Corporate actions, stale prices, or connection failures may affect live runs & Retry logic and parquet cache implemented; Bloomberg CSV data available as fallback \\
+Option pricing is Black-Scholes only & No stochastic volatility, no smile modeling & Appropriate for the course scope; documented as a known limitation \\
+Parametric VaR uses delta-normal linear approximation & Nonlinear option payoffs are underestimated relative to full repricing & Historical and MC engines use full repricing; limitation is disclosed in model documentation \\
+EWMA parameter is formula-derived, not ML-calibrated & May not match market-observed volatility clustering & Acceptable for academic purpose; documented in model description \\
+Regulatory extensions are illustrative & Do not claim official Basel or DFAST compliance & Academic demonstration only; labeled as course formula implementations \\
+Monte Carlo convergence is seed-dependent & Seeded runs are deterministic; unseeded runs introduce variance & Regression tests use fixed seeds; unseeded usage is documented \\
+96\% statement coverage rather than 100\% & Some UI branches and defensive paths are untested & Remaining gaps are non-formula paths; documented in Section~10.3 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Design Compliance with Lecture 5}
+
+Lecture~5 frames pre-deployment model risk management in terms of five
+requirements: requirements definition, design documentation, data
+analysis, testing, and system analysis and testing.  We address each
+explicitly:
+
+\begin{enumerate}
+  \item \textbf{Requirements.}  The system purpose and scope are stated
+    in Section~2, including in-scope and out-of-scope boundaries.
+  \item \textbf{Design documentation.}  Sections 3–5 provide a layered
+    architecture diagram, separation-of-concerns table, module inventory,
+    public interface contracts, and core data structures.
+  \item \textbf{Data analysis.}  Section~8 documents the data validation
+    strategy; Section~6 documents the input schema and data quality checks.
+  \item \textbf{Testing.}  Section~10 documents the no-network test suite
+    (610 tests, 96\% coverage), integration scripts, and coverage
+    remediation plan.
+  \item \textbf{System analysis and testing.}  Sections 4 and 7 describe
+    the end-to-end data flow and the service-layer orchestration that binds
+    the system together.
+\end{enumerate}
+
+Lecture~5 also explicitly calls out bugs, design weaknesses, hidden
+assumptions, floating-point comparison errors, unit tests, single-purpose
+routines, and separation of data gathering from calibration from
+computation.  Sections 8–12 address each of these concerns directly.
+
+\end{document}

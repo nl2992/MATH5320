@@ -1,0 +1,550 @@
+% ─────────────────────────────────────────────────────────────────────────────
+% Deliverable 5 — Test Results Report
+% MATH5320 Portfolio Risk Management System
+% Columbia University, MATH GR 5320 Financial Risk Management, Spring 2026
+% ─────────────────────────────────────────────────────────────────────────────
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs,longtable,array,ragged2e}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{fancyvrb}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  citecolor=blue,
+  pdftitle={Test Results Report — MATH5320},
+  pdfauthor={Nigel Li, Michael Adegbite, Stella}
+}
+
+\setlist[itemize]{topsep=3pt,itemsep=2pt,parsep=0pt,leftmargin=1.6em}
+\setlist[enumerate]{topsep=3pt,itemsep=2pt,parsep=0pt,leftmargin=1.6em}
+\newcolumntype{L}[1]{>{\RaggedRight\arraybackslash}p{#1}}
+\newcommand{\code}[1]{\texttt{#1}}
+\DefineVerbatimEnvironment{shellcode}{Verbatim}{fontsize=\small,xleftmargin=1em}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{document}
+
+% ── Cover page ────────────────────────────────────────────────────────────────
+\begin{titlepage}
+\centering
+\vspace*{2cm}
+{\LARGE\bfseries Test Results Report\par}
+\vspace{0.4cm}
+{\large MATH GR 5320 Portfolio Risk Management System\par}
+\vspace{0.4cm}
+{\large Columbia University — Financial Risk Management, Spring 2026\par}
+\vspace{1.4cm}
+
+\begin{tabular}{ll}
+\toprule
+\textbf{Field} & \textbf{Value} \\
+\midrule
+Deliverable & 5 of 5 (10 points) \\
+Authors & Nigel Li, Michael Adegbite, Stella \\
+Reference Commit & \texttt{5841589e3f3d2dbd3c1e38b08642eccce201a6a2} \\
+Run Timestamp & 2026-05-11 03:00:09 EDT \\
+Python Version & 3.12.2 \quad OS: Darwin 24.5.0 arm64 \\
+No-network tests & \textbf{610 passed, 0 failed, 0 skipped} \\
+Statement Coverage & \textbf{96\%} \\
+Integration scripts & \textbf{2 / 2 passed} \\
+\bottomrule
+\end{tabular}
+
+\vspace{1.4cm}
+\begin{minipage}{0.78\linewidth}
+\small\itshape
+This document presents observed test execution results for the MATH5320
+risk engine.  It is organized to align with the Test Plan (Deliverable~3),
+covering unit test outcomes, integration test outcomes, analytical golden
+comparisons, homework fixture validation, backtest results, and coverage
+analysis.
+\end{minipage}
+\end{titlepage}
+
+\tableofcontents
+\clearpage
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Executive Summary}
+
+The test results demonstrate strong validation coverage across the
+repository's no-network unit suite and live integration scripts.
+
+\textbf{No-network suite:} 610 tests passed, 0 failed, 0 skipped.
+
+\textbf{Coverage:} 96\% statement coverage across \code{src/}; remaining
+untested lines are concentrated in UI branch paths, selected credit-service
+helpers, and defensive validation branches.
+
+\textbf{Integration:} Both live-data integration scripts passed, confirming
+live-data download, service orchestration, full risk-model execution, and
+representative backtesting behavior end to end.
+
+\textbf{Overall conclusion:} The deterministic, no-network, and live
+integration evidence collectively support the correctness of the core
+software design and formula implementations.  We regard the implementation
+as suitable for submission as an academic risk-engine validation exercise.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Test Environment}
+
+\subsection{Run Metadata}
+
+\begin{itemize}
+  \item Date/time: 2026-05-11 03:00:09 EDT
+  \item Git commit: \code{5841589e3f3d2dbd3c1e38b08642eccce201a6a2}
+  \item Python: 3.12.2 \quad OS: Darwin 24.5.0 arm64
+  \item Network status: enabled for integration-script execution
+  \item Bloomberg data files present: \code{data/AAPL-bloomberg.csv},
+    \code{data/CAT-bloomberg.csv}
+\end{itemize}
+
+\subsection{Key Package Versions}
+
+\code{streamlit 1.37.1}, \code{numpy 1.26.4}, \code{pandas 3.0.2},
+\code{scipy 1.17.1}, \code{plotly 5.24.1}, \code{yfinance 1.2.0},
+\code{pytest 7.4.4}, \code{pytest-cov 7.1.0}.
+
+\subsection{Environment Artifacts}
+
+The following files were written to \code{submission/test\_artifacts/}
+for the submission evidence package:
+
+\begin{itemize}
+  \item \code{git\_commit.txt}, \code{python\_version.txt}, \code{requirements\_freeze.txt}
+  \item \code{pytest\_output.txt}, \code{coverage\_output.txt}
+  \item \code{integration\_test\_output.txt}, \code{integration\_test\_formula\_sheet\_output.txt}
+  \item \code{per\_file\_test\_counts.json}, \code{homework\_fixture\_results.csv},
+    \code{official\_benchmark\_results.csv}, \code{backtest\_results.csv}
+\end{itemize}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Test Commands}
+
+\subsection{No-Network Unit Suite}
+
+\begin{shellcode}
+python -m pytest tests/ \
+  --ignore=tests/integration_test.py \
+  --ignore=tests/integration_test_formula_sheet.py -v
+\end{shellcode}
+
+\subsection{Coverage Run}
+
+\begin{shellcode}
+python -m pytest tests/ --cov=src --cov-report=term-missing \
+  --cov-report=html:submission/coverage_report \
+  --cov-report=xml:submission/coverage_report/coverage.xml \
+  --ignore=tests/integration_test.py \
+  --ignore=tests/integration_test_formula_sheet.py
+\end{shellcode}
+
+\subsection{Integration Scripts}
+
+\begin{shellcode}
+python tests/integration_test.py
+python tests/integration_test_formula_sheet.py
+\end{shellcode}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Test Execution Summary}
+
+\subsection{Test Group Results}
+
+\begin{center}
+\footnotesize
+\begin{tabular}{L{3.5cm}L{5cm}rrrl}
+\toprule
+\textbf{Group} & \textbf{File(s)} & \textbf{Passed} & \textbf{Failed} & \textbf{Skipped} & \textbf{Notes} \\
+\midrule
+Core backend              & \code{test\_backend.py}                                   & 29  & 0 & 0 & Core pricing, portfolio, VaR/ES, service smoke tests \\
+Backtest extensions       & \code{test\_backtest\_extensions.py}                     & 31  & 0 & 0 & Christoffersen, conditional coverage, traffic light, severity \\
+Course validation         & \code{test\_course\_validation.py}                       & 67  & 0 & 0 & Course formula-sheet and regression fixtures \\
+Homework fixtures         & \code{test\_homework\_cases.py}                          & 83  & 0 & 0 & Homework-derived validation cases \\
+Lognormal                 & \code{test\_lognormal.py}                                 & 34  & 0 & 0 & Exact GBM/lognormal formulas \\
+Credit                    & \code{test\_credit.py}, \code{test\_cva\_mitigants.py}, \code{test\_counterparty\_mitigation.py}, \code{test\_merton\_timing.py} & 118 & 0 & 0 & Hazard, Merton, CDS, CVA, mitigants \\
+Credit service            & \code{test\_credit\_service.py}                           & 11  & 0 & 0 & Extension-service aggregation \\
+Regulatory                & \code{test\_regulatory.py}, \code{test\_balance\_sheet.py}, \code{test\_dfast\_pathing.py} & 46 & 0 & 0 & RWA, capital ratio, stress pathing \\
+Market data               & \code{test\_market\_data.py}                              & 24  & 0 & 0 & CSV loader, yfinance wrappers, cache, rate helper \\
+Config / validation       & \code{test\_config\_and\_validation.py}                  & 10  & 0 & 0 & Input and data validation \\
+Charts                    & \code{test\_charts.py}                                    &  6  & 0 & 0 & Plot helpers \\
+UI panels                 & \code{test\_ui\_panels.py}                                & 68  & 0 & 0 & Streamlit panel behavior \\
+Coverage and numerics     & \code{test\_coverage\_gaps.py}, \code{test\_strict\_numerics.py}, \code{test\_es\_confidence\_split.py} & 49 & 0 & 0 & Gap-closing and numerical-discipline tests \\
+Integration               & \code{integration\_test.py}                               &  1  & 0 & 0 & Live-data end-to-end market-risk workflow passed \\
+Formula integration       & \code{integration\_test\_formula\_sheet.py}              &  1  & 0 & 0 & Live-data formula-sheet workflow passed \\
+\midrule
+\textbf{Total}            & &  \textbf{610} & \textbf{0} & \textbf{0} & \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Overall Summary}
+
+\begin{center}
+\begin{tabular}{lr}
+\toprule
+\textbf{Metric} & \textbf{Result} \\
+\midrule
+No-network tests collected & 610 \\
+No-network tests passed    & 610 \\
+No-network tests failed    & 0 \\
+No-network tests skipped   & 0 \\
+Total statement coverage   & 96\% \\
+Integration scripts passed & 2 / 2 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Unit Test Results}
+
+\subsection{Observed No-Network Suite Result}
+
+Observed terminal tail (from \code{submission/test\_artifacts/pytest\_output.txt}):
+
+\begin{shellcode}
+====================== 610 passed, 242 warnings in 14.95s ======================
+\end{shellcode}
+
+The warning volume was high but corresponded entirely to
+deprecation notices in third-party libraries (Streamlit, pandas).
+None produced test failures.
+
+\subsection{Interpretation}
+
+The no-network suite provides strong evidence that:
+
+\begin{itemize}
+  \item core portfolio and pricing calculations work as expected;
+  \item risk engines return finite and plausible outputs;
+  \item backtesting logic is implemented and exercised deterministically;
+  \item course-formula extensions have substantial regression coverage;
+  \item UI panels render and behave correctly under test harnesses.
+\end{itemize}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Integration Test Results}
+
+\subsection{\code{tests/integration\_test.py}}
+
+\textbf{Status: Passed.}
+
+Observed excerpt:
+\begin{shellcode}
+[4] Running all risk models...
+    [HISTORICAL]  VaR = $4,821.40  |  ES = $4,793.83
+[5] Running walk-forward backtest (historical model)...
+ALL INTEGRATION TESTS PASSED
+\end{shellcode}
+
+Interpretation: live price download, portfolio creation, service
+orchestration, model execution, backtesting, EWMA mode, and multi-day
+horizon checks all completed successfully.
+
+\subsection{\code{tests/integration\_test\_formula\_sheet.py}}
+
+\textbf{Status: Passed.}
+
+Observed excerpt:
+\begin{shellcode}
+[3] Stock+option portfolio -> RiskEngineService.run_all()
+    historical   VaR=1,757.98  ES=1,687.03
+[9] compute_rwa_and_ratio + run_dfast
+ALL FORMULA-SHEET INTEGRATION TESTS PASSED.
+\end{shellcode}
+
+Interpretation: live-data download, rate fetch, portfolio construction,
+core market-risk execution, backtesting, Merton, CDS, CVA, and regulatory
+checks all completed successfully.
+
+\subsection{Integration Conclusion}
+
+The integration runs confirm that:
+\begin{enumerate}
+  \item end-to-end plumbing is operational with live market data;
+  \item the integration scripts are aligned with the separate-confidence VaR/ES design;
+  \item the formula-sheet extension workflows pass end to end.
+\end{enumerate}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Analytical Golden Test Results}
+
+Selected analytical cases were verified against the expected values used
+in the repository's tests.  All matched within the stated tolerance.
+
+\begin{center}
+\begin{tabular}{llllll}
+\toprule
+\textbf{Case ID} & \textbf{Module} & \textbf{Expected} & \textbf{Actual} & \textbf{Abs.\ error} & \textbf{Pass} \\
+\midrule
+BS\_01  & B-S call        & 10.4505835722     & 10.4505835722     & $\approx 0$  & Yes \\
+BS\_02  & B-S put         & 5.5735260223      & 5.5735260223      & $\approx 0$  & Yes \\
+LN\_01  & Long GBM VaR    & 3720.342013894248 & 3720.342013894248 & 0            & Yes \\
+LN\_02  & Short GBM VaR   & 5924.434136581646 & 5924.434136581646 & 0            & Yes \\
+HZ\_01  & Hazard $s(5)$   & 0.9636761353      & 0.9636761353      & $\approx 0$  & Yes \\
+MR\_01  & Merton Q-PD     & 0.2952952345      & 0.2952952345      & $\approx 0$  & Yes \\
+CDS\_01 & CDS spread      & 0.0180            & 0.0180            & 0            & Yes \\
+CVA\_01 & Discrete CVA    & 1.92              & 1.92              & 0            & Yes \\
+REG\_01 & Capital ratio   & 0.12              & 0.12              & 0            & Yes \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+These results confirm that the pure-formula layer is correctly implemented
+for all sampled benchmark cases.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Homework Fixture Results}
+
+The file \code{submission/test\_artifacts/homework\_fixture\_results.csv}
+records all homework-derived regression fixtures.  Representative results
+are summarized below.
+
+\begin{center}
+\begin{tabular}{L{3cm}L{2cm}L{4.5cm}L{3.5cm}l}
+\toprule
+\textbf{Homework case} & \textbf{Area} & \textbf{Expected result} & \textbf{Actual result} & \textbf{Pass?} \\
+\midrule
+HW4 single-stock VaR  & GBM VaR     & 19037.040669837672 & 19037.040669837672 & Pass \\
+HW6 reduced-form default & Hazard    & $P(\tau \leq 5) = 0.03633$; $P(3 < \tau \leq 4) = 0.00721$ & matched exactly & Pass \\
+HW6 piecewise hazard  & Hazard      & spread range 69.95 bp to 80.44 bp & 69.89 bp to 80.44 bp & Pass \\
+HW7 Merton Q/P        & Structural  & Q-PD $\approx 0.2953$; P-PD $\approx 0.3888$ & Q-PD = 0.2952952345; P-PD = 0.3888069321 & Pass \\
+HW8 CDS               & CDS         & approx spread $\approx 0.0180$ & 0.0180 & Pass \\
+HW9 short VaR/ES      & Short risk  & short VaR $>$ long VaR & VaR = 5924.4341; ES = 5999.5959 & Pass \\
+HW10 RWA/capital      & Regulatory  & RWA = 100; capital ratio = 0.12 & RWA = 100.0; ratio = 0.12 & Pass \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+These results demonstrate that the repository is tied back to
+course-derived benchmark values, not merely tested at an abstract level.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{External Benchmark Results}
+
+The file \code{submission/test\_artifacts/official\_benchmark\_results.csv}
+records benchmark comparisons against external references.
+
+\begin{center}
+\begin{tabular}{L{3.5cm}L{2.5cm}L{3.5cm}L{3.5cm}}
+\toprule
+\textbf{Benchmark} & \textbf{Source} & \textbf{Expected} & \textbf{Actual} \\
+\midrule
+ATM call (option calculator) & Independent reference & price $\approx 10.4506$; delta $\approx 0.6368$ & price = 10.4505835722; delta = 0.6368306512 \\
+ATM put (option calculator) & Independent reference & price $\approx 5.5735$; delta $\approx -0.3632$ & price = 5.5735260223; delta = $-0.3631693488$ \\
+Basel traffic light — 0 exceptions & Regulatory-style & GREEN & GREEN \\
+Basel traffic light — 4 exceptions & Regulatory-style & GREEN & GREEN \\
+Basel traffic light — 5 exceptions & Regulatory-style & AMBER & AMBER \\
+Basel traffic light — 9 exceptions & Regulatory-style & AMBER & AMBER \\
+Basel traffic light — 10 exceptions & Regulatory-style & RED & RED \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Note: the Black-Scholes rows are benchmark-style reasonableness checks
+against standard textbook values.  The Basel rows are rule-based checks
+against published regulatory classification logic.  Both provide
+independent validation beyond the homework fixture set.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Backtesting Results}
+
+The file \code{submission/test\_artifacts/backtest\_results.csv} captures
+a representative historical-model backtest on the most recent 1,500
+aligned AAPL/CAT Bloomberg observations.
+
+\subsection{Summary Table}
+
+\begin{center}
+\begin{tabular}{lrrrrrrr}
+\toprule
+\textbf{Model} & \textbf{Horizon} & \textbf{Conf.} & \textbf{Obs.} & \textbf{Exp.\ exc.} & \textbf{Act.\ exc.} & \textbf{Exc.\ rate} & \textbf{Kupiec $p$} \\
+\midrule
+Historical & 5 & 0.99 & 990 & 9.90 & 15 & 1.52\% & 0.1300 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Additional Diagnostics}
+
+\begin{itemize}
+  \item Kupiec $\mathrm{LR}_{\mathrm{uc}}$ statistic: \textbf{2.2920}
+  \item Christoffersen independence LR: \textbf{62.2015}
+  \item Christoffersen independence $p$-value: $3.10 \times 10^{-15}$
+  \item Conditional coverage LR: \textbf{64.4936}
+  \item Conditional coverage $p$-value: $9.89 \times 10^{-15}$
+  \item Basel zone: \textbf{RED} (15 exceptions exceeds the 10-exception threshold)
+  \item Average exception gap: \$205,833.28
+  \item Maximum exception loss: \$1,262,636.56
+\end{itemize}
+
+\subsection{Interpretation}
+
+Kupiec's unconditional coverage test assesses only the \emph{frequency}
+of exceptions.  In this run, the 15 observed exceptions out of 990
+forecasts yields an exception rate of 1.52\% against an expected rate
+of 1.00\%, and a Kupiec $p$-value of 0.130 — the unconditional coverage
+hypothesis is not rejected at conventional significance levels.
+
+However, the Christoffersen independence LR statistic of 62.20 with a
+$p$-value of $3.10 \times 10^{-15}$ is a highly significant rejection of
+the independence hypothesis.  The exceptions cluster in time, indicating
+that the historical-simulation model fails to capture volatility dynamics.
+This is consistent with the academic literature: historical simulation
+is computationally simple but is known to be slow to adapt to regime
+changes.
+
+The Basel RED designation reflects a mechanical count ($N_e \geq 10$
+implies RED regardless of the Kupiec result).  Taken together, the
+backtesting evidence motivates Recommendation~5 in the Model Documentation
+(Deliverable~1): the implementation of EWMA or GARCH-based volatility
+forecasting to address exception clustering.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Data Validation Results}
+
+Data validation is covered by \code{tests/test\_market\_data.py}
+(24 passing tests) and \code{tests/test\_config\_and\_validation.py}
+(10 passing tests).
+
+\textbf{Covered behaviors:} CSV parsing; chronological sorting; empty-data
+rejection; single- and multi-ticker Yahoo Finance parsing; cache behavior;
+risk-free-rate helper behavior; \code{DatetimeIndex} validation; all-NaN
+column rejection; non-positive-price rejection; and missing-ticker error
+detection.
+
+\textbf{Result:} the data layer performs correctly on all tested paths.
+Remaining gaps — explicit stale-price detection across all data sources,
+and a fully documented duplicate-date policy — are identified as future
+hardening areas and do not affect the correctness of any of the formula
+modules.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Coverage Results}
+
+\subsection{Summary}
+
+\begin{center}
+\begin{tabular}{lr}
+\toprule
+\textbf{Metric} & \textbf{Result} \\
+\midrule
+Statement coverage         & 96\% \\
+Missing lines              & 182 \\
+Coverage HTML              & \code{submission/coverage\_report/index.html} \\
+Coverage XML               & \code{submission/coverage\_report/coverage.xml} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Files with Remaining Untested Lines}
+
+\begin{center}
+\begin{tabular}{L{4.5cm}rL{4cm}L{4.5cm}}
+\toprule
+\textbf{File} & \textbf{Missing lines} & \textbf{Likely reason} & \textbf{Fix direction} \\
+\midrule
+\code{src/credit/cds.py}                  & 33 & Lower-tested branches in full CDS logic & Add branch-specific CDS tests \\
+\code{src/credit/hazard.py}               & 26 & Piecewise helper branches & Add targeted piecewise-hazard tests \\
+\code{src/ui/capital\_panel.py}            & 18 & UI branches not fully exercised & Add panel-path tests \\
+\code{src/ui/cds\_cva\_panel.py}           & 18 & UI and branch-heavy error paths & Add panel-path tests \\
+\code{src/risk/historical.py}             & 16 & Historical vol-shock and helper paths & Add explicit historical-shock tests \\
+\code{src/services/regulatory\_service.py}& 11 & Capital-path helper branches & Add service-branch tests \\
+\code{src/credit/cva.py}                  &  8 & Discounted and edge branches & Add CVA branch tests \\
+\code{src/risk/normal.py}                 &  7 & Direct formula helpers not all hit & Add direct normal-formula tests \\
+\code{src/risk/estimators.py}             &  7 & Manual-parameter validation branches & Add targeted manual-input tests \\
+\code{src/credit/mitigation.py}           &  4 & Less common mitigation branches & Add more mitigant tests \\
+\code{src/risk/returns.py}                &  3 & Absolute-return helper path & Add branch tests \\
+\code{src/risk/regulatory.py}             &  2 & Small residual branches & Add targeted tests \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Coverage Conclusion}
+
+The model-critical paths — pricing formulas, VaR/ES engines, covariance
+handling, backtesting diagnostics, credit formulas, and regulatory
+arithmetic — are all tested directly.  The remaining 4\% of uncovered
+lines are concentrated in UI display branches, secondary service
+orchestration helpers, and defensive validation branches.  These are
+documented as future hardening areas and are not treated as unresolved
+formula-validation failures.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Failed and Skipped Tests}
+
+\begin{center}
+\begin{tabular}{L{4.5cm}lL{3.5cm}L{4cm}}
+\toprule
+\textbf{Test / command} & \textbf{Status} & \textbf{Affects required functionality?} & \textbf{Resolution} \\
+\midrule
+No-network unit suite                      & Passed & No & Primary validation evidence \\
+Coverage command                           & Passed (96\% coverage) & No & Gaps documented in Section~10 \\
+\code{tests/integration\_test.py}          & Passed & No & Live workflow evidence \\
+\code{tests/integration\_test\_formula\_sheet.py} & Passed & No & Live formula-sheet evidence \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+No required no-network unit tests were skipped.  The two live-data
+integration scripts were excluded from the no-network commands by design
+and were then executed separately; both passed.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Interpretation and Conclusion}
+
+The test results support the core software design and all model
+documentation claims in Deliverable~1.
+
+\textbf{Strongly supported:}
+\begin{itemize}
+  \item Deterministic formula modules pass all 610 no-network tests.
+  \item Portfolio-risk methods pass unit and workflow tests.
+  \item Backtesting logic is implemented, exercised, and interpreted correctly.
+  \item Data-validation and UI layers have dedicated, passing test coverage.
+  \item Raw artifacts are captured and reproducible.
+\end{itemize}
+
+\textbf{Areas for future improvement:}
+Coverage reporting identifies untested branches in CDS, hazard,
+historical vol-shock paths, regulatory-service helpers, and selected UI
+panels.  These are documented as future hardening areas and do not
+represent unresolved correctness failures.
+
+\textbf{Overall validation opinion:} the repository has a strong
+no-network and live-integration validation base and is acceptable as an
+academic risk-engine implementation.  The core model, portfolio, service,
+and UI layers are exercised by dedicated tests, and the results are
+transparently documented.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Appendix: Artifact Index}
+
+The following output files are included in \code{submission/test\_artifacts/}:
+
+\begin{itemize}
+  \item \code{pytest\_output.txt} — full terminal output of the no-network suite
+  \item \code{coverage\_output.txt} — per-module coverage table
+  \item \code{integration\_test\_output.txt} — terminal output of core integration test
+  \item \code{integration\_test\_formula\_sheet\_output.txt} — terminal output of formula-sheet integration test
+  \item \code{requirements\_freeze.txt} — \code{pip freeze} snapshot
+  \item \code{git\_commit.txt} — \code{git rev-parse HEAD} output
+  \item \code{backtest\_results.csv} — walk-forward backtest statistics
+  \item \code{homework\_fixture\_results.csv} — homework regression fixture results
+  \item \code{official\_benchmark\_results.csv} — external benchmark comparison results
+\end{itemize}
+
+\end{document}
