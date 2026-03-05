@@ -1,0 +1,4 @@
+# Tell GitHub's linguist to ignore generated/vendor files for language stats
+submission/coverage_report/**  linguist-generated=true
+htmlcov/**                     linguist-generated=true
+*.ipynb                        linguist-detectable=true
