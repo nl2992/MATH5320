@@ -75,7 +75,7 @@ flowchart TB
     CRS --> COUT["hazard · Merton · CDS · CVA"]
     RGS --> ROUT["RWA · capital · DFAST"]
 
-    TST["tests/ · 622 unit tests"] -. exercise .-> CORE & EXT
+    TST["tests/ · 624 no-network unit tests"] -. exercise .-> CORE & EXT
     NB["notebooks/"] -. exercise .-> CORE & EXT
 ```
 
@@ -129,7 +129,7 @@ MATH5320/
 │       ├── cds_cva_panel.py        # CDS / CVA panel
 │       ├── capital_panel.py        # Capital and stress panel
 │       └── charts.py               # Plotly chart helpers
-├── tests/                          # 622 no-network unit and regression tests
+├── tests/                          # 624 no-network unit and regression tests
 ├── notebooks/                      # Course walkthrough notebooks
 ├── docs/
 │   ├── references/
@@ -666,7 +666,7 @@ Requirements from `docs/references/project_requirements.pdf` (MATH GR 5320).
 | Using historical volatility instead of implied volatility | Option positions carry a user-supplied `volatility` field (implied vol). The system does not back out implied vol from market prices; this limitation is documented in `submission/00_combined_final_report.md §10`. |
 | Incorrect covariance | Covariance is estimated from historical log returns using a rolling window or EWMA; the delta-dollar exposure vector is computed correctly as `x = n·S·Δ`. See [src/risk/parametric.py](src/risk/parametric.py) and [tests/test_strict_numerics.py](tests/test_strict_numerics.py). |
 | Inappropriate parametric VaR | Parametric VaR uses the correct delta-normal formula: `VaR = −m + s·Φ⁻¹(α)` with proper h-day horizon scaling. See [src/risk/normal.py](src/risk/normal.py) and [tests/test_course_validation.py](tests/test_course_validation.py). |
-| Tests not supporting model-doc conclusions | 610 no-network tests with 96% statement coverage. Course fixture values (HW03–HW11) are embedded in [tests/test_homework_cases.py](tests/test_homework_cases.py) and [tests/test_course_validation.py](tests/test_course_validation.py). |
+| Tests not supporting model-doc conclusions | 624 no-network tests with 95% statement coverage. Course fixture values (HW03–HW11) are embedded in [tests/test_homework_cases.py](tests/test_homework_cases.py) and [tests/test_course_validation.py](tests/test_course_validation.py). |
 
 ---
 
@@ -685,3 +685,7 @@ The final submission package is in `submission/`.
 | `submission/demo.md` | Front-end workflow trace with screenshots |
 | `submission/advanced_demo.ipynb` | Advanced demo: equal-weight M7 portfolio, §1-§10 including manual calibration and option-vol shock checks |
 | `submission/advanced_demo.md` | M7 portfolio front-end trace with screenshots plus notebook-only proof for prompt-sensitive checks |
+| `submission/latex_deliverables/01_model_documentation.tex` | LaTeX source: Model Documentation and Validation Report |
+| `submission/latex_deliverables/02_software_design_documentation.tex` | LaTeX source: Software Design Documentation |
+| `submission/latex_deliverables/03_test_plan.tex` | LaTeX source: Test Plan |
+| `submission/latex_deliverables/04_test_results.tex` | LaTeX source: Test Results Report |
