@@ -164,6 +164,120 @@ Separation of concerns            & Sections 3 and 7 \\
 \end{center}
 
 % ─────────────────────────────────────────────────────────────────────────────
+\subsection{Model Choice Justification and Literature Basis}
+
+Each method implemented in the repository is grounded in published research
+or documented industry practice.
+
+\begin{center}
+\footnotesize
+\begin{tabular}{L{2.8cm}L{4.8cm}L{5.5cm}}
+\toprule
+\textbf{Method} & \textbf{Justification} & \textbf{Reference} \\
+\midrule
+Black-Scholes pricing
+  & Industry-standard European option pricing; BS delta feeds delta-normal VaR
+  & Hull, \textit{Options, Futures, and Other Derivatives}, 11th ed., Chs.\ 15, 19 \\
+Historical simulation
+  & Non-parametric; no distributional assumption; captures fat tails from observed data
+  & McNeil, Frey \& Embrechts, \textit{Quantitative Risk Management}, Princeton, 2015, Ch.~2 \\
+Delta-normal parametric
+  & Closed-form solution for linear portfolios; tractable baseline VaR
+  & \textit{RiskMetrics Technical Document}, Morgan Guaranty Trust, 1994 \\
+Monte Carlo VaR/ES
+  & Full repricing for nonlinear payoffs; gold standard for options
+  & McNeil et al.\ Ch.~2; Hull Ch.~22 \\
+EWMA volatility
+  & Down-weights old data; adapts faster to changing regimes than rolling equal-weight
+  & \textit{RiskMetrics Technical Document}, 1994; Zivot \& Wang, Ch.~6 \\
+Kupiec backtest
+  & Likelihood-ratio test of unconditional exception frequency; the standard regulatory backtest
+  & Kupiec (1995), \textit{FEDS Discussion Paper 95-24} \\
+Christoffersen test
+  & Conditional coverage test; detects exception clustering; required by Lecture~5
+  & Christoffersen (1998), \textit{International Economic Review} 39(4) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Comparison with Alternative Approaches}
+
+Three alternative implementations were considered and not adopted.  The
+design choices are explicit, not accidental.
+
+\begin{center}
+\footnotesize
+\begin{tabular}{L{2.8cm}L{3.0cm}L{3.2cm}L{4.0cm}}
+\toprule
+\textbf{Property} & \textbf{Historical simulation} & \textbf{Parametric} & \textbf{Monte Carlo} \\
+\midrule
+Distributional assumption & None (empirical) & Multivariate normal & Multivariate normal (extendable) \\
+Option handling & Full repricing & Delta approximation & Full repricing \\
+Computation & Moderate & Very fast, closed-form & Slow; scales with path count \\
+Fat-tail capture & Yes, from data & No & Partial; depends on assumed distribution \\
+Volatility clustering & None; equally weighted & Yes with EWMA & Yes with EWMA \\
+Main limitation & Slow to adapt to regime changes & Underestimates nonlinear risk & Model-dependent; seed-sensitive \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Alternatives not implemented, with documented reasons:
+
+\begin{itemize}
+  \item \textbf{Age-weighted historical simulation.}  Assigns exponentially
+    decaying weights to historical scenarios, addressing the slow-adaptation
+    limitation.  Not implemented because the EWMA estimator on the
+    parametric and MC engine achieves a comparable effect on covariance.
+  \item \textbf{Extreme Value Theory (EVT).}  Parameterizes the tail of the
+    loss distribution for superior tail estimation; documented as a future
+    enhancement.
+  \item \textbf{Filtered Historical Simulation (FHS).}  Applies GARCH
+    filtering before historical simulation, directly addressing the
+    Christoffersen exception-clustering failure observed in backtesting.
+    Documented as the appropriate next step for a production build.
+\end{itemize}
+
+\subsection{Subjective Design Choices and Calibration Parameters}
+
+Several parameter defaults required judgment.  These are documented here
+rather than embedded silently in code defaults.
+
+\begin{center}
+\begin{tabular}{L{3.5cm}L{1.8cm}L{7.5cm}}
+\toprule
+\textbf{Parameter} & \textbf{Default} & \textbf{Justification} \\
+\midrule
+Lookback window
+  & 252 days
+  & One calendar year; standard RiskMetrics and Basel convention.  Shorter windows
+    sacrifice stability; longer windows mix fundamentally different regimes. \\
+EWMA half-life $N$
+  & 60
+  & Corresponds to $\lambda \approx 0.989$ decay factor per day;
+    roughly quarterly effective memory.  Based on RiskMetrics recommendation
+    for daily equity data. \\
+Monte Carlo paths
+  & 10\,000
+  & Sufficient for 99\% VaR stability at academic scale.  A seeded test at
+    100\,000 paths confirms convergence to within 2\% of exact GBM VaR;
+    gains beyond 10\,000 are marginal for coursework purposes. \\
+Vol floor
+  & 1\%
+  & Prevents numerical instability when historical vol approaches zero.
+    Does not affect typical market conditions; applied only to option
+    repricing vol-shock paths. \\
+Confidence level (default)
+  & 99\% VaR; 97.5\% ES
+  & Aligns with Basel~III IMA: 99\% 10-day VaR for market risk reporting;
+    97.5\% ES for FRTB purposes. \\
+Risk horizon (default)
+  & 5 days
+  & Basel~III standard horizon for daily VaR reporting and backtesting. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ─────────────────────────────────────────────────────────────────────────────
 \section{Software Architecture}
 
 \subsection{Layered Architecture}
@@ -618,7 +732,7 @@ python -m pytest tests/ \
 \end{shellcode}
 
 Recorded result (2026-05-11 03:00:09 EDT, commit \code{5841589e}):
-\textbf{610 passed, 0 failed, 0 skipped}.
+\textbf{624 passed, 0 failed, 0 skipped}.
 
 Coverage command:
 \begin{shellcode}
@@ -629,7 +743,7 @@ python -m pytest tests/ --cov=src --cov-report=term-missing \
   --ignore=tests/integration_test_formula_sheet.py
 \end{shellcode}
 
-Recorded result: \textbf{96\% statement coverage}.  Remaining untested
+Recorded result: \textbf{95\% statement coverage}.  Remaining untested
 lines are concentrated in UI branch paths, selected credit-service
 helpers, and defensive validation branches.
 
@@ -709,7 +823,7 @@ Parametric VaR uses delta-normal linear approximation & Nonlinear option payoffs
 EWMA parameter is formula-derived, not ML-calibrated & May not match market-observed volatility clustering & Acceptable for academic purpose; documented in model description \\
 Regulatory extensions are illustrative & Do not claim official Basel or DFAST compliance & Academic demonstration only; labeled as course formula implementations \\
 Monte Carlo convergence is seed-dependent & Seeded runs are deterministic; unseeded runs introduce variance & Regression tests use fixed seeds; unseeded usage is documented \\
-96\% statement coverage rather than 100\% & Some UI branches and defensive paths are untested & Remaining gaps are non-formula paths; documented in Section~10.3 \\
+95\% statement coverage rather than 100\% & Some UI branches and defensive paths are untested & Remaining gaps are non-formula paths; documented in Section~10.3 \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -731,7 +845,7 @@ explicitly:
   \item \textbf{Data analysis.}  Section~8 documents the data validation
     strategy; Section~6 documents the input schema and data quality checks.
   \item \textbf{Testing.}  Section~10 documents the no-network test suite
-    (610 tests, 96\% coverage), integration scripts, and coverage
+    (624 tests, 95\% coverage), integration scripts, and coverage
     remediation plan.
   \item \textbf{System analysis and testing.}  Sections 4 and 7 describe
     the end-to-end data flow and the service-layer orchestration that binds

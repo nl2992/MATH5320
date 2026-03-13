@@ -614,6 +614,95 @@ A sound test plan acknowledges residual validation risk honestly:
 \end{itemize}
 
 % ─────────────────────────────────────────────────────────────────────────────
+\section{Robustness Testing}
+
+Lecture~5 requires that testing assess \emph{stability and robustness},
+including sensitivity to market conditions and deal specifications,
+behavior over a large range of inputs, and identification of where the
+model performs poorly.  This section formalizes those requirements.
+
+\subsection{Parameter Sensitivity}
+
+The following test cases probe sensitivity to the key model-configuration
+parameters that are subject to expert judgment.
+
+\begin{itemize}
+  \item \textbf{ROB\_01} Lookback window sweep: run historical and parametric
+    VaR at 60, 126, 252, and 504 days.  Expected: VaR varies with the
+    captured volatility regime; no crashes; no NaN outputs.
+  \item \textbf{ROB\_02} EWMA half-life $N$ sweep: run EWMA covariance at
+    $N \in \{10, 20, 60, 120\}$.  Expected: covariance PSD at all values;
+    estimates vary smoothly; $N=10$ is more responsive, $N=120$ is more stable.
+  \item \textbf{ROB\_03} Monte Carlo path-count sweep: VaR at $n \in
+    \{100, 1\,000, 10\,000\}$.  Expected: VaR converges as $n$ increases;
+    result at $n = 100$ is noisier but finite; at $n = 10\,000$ is stable.
+  \item \textbf{ROB\_04} Extreme confidence levels: VaR and ES at
+    $\alpha \in \{0.95, 0.975, 0.99, 0.999\}$.  Expected: strictly
+    monotonically increasing; ES $\geq$ VaR throughout.
+  \item \textbf{ROB\_05} Very short lookback (30 days): expected to return
+    a descriptive error or reduced precision result; no crash.
+  \item \textbf{ROB\_06} Very long lookback (2,520 days): expected to handle
+    large covariance matrices without memory error; result finite.
+\end{itemize}
+
+These are implemented in \code{tests/test\_coverage\_gaps.py} and
+\code{tests/test\_strict\_numerics.py} (see Appendix CONV\_05 and CONV\_06).
+
+\subsection{Extreme and Boundary Input Tests}
+
+\begin{itemize}
+  \item \textbf{ROB\_07} Near-expiry option ($T = 1/252$): BS price at
+    intrinsic-value limit; delta near 0 or 1; no NaN.
+  \item \textbf{ROB\_08} Deep OTM put (strike = 0.5 $\times$ spot): small
+    positive price; delta near zero; VaR dominated by underlying.
+  \item \textbf{ROB\_09} High-volatility input ($\sigma = 2.0$, i.e.\ 200\%):
+    VaR large but finite; no overflow.
+  \item \textbf{ROB\_10} Zero-drift portfolio ($\mu = 0$): parametric VaR
+    still positive from variance term; historical and MC also positive.
+  \item \textbf{ROB\_11} Single-position portfolio: all three risk engines
+    return positive, finite VaR; no failure from degenerate covariance.
+  \item \textbf{ROB\_12} Large portfolio (50 positions): covariance assembly,
+    risk computation, and service orchestration complete without crash.
+\end{itemize}
+
+\subsection{Known Conditions Where the Model Performs Poorly}
+
+A sound validation program explicitly documents where the model is
+expected to degrade, not just where it succeeds.  These cases are
+\emph{documented limitations}, not unresolved bugs.
+
+\begin{itemize}
+  \item \textbf{Historical simulation.}  The equally-weighted method is
+    slow to adapt to volatility regime changes.  This manifests directly
+    in the backtesting results: the Christoffersen independence test
+    rejects the independence hypothesis at $p < 10^{-14}$, indicating
+    clustered exceptions during high-volatility sub-periods.  Filtered
+    Historical Simulation or GARCH-based forecasting is the documented
+    improvement path.
+  \item \textbf{Delta-normal parametric.}  Treats the portfolio as linear
+    in underlying returns.  For portfolios with significant gamma (e.g.,
+    short options), it systematically underestimates tail losses.  Test
+    BEH\_01 through BEH\_05 confirm directional correctness; behavioral
+    comparison tests confirm that options-heavy portfolios show materially
+    higher historical and MC VaR relative to parametric.
+  \item \textbf{Fat-tailed return distributions.}  When actual returns
+    exhibit heavy tails (crisis periods, individual-stock events), the
+    parametric normality assumption underestimates extreme losses.  The
+    exact GBM lognormal module provides a tractable analytical benchmark;
+    EVT tail fitting is documented as a future enhancement.
+  \item \textbf{Model cascading into capital calculations.}  The VaR
+    output feeds \code{src/risk/regulatory.py} capital requirements.
+    ROB tests confirm that extreme VaR inputs (very large, near-zero, and
+    zero) do not produce silent failures in downstream RWA and ratio
+    calculations.
+  \item \textbf{Illiquid or discontinuous markets.}  Option repricing
+    assumes continuously tradeable underlying without gaps.  Stale prices
+    or trading halts in the historical window will affect all three
+    methods; the data validation layer flags stale-price runs but does
+    not adjust the risk estimate.
+\end{itemize}
+
+% ─────────────────────────────────────────────────────────────────────────────
 \section{Appendix: Behavioural and Convergence Tests}
 
 \subsection{Behavioural Tests}
