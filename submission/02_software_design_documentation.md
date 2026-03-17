@@ -576,7 +576,7 @@ python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integr
 
 Observed result on `2026-05-11 06:22:06 EDT`:
 
-- `610 passed`
+- `624 passed`
 - `242 warnings`
 
 Observed coverage run:
@@ -591,8 +591,8 @@ python -m pytest tests/ --cov=src --cov-report=term-missing \
 
 Observed result:
 
-- `610 passed, 242 warnings in 70.04s`
-- `96%` statement coverage across `src/`
+- `624 passed, 242 warnings in 57.50s`
+- `95%` statement coverage across `src/`
 - Coverage report generated; remaining untested lines are concentrated in UI branches, selected credit helpers, and a small number of defensive validation paths
 - Both live integration scripts passed separately
 

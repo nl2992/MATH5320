@@ -15,7 +15,7 @@ We built a portfolio risk system for MATH GR 5320. It takes portfolios of stocks
 
 The codebase is layered: service modules handle the end-to-end run, portfolio and pricing modules handle valuation, and risk, credit, and regulatory modules contain the quantitative logic. Keeping the UI separate from the models makes testing straightforward and lets the same functions be used directly in notebooks.
 
-The test suite has 610 no-network unit tests with 96% statement coverage, covering deterministic formula tests, course-fixture regressions, and live integration checks. All core market-risk and credit-risk formulas have been verified against course homework values.
+The test suite has 624 no-network unit tests with 95% statement coverage, covering deterministic formula tests, course-fixture regressions, and live integration checks. All core market-risk and credit-risk formulas have been verified against course homework values.
 
 Main limits: option repricing uses a simplified volatility shock rather than a full implied-vol surface, parametric VaR is first-order delta-normal, Monte Carlo uses multivariate normal shocks, and the Merton model only recognises default at maturity.
 
@@ -132,7 +132,7 @@ Here we document the model-risk framework: scope, assumptions, validation, monit
 | Purpose | Course-level risk engine for portfolios of stocks and European options |
 | Scope | Historical, parametric, and Monte Carlo VaR/ES; walk-forward VaR backtesting; formula-sheet extensions for lognormal, hazard, Merton, CDS, CVA, counterparty mitigation, and illustrative capital/stress |
 | Non-scope | Production trading, official regulatory reporting, production XVA, American or path-dependent option support |
-| Performance requirement | Core formulas match deterministic tests; the no-network suite passes `610` tests and both live-data integration scripts pass |
+| Performance requirement | Core formulas match deterministic tests; the no-network suite passes `624` tests and both live-data integration scripts pass |
 | Data requirement | Aligned price histories, sufficient lookback, positive stock prices, and well-formed option inputs; proxy data sources must be documented |
 
 ### 3.2 Model Choice Justification
@@ -789,7 +789,7 @@ python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integr
 Observed result from the current walkthrough:
 
 ```text
-610 passed, 242 warnings in 32.07s
+624 passed, 242 warnings in 26.28s
 ```
 
 ### 9.2 Coverage Run
@@ -810,7 +810,7 @@ Observed result:
 - coverage report generated (HTML and XML),
 - remaining untested lines are concentrated in UI branch paths, selected credit helpers, and a small number of defensive validation branches.
 
-The updated test suite (610 tests) achieves **96% total statement coverage**. Residual gaps are limited mainly to Streamlit UI panel branches (`src/ui/capital_panel.py`, `src/ui/cds_cva_panel.py`, `src/ui/risk_settings.py`) that require a richer interactive harness than the no-network pytest runner. Most non-UI logic modules now reach 95%–100% coverage, with the principal remaining exception being `src/credit/hazard.py` at 93%.
+The updated test suite (624 tests) achieves **95% total statement coverage**. Residual gaps are limited mainly to Streamlit UI panel branches (`src/ui/capital_panel.py`, `src/ui/cds_cva_panel.py`, `src/ui/risk_settings.py`) that require a richer interactive harness than the no-network pytest runner. Most non-UI logic modules now reach 95%–100% coverage, with the principal remaining exception being `src/credit/hazard.py` at 93%.
 
 **Option-volatility treatment.** The project guide flags "not modelling changes in volatility for options" as a grading penalty. This system supports two modes controlled by the `option_vol_shock_mode` parameter:
 
@@ -936,7 +936,7 @@ This is not a production risk platform. The main limits are the simplified optio
 | Option volatility treatment | `fixed` mode holds vol constant; `underlying_beta` mode provides a simplified shock; both documented | No full implied-vol surface or smile/skew model |
 | Backtesting | Kupiec and Christoffersen tests implemented and tested; walk-forward framework in place | Exception clustering may persist under regime change |
 | Credit and regulatory extensions | Course-formula extensions validated against homework fixtures | Not production-grade; Merton single-maturity default only |
-| Testing | 610 no-network tests, 96% statement coverage; homework and course-fixture values confirmed | Streamlit UI branch paths not fully coverable without a browser driver |
+| Testing | 624 no-network tests, 95% statement coverage; homework and course-fixture values confirmed | Streamlit UI branch paths not fully coverable without a browser driver |
 
 ---
 

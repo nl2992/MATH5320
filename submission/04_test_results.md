@@ -13,7 +13,7 @@ Observed local no-network suite result:
 Observed coverage run result:
 
 - all no-network tests passed,
-- total statement coverage: `96%`,
+- total statement coverage: `95%`,
 - remaining untested lines are concentrated in UI branch paths, selected credit helpers, and a small number of defensive validation branches (documented in Section 12).
 
 Observed integration-script result:
@@ -134,7 +134,7 @@ pip freeze > submission/test_artifacts/requirements_freeze.txt
 | No-network tests passed | 622 |
 | No-network tests failed | 0 |
 | No-network tests skipped | 0 |
-| Total statement coverage | 96% |
+| Total statement coverage | 95% |
 | Integration scripts passed | 2 / 2 |
 
 ---
@@ -146,7 +146,7 @@ pip freeze > submission/test_artifacts/requirements_freeze.txt
 Observed tail of `submission/test_artifacts/pytest_output.txt`:
 
 ```text
-====================== 610 passed, 242 warnings in 32.07s ======================
+====================== 624 passed, 242 warnings in 26.28s ======================
 ```
 
 The warning volume was high but did not correspond to test failures. Most warnings came from dependency-version and deprecation notices in third-party libraries used by Streamlit or pandas.
@@ -348,7 +348,7 @@ Remaining gaps are more about richer data-quality logic, such as explicit stale-
 
 | Metric | Result |
 |---|---:|
-| Statement coverage | 96% |
+| Statement coverage | 95% |
 | Missing lines | 80 |
 | Coverage HTML | `submission/coverage_report/index.html` generated |
 | Coverage XML | `submission/coverage_report/coverage.xml` generated |
@@ -381,7 +381,7 @@ Coverage reporting was used to identify tested and untested source paths. The ma
 | Test / command | Status | Reason | Does it affect required functionality? | Resolution |
 |---|---|---|---|---|
 | No-network unit suite | Passed | N/A | No negative effect | Keep as primary validation evidence |
-| Coverage command | Ran; 96% statement coverage | Coverage report identifies remaining untested branches | No | Documented in Section 12 |
+| Coverage command | Ran; 95% statement coverage | Coverage report identifies remaining untested branches | No | Documented in Section 12 |
 | `tests/integration_test.py` | Passed | N/A | No negative effect | Keep as live workflow evidence |
 | `tests/integration_test_formula_sheet.py` | Passed | N/A | No negative effect | Keep as live workflow evidence |
 

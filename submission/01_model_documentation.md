@@ -22,10 +22,10 @@
 |---|---|---|---|
 | 1.0 | April 2026 | `5841589` | Initial market-risk engine: historical, parametric, MC VaR/ES, backtesting |
 | 1.1 | May 2026 | `86890d8` | Added credit, CVA, regulatory, DFAST extension modules |
-| 1.2 | May 2026 | `79111d8` | Raised test suite to 610 tests; improved coverage to 96%; added option-vol shock mode |
+| 1.2 | May 2026 | `79111d8` | Raised test suite to 624 tests; improved coverage to 95%; added option-vol shock mode |
 | 1.3 | May 2026 | `23f39ba` | Final submission: removed stale root drafts; all reports consolidated under `submission/` |
 | 1.4 | May 2026 | `f154109` | Source state used for the refreshed evidence bundle and live integration reruns |
-| 1.5 | May 2026 | `754df26` | Test suite grown to 622 tests; architecture diagrams corrected; submission docs finalised |
+| 1.5 | May 2026 | `754df26` | Test suite grown to 624 tests; architecture diagrams corrected; submission docs finalised |
 
 ---
 
@@ -48,7 +48,7 @@ python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integr
 The observed result was:
 
 ```text
-610 passed, 242 warnings in 32.07s
+624 passed, 242 warnings in 26.28s
 ```
 
 An additional coverage run used:
@@ -60,7 +60,7 @@ python -m pytest tests/ --cov=src --cov-report=term-missing \
   --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py
 ```
 
-The coverage run reported `610 passed` with 96% statement coverage. The two live-data integration scripts were run separately and both passed.
+The coverage run reported `624 passed` with 95% statement coverage. The two live-data integration scripts were run separately and both passed.
 
 For the course brief, we did what was needed: compare VaR and ES for mixed portfolios, validate formula implementations against course fixtures, and document model choices and limits. The main limits are historical log-return shocks, first-order delta-normal parametric approximation, a simplified option-volatility shock rather than a full implied-vol surface, multivariate normal Monte Carlo shocks, and credit and regulatory modules that are course extensions rather than production models.
 
@@ -858,7 +858,7 @@ python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integr
 Observed result:
 
 ```text
-610 passed, 242 warnings in 32.07s
+624 passed, 242 warnings in 26.28s
 ```
 
 Observed coverage run:
@@ -873,8 +873,8 @@ python -m pytest tests/ --cov=src --cov-report=term-missing \
 Observed result summary:
 
 ```text
-610 passed, 242 warnings in 70.04s
-TOTAL 2073 statements, 80 missed, 96% coverage
+624 passed, 242 warnings in 57.50s
+TOTAL 2225 statements, 80 missed, 95% coverage
 ```
 
 Interpretation:
@@ -1079,12 +1079,12 @@ The following monitoring checks should be applied whenever the system is used wi
 | Covariance matrix eigenvalue stability | When switching data period | Confirm positive-semidefinite; check for near-singular matrices |
 | VaR sign check (VaR > 0) | Each model run | Indicates degenerate portfolio or calibration error; halt and inspect |
 | Price data freshness | Before each analysis run | Confirm data end date matches intended evaluation date |
-| Coverage report | After any code change | Rerun full test suite; confirm 622 tests pass and coverage >= 96% |
+| Coverage report | After any code change | Rerun full test suite; confirm 624 tests pass and coverage >= 95% |
 | Commit hash recorded | Before any report produced | Record hash in report header for traceability |
 
 ## Validation Opinion and Use Recommendation
 
-Based on the documented model methodology, implementation review, 622-test no-network unit suite (96% statement coverage), integration tests against live market data, and walk-forward backtesting evidence, the following validation opinion is issued.
+Based on the documented model methodology, implementation review, 624-test no-network unit suite (95% statement coverage), integration tests against live market data, and walk-forward backtesting evidence, the following validation opinion is issued.
 
 **Opinion: Approved with limitations for intended academic use.**
 
@@ -1106,7 +1106,7 @@ We correctly implemented the required portfolio risk engine. All three VaR and E
 
 **Required controls before any reuse of this system:**
 
-1. Rerun the full test suite (`python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py`) and confirm 622 tests pass.
+1. Rerun the full test suite (`python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py`) and confirm 624 tests pass.
 2. Record the commit hash in any report produced from this system.
 3. Review backtesting exception counts and Christoffersen clustering diagnostics before accepting VaR estimates.
 4. Disclose all manual calibration assumptions in any output.
@@ -1118,7 +1118,7 @@ We correctly implemented the required portfolio risk engine. All three VaR and E
 
 ### Conclusion
 
-We met the stated objectives for MATH GR 5320. The required stock-and-option risk engine is implemented, tested, and validated against course fixtures. The layered architecture keeps testing straightforward and notebook reuse possible. At 622 tests with 96% coverage, the suite provides solid numerical evidence for the core model claims.
+We met the stated objectives for MATH GR 5320. The required stock-and-option risk engine is implemented, tested, and validated against course fixtures. The layered architecture keeps testing straightforward and notebook reuse possible. At 624 tests with 95% coverage, the suite provides solid numerical evidence for the core model claims.
 
 We also went beyond the baseline requirements by including extension modules for credit risk, CVA, counterparty mitigation, and regulatory capital. These are tested and documented but are not within the core grading scope.
 
@@ -1235,7 +1235,7 @@ Observed tail of output:
 
 ```text
 ........................................................................ [100%]
-610 passed, 242 warnings in 32.07s
+624 passed, 242 warnings in 26.28s
 ```
 
 Observed coverage command:
@@ -1251,8 +1251,8 @@ Observed tail of output:
 
 ```text
 ================================ tests coverage ================================
-TOTAL                                  2073     80    96%
-================= 610 passed, 242 warnings in 70.04s (0:01:10) =================
+TOTAL                                  2225    110    95%
+================= 624 passed, 242 warnings in 57.50s (0:01:10) =================
 ```
 
 ### Appendix D. Notebooks and Supporting Evidence

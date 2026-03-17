@@ -1,35 +1,12 @@
-============================= test session starts ==============================
-platform darwin -- Python 3.12.2, pytest-7.4.4, pluggy-1.6.0
-rootdir: /Users/nigelli/Desktop/Columbia MAFN/26Spring/MATH5320/Project/MATH5320
-plugins: anyio-4.9.0, cov-7.1.0, xonsh-0.22.8
-collected 610 items
-
-tests/test_backend.py .............................                      [  4%]
-tests/test_backtest_extensions.py ...............................        [  9%]
-tests/test_balance_sheet.py ....................                         [ 13%]
-tests/test_charts.py ......                                              [ 14%]
-tests/test_config_and_validation.py ..........                           [ 15%]
-tests/test_counterparty_mitigation.py .....................              [ 19%]
-tests/test_course_validation.py ........................................ [ 25%]
-...........................                                              [ 30%]
-tests/test_coverage_gaps.py ............................................ [ 37%]
-.................                                                        [ 40%]
-tests/test_credit.py ................................................... [ 48%]
-..........                                                               [ 50%]
-tests/test_credit_service.py ...........                                 [ 51%]
-tests/test_cva_mitigants.py ..............                               [ 54%]
-tests/test_dfast_pathing.py ...........                                  [ 56%]
-tests/test_es_confidence_split.py ....                                   [ 56%]
-tests/test_homework_cases.py ........................................... [ 63%]
-........................................                                 [ 70%]
-tests/test_lognormal.py ..................................               [ 75%]
-tests/test_market_data.py ........................                       [ 79%]
-tests/test_merton_timing.py ......................                       [ 83%]
-tests/test_regulatory.py ...............                                 [ 85%]
-tests/test_strict_numerics.py ..................                         [ 88%]
-tests/test_ui_panels.py ................................................ [ 96%]
-....................                                                     [100%]
-
+........................................................................ [ 11%]
+........................................................................ [ 23%]
+........................................................................ [ 34%]
+........................................................................ [ 46%]
+........................................................................ [ 57%]
+........................................................................ [ 69%]
+........................................................................ [ 80%]
+........................................................................ [ 92%]
+................................................                         [100%]
 =============================== warnings summary ===============================
 ../../../../../../../../opt/anaconda3/lib/python3.12/site-packages/pandas/core/computation/expressions.py:22
   /opt/anaconda3/lib/python3.12/site-packages/pandas/core/computation/expressions.py:22: UserWarning: Pandas requires version '2.10.2' or newer of 'numexpr' (version '2.8.7' currently installed).
@@ -59,48 +36,47 @@ _______________ coverage: platform darwin, python 3.12.2-final-0 _______________
 
 Name                                  Stmts   Miss  Cover   Missing
 -------------------------------------------------------------------
-src/__init__.py                           0      0   100%
+src/__init__.py                           2      0   100%
 src/config.py                            15      0   100%
 src/credit/__init__.py                    0      0   100%
-src/credit/cds.py                        88      4    95%   187-189, 195
-src/credit/cva.py                        86      1    99%   237
-src/credit/hazard.py                     90      6    93%   152, 154, 156, 160, 162, 169
+src/credit/cds.py                        88      4    95%   215-217, 223
+src/credit/cva.py                        86      1    99%   274
+src/credit/hazard.py                     90      6    93%   239, 241, 243, 247, 249, 256
 src/credit/merton.py                     55      0   100%
-src/credit/mitigation.py                 65      1    98%   199
+src/credit/mitigation.py                 65      1    98%   295
 src/data/__init__.py                      0      0   100%
-src/data/market_data.py                 101      0   100%
-src/data/validation.py                   26      0   100%
+src/data/market_data.py                 111      1    99%   155
+src/data/validation.py                   73      7    90%   47, 84, 86, 129, 149, 156-157
+src/demo_presets.py                      19     11    42%   31-52, 56, 65, 82
 src/portfolio/__init__.py                 0      0   100%
 src/portfolio/portfolio.py               41      0   100%
-src/portfolio/positions.py               31      1    97%   83
+src/portfolio/positions.py               31      1    97%   122
 src/pricing/__init__.py                   0      0   100%
 src/pricing/black_scholes.py             31      0   100%
 src/risk/__init__.py                      0      0   100%
-src/risk/backtest.py                    138      0   100%
-src/risk/estimators.py                   54      1    98%   52
+src/risk/backtest.py                    146      1    99%   207
+src/risk/estimators.py                   54      1    98%   69
 src/risk/historical.py                   62      0   100%
 src/risk/lognormal.py                    38      0   100%
 src/risk/monte_carlo.py                  52      0   100%
 src/risk/normal.py                       16      0   100%
 src/risk/parametric.py                   32      0   100%
-src/risk/regulatory.py                  118      2    98%   182, 257
+src/risk/regulatory.py                  118      2    98%   208, 303
 src/risk/returns.py                      13      0   100%
-src/schemas.py                           23      0   100%
+src/schemas.py                           64      7    89%   29, 65, 67, 71, 73, 79, 81
 src/services/__init__.py                  0      0   100%
 src/services/credit_service.py           43      0   100%
 src/services/regulatory_service.py       41      0   100%
-src/services/risk_engine_service.py      40      0   100%
+src/services/risk_engine_service.py      55      2    96%   124, 214
 src/ui/__init__.py                        0      0   100%
 src/ui/capital_panel.py                 100     18    82%   214-283
 src/ui/cds_cva_panel.py                 203     18    91%   442-444, 466-501
 src/ui/charts.py                         46      0   100%
 src/ui/credit_panel.py                  105      0   100%
-src/ui/market_data_panel.py              72      0   100%
-src/ui/portfolio_editor.py               74      0   100%
-src/ui/results_panel.py                  60      0   100%
-src/ui/risk_settings.py                 114     28    75%   202, 223-226, 246-252, 261-263, 293, 298-301, 304, 311, 314, 316, 318, 321, 324, 326
+src/ui/market_data_panel.py              76      0   100%
+src/ui/portfolio_editor.py               75      0   100%
+src/ui/results_panel.py                  63      1    98%   63
+src/ui/risk_settings.py                 116     28    76%   209, 230-233, 253-259, 268-270, 300, 305-308, 311, 318, 321, 323, 325, 328, 331, 333
 -------------------------------------------------------------------
-TOTAL                                  2073     80    96%
-Coverage HTML written to dir submission/coverage_report
-Coverage XML written to file submission/coverage_report/coverage.xml
-================= 610 passed, 242 warnings in 70.04s (0:01:10) =================
+TOTAL                                  2225    110    95%
+624 passed, 242 warnings in 57.50s
