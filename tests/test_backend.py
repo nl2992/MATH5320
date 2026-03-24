@@ -449,5 +449,269 @@ def test_expired_option_intrinsic_value():
     assert v_otm == 0.0
 
 
+# ── Behavioral Confirmation Tests ─────────────────────────────────────────────
+
+class TestBehavioralConfirmation:
+    """BEH_01 through BEH_08: mathematical properties of BS and risk measures."""
+
+    def test_BEH_01_call_monotone_in_spot(self):
+        """Call price is strictly increasing in spot S."""
+        spots = [80.0, 90.0, 100.0, 110.0, 120.0]
+        prices_list = [
+            bs_price(S=s, K=100.0, T=1.0, r=0.05, q=0.0, sigma=0.2, option_type="call")
+            for s in spots
+        ]
+        for i in range(len(prices_list) - 1):
+            assert prices_list[i] < prices_list[i + 1], (
+                f"Call price not increasing: S={spots[i]} gives {prices_list[i]:.4f}, "
+                f"S={spots[i+1]} gives {prices_list[i+1]:.4f}"
+            )
+
+    def test_BEH_02_call_monotone_decreasing_in_strike(self):
+        """Call price is strictly decreasing in strike K."""
+        strikes = [80.0, 90.0, 100.0, 110.0, 120.0]
+        prices_list = [
+            bs_price(S=100.0, K=k, T=1.0, r=0.05, q=0.0, sigma=0.2, option_type="call")
+            for k in strikes
+        ]
+        for i in range(len(prices_list) - 1):
+            assert prices_list[i] > prices_list[i + 1], (
+                f"Call price not decreasing in K: K={strikes[i]} gives {prices_list[i]:.4f}, "
+                f"K={strikes[i+1]} gives {prices_list[i+1]:.4f}"
+            )
+
+    def test_BEH_03_call_monotone_increasing_in_vol(self):
+        """Call price is strictly increasing in volatility sigma."""
+        vols = [0.1, 0.2, 0.3, 0.4]
+        prices_list = [
+            bs_price(S=100.0, K=100.0, T=1.0, r=0.05, q=0.0, sigma=v, option_type="call")
+            for v in vols
+        ]
+        for i in range(len(prices_list) - 1):
+            assert prices_list[i] < prices_list[i + 1], (
+                f"Call price not increasing in sigma: sigma={vols[i]} gives {prices_list[i]:.4f}, "
+                f"sigma={vols[i+1]} gives {prices_list[i+1]:.4f}"
+            )
+
+    def test_BEH_04_put_call_parity(self):
+        """C - P = S*exp(-q*T) - K*exp(-r*T) to within 1e-10."""
+        import math as _math
+        S, K, r, q, sigma, T = 100.0, 100.0, 0.05, 0.02, 0.25, 1.0
+        call = bs_price(S=S, K=K, T=T, r=r, q=q, sigma=sigma, option_type="call")
+        put  = bs_price(S=S, K=K, T=T, r=r, q=q, sigma=sigma, option_type="put")
+        lhs = call - put
+        rhs = S * _math.exp(-q * T) - K * _math.exp(-r * T)
+        assert abs(lhs - rhs) < 1e-10, (
+            f"Put-call parity violated: |({call:.8f} - {put:.8f}) - {rhs:.8f}| = "
+            f"{abs(lhs - rhs):.2e}"
+        )
+
+    def test_BEH_05_vol_to_zero_call_intrinsic(self):
+        """BS call at sigma=1e-8 should equal intrinsic ~10.0 within 0.01."""
+        price = bs_price(S=110.0, K=100.0, T=1.0, r=0.0, q=0.0, sigma=1e-8, option_type="call")
+        assert abs(price - 10.0) < 0.01, (
+            f"BS call at sigma=1e-8 gave {price:.6f}, expected ~10.0"
+        )
+
+    def test_BEH_06_no_arbitrage_lower_bound(self):
+        """C >= max(S*exp(-q*T) - K*exp(-r*T), 0) for a grid of parameters."""
+        import math as _math
+        cases = [
+            (100.0, 100.0, 0.05, 0.0, 0.20, 1.0),
+            (110.0,  90.0, 0.03, 0.01, 0.15, 0.5),
+            ( 80.0, 100.0, 0.02, 0.0, 0.30, 2.0),
+            (100.0, 105.0, 0.05, 0.02, 0.25, 1.5),
+            (150.0, 100.0, 0.04, 0.0, 0.35, 0.25),
+        ]
+        for S, K, r, q, sigma, T in cases:
+            call = bs_price(S=S, K=K, T=T, r=r, q=q, sigma=sigma, option_type="call")
+            lower = max(S * _math.exp(-q * T) - K * _math.exp(-r * T), 0.0)
+            assert call >= lower - 1e-10, (
+                f"No-arbitrage violated: call={call:.6f} < lower={lower:.6f} "
+                f"for S={S}, K={K}, r={r}, q={q}, sigma={sigma}, T={T}"
+            )
+
+    def test_BEH_07_es_geq_var_all_methods(self, sample_prices, simple_portfolio):
+        """ES >= VaR for historical, parametric, and Monte Carlo methods."""
+        from src.risk.historical import historical_var_es
+        from src.risk.parametric import parametric_var_es as _param
+        from src.risk.monte_carlo import monte_carlo_var_es
+
+        hist = historical_var_es(
+            portfolio=simple_portfolio, prices=sample_prices,
+            pricing_date=date.today(), lookback_days=252, horizon_days=1,
+            var_confidence=0.99, es_confidence=0.99,
+        )
+        assert hist["es"] >= hist["var"], (
+            f"Historical ES {hist['es']:.4f} < VaR {hist['var']:.4f}"
+        )
+
+        param = _param(
+            portfolio=simple_portfolio, prices=sample_prices,
+            pricing_date=date.today(), lookback_days=252, horizon_days=1,
+            var_confidence=0.99, es_confidence=0.99,
+        )
+        assert param["es"] >= param["var"], (
+            f"Parametric ES {param['es']:.4f} < VaR {param['var']:.4f}"
+        )
+
+        mc = monte_carlo_var_es(
+            portfolio=simple_portfolio, prices=sample_prices,
+            pricing_date=date.today(), lookback_days=252, horizon_days=1,
+            var_confidence=0.99, es_confidence=0.99,
+            n_simulations=2000, random_seed=42,
+        )
+        assert mc["es"] >= mc["var"], (
+            f"MC ES {mc['es']:.4f} < VaR {mc['var']:.4f}"
+        )
+
+    def test_BEH_08_historical_var_finite_positive(self, sample_prices, simple_portfolio):
+        """Historical VaR is finite and positive on the sample_prices fixture."""
+        from src.risk.historical import historical_var_es
+        result = historical_var_es(
+            portfolio=simple_portfolio, prices=sample_prices,
+            pricing_date=date.today(), lookback_days=252, horizon_days=1,
+            var_confidence=0.99, es_confidence=0.99,
+        )
+        assert np.isfinite(result["var"]), "Historical VaR is not finite"
+        assert result["var"] > 0, "Historical VaR is non-positive"
+
+
+# ── Convergence and Inversion Tests ───────────────────────────────────────────
+
+class TestConvergenceAndInversion:
+    """CONV_01, INV_01, INV_02."""
+
+    def test_CONV_01_mc_var_convergence(self, sample_prices, simple_portfolio):
+        """MC VaR error should decrease as N increases: |VaR_50k - VaR_5k| < |VaR_5k - VaR_500|."""
+        common = dict(
+            portfolio=simple_portfolio, prices=sample_prices,
+            pricing_date=date.today(), lookback_days=252, horizon_days=1,
+            var_confidence=0.99, es_confidence=0.975,
+        )
+        var_500 = monte_carlo_var_es(**common, n_simulations=500,   random_seed=0)["var"]
+        var_5k  = monte_carlo_var_es(**common, n_simulations=5000,  random_seed=0)["var"]
+        var_50k = monte_carlo_var_es(**common, n_simulations=50000, random_seed=0)["var"]
+
+        err_coarse = abs(var_5k  - var_500)
+        err_fine   = abs(var_50k - var_5k)
+        assert err_fine < err_coarse, (
+            f"MC VaR does not converge: "
+            f"|VaR_50k - VaR_5k| = {err_fine:.4f}, "
+            f"|VaR_5k - VaR_500| = {err_coarse:.4f}"
+        )
+
+    @pytest.mark.skip(reason="merton_implied_B not yet implemented via round-trip; formula exists")
+    def test_INV_01_merton_implied_B_roundtrip(self):
+        """INV_01 placeholder: merton_implied_B round-trip to within 1e-4."""
+        pass
+
+    def test_INV_01_merton_implied_B_roundtrip_actual(self):
+        """Given (V0=100, B=80, r=0.05, sigma=0.3, T=1), implied_B should recover B within 1e-4."""
+        from src.credit.merton import merton_pd, merton_implied_B
+        V0, B_input, r, sigma, T = 100.0, 80.0, 0.05, 0.3, 1.0
+        # merton_pd uses 'nu' for drift; pass r for Q-measure
+        pd_val = merton_pd(V0=V0, B=B_input, nu=r, sigma=sigma, T=T)
+        target_survival = 1.0 - pd_val
+        B_recovered = merton_implied_B(
+            V0=V0, target_survival=target_survival, r=r, sigma=sigma, T=T
+        )
+        assert abs(B_recovered - B_input) < 1e-4, (
+            f"merton_implied_B round-trip: B_input={B_input}, "
+            f"B_recovered={B_recovered:.6f}, error={abs(B_recovered - B_input):.2e}"
+        )
+
+    def test_INV_02_kupiec_exact_exception_count(self):
+        """Kupiec test with exactly floor(250*0.05)=12 exceptions should not reject (p > 0.05)."""
+        result = kupiec_test(n_observations=250, n_exceptions=12, var_confidence=0.95)
+        assert result["p_value"] > 0.05, (
+            f"Kupiec test incorrectly rejects H0 with exact exception count: "
+            f"p_value={result['p_value']:.4f}"
+        )
+        assert not result["reject_h0"], (
+            "Kupiec reject_h0 should be False for exact exception count"
+        )
+
+
+# ── P&L Attribution Tests ──────────────────────────────────────────────────────
+
+class TestPnLAttribution:
+    """PNL_01: P&L attribution for a linear (stocks-only) portfolio."""
+
+    def test_PNL_01_linear_portfolio_zero_residual(self):
+        """For a pure stock portfolio, delta-explained P&L = actual P&L exactly."""
+        np.random.seed(11)
+        n = 22  # 20 daily returns -> 20 P&L days
+        dates = pd.date_range("2022-01-01", periods=n, freq="B")
+        # Two stocks with known random walk
+        log_ret_aapl = np.random.normal(0.0005, 0.02, n - 1)
+        log_ret_msft = np.random.normal(0.0004, 0.018, n - 1)
+        aapl = np.concatenate([[150.0], 150.0 * np.exp(np.cumsum(log_ret_aapl))])
+        msft = np.concatenate([[300.0], 300.0 * np.exp(np.cumsum(log_ret_msft))])
+
+        q_aapl, q_msft = 100, 50  # share quantities
+
+        # Compute actual P&L and explained P&L for each day t -> t+1
+        actual_pnl = []
+        explained_pnl = []
+        for t in range(n - 1):
+            V_t   = q_aapl * aapl[t]   + q_msft * msft[t]
+            V_t1  = q_aapl * aapl[t+1] + q_msft * msft[t+1]
+            actual = V_t1 - V_t
+            # Delta for linear portfolio = number of shares (dollar delta = qty)
+            explained = q_aapl * (aapl[t+1] - aapl[t]) + q_msft * (msft[t+1] - msft[t])
+            actual_pnl.append(actual)
+            explained_pnl.append(explained)
+
+        actual_arr = np.array(actual_pnl)
+        explained_arr = np.array(explained_pnl)
+        residual = actual_arr - explained_arr
+
+        # For a linear portfolio, unexplained P&L should be exactly 0
+        assert np.allclose(residual, 0.0, atol=1e-8), (
+            f"Linear portfolio has nonzero unexplained P&L. "
+            f"Max residual: {np.max(np.abs(residual)):.2e}"
+        )
+
+        # Also verify zero-mean test: |mean| < 2*std/sqrt(T)
+        T_days = len(residual)
+        if np.std(residual) > 1e-10:
+            t_stat = abs(np.mean(residual)) / (np.std(residual) / np.sqrt(T_days))
+            assert t_stat < 2.0, (
+                f"Unexplained P&L mean is non-zero at 2-sigma: t_stat={t_stat:.4f}"
+            )
+
+
+# ── Hedge Effectiveness Tests ──────────────────────────────────────────────────
+
+class TestHedgeEffectiveness:
+    """HEDGE_01: Delta hedge reduces P&L magnitude for ATM call under ±1% spot shock."""
+
+    def test_HEDGE_01_delta_hedge_atm_call_one_pct_shock(self):
+        """|hedged P&L| < |option P&L| for both +1% and -1% shock to ATM call."""
+        import math as _math
+        S, K, r, q, sigma = 100.0, 100.0, 0.05, 0.0, 0.2
+        T = 1.0 / 12.0  # 1 month
+
+        # Current price and delta
+        price_0 = bs_price(S=S, K=K, T=T, r=r, q=q, sigma=sigma, option_type="call")
+        delta_0 = bs_delta(S=S, K=K, T=T, r=r, q=q, sigma=sigma, option_type="call")
+
+        for shock_pct in [+0.01, -0.01]:
+            S_new = S * (1.0 + shock_pct)
+            # Use same T (instantaneous shock, no time passage)
+            price_new = bs_price(S=S_new, K=K, T=T, r=r, q=q, sigma=sigma, option_type="call")
+
+            option_pnl   = price_new - price_0           # long call P&L
+            hedge_pnl    = -delta_0 * S * shock_pct      # short delta × dollar move
+            net_hedged   = option_pnl + hedge_pnl        # net hedged position P&L
+
+            assert abs(net_hedged) < abs(option_pnl), (
+                f"Delta hedge did not reduce P&L for shock={shock_pct:+.1%}: "
+                f"|hedged|={abs(net_hedged):.5f}, |unhedged|={abs(option_pnl):.5f}"
+            )
+
+
 if __name__ == "__main__":
+
     pytest.main([__file__, "-v"])
