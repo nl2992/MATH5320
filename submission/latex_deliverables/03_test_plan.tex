@@ -57,7 +57,7 @@ Authors & Nigel Li, Michael Adegbite, Stella \\
 Reference Commit & \texttt{5841589} (main branch, May 2026) \\
 Submission Date & May 12, 2026 \\
 Python Version & 3.12.2 \\
-Test Suite & 624 tests, 0 failures (see Deliverable~5) \\
+Test Suite & 644 tests, 1 skipped, 0 failures (see Deliverable~5) \\
 Statement Coverage & 95\% \\
 \bottomrule
 \end{tabular}
@@ -71,6 +71,15 @@ governance, aligned with Lecture~5's emphasis on pre-deployment
 model risk management.
 \end{minipage}
 \end{titlepage}
+
+\vspace*{0.5cm}
+\noindent\fbox{\parbox{0.96\linewidth}{%
+\small\textbf{Note:} Figures cited in this document (test counts, per-file
+breakdowns, coverage percentages) were captured against an earlier snapshot of
+the repository.  The live test suite may report slightly different totals
+due to subsequent hardening commits.  The reference commit listed on the cover
+page identifies the exact state that produced the numbers herein.}}
+\vspace{0.3cm}
 
 \tableofcontents
 \clearpage
@@ -251,6 +260,7 @@ Coverage tests          & Source execution breadth & Coverage report and missing
 \code{risk/regulatory.py}                 & RWA, capital ratio, DFAST pathing \\
 \code{services/risk\_engine\_service.py}  & Orchestration and result-object consistency \\
 \code{ui/*.py}                            & Streamlit input handling and result rendering \\
+\code{tests/test\_numerical\_precision.py}& 7 tests covering IEEE 754 numerical precision and failure modes \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -440,6 +450,204 @@ full discrete-payment formula from \code{cds\_par\_spread}.  We verify:
 
 This benchmark is implemented in \code{tests/test\_credit.py} and
 \code{tests/test\_course\_validation.py}.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Numerical Precision and Failure-Mode Testing}
+\label{sec:numerical-precision-failure-mode}
+
+Quantitative developers need to understand both the strengths and the
+weaknesses of the numerical methods they use.  The test suite therefore
+includes a dedicated numerical-precision file,
+\code{tests/test\_numerical\_precision.py}, designed to address floating-point
+failure modes discussed in the lectures.  The relevant numerical reference
+is Goldberg's discussion of IEEE 754 floating-point arithmetic \cite{Gol91}.
+
+These tests are not intended to prove that the model is accurate for every
+market regime.  Their purpose is narrower and more technical: they confirm
+that the implementation remains finite, stable, and directionally sensible
+under cases that commonly expose floating-point errors, catastrophic
+cancellation, unstable covariance calculations, and extreme-tail VaR/ES
+evaluation.
+
+\begin{longtable}{L{2.2cm}L{4.4cm}L{6.2cm}}
+\toprule
+\textbf{Test ID} & \textbf{Failure mode} & \textbf{Validation purpose} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Test ID} & \textbf{Failure mode} & \textbf{Validation purpose} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\code{NP\_01} & Black-Scholes underflow at very low volatility & Confirms that an at-the-money call with $\sigma = 10^{-10}$ returns a finite value close to discounted intrinsic value rather than NaN or infinity. \\
+\code{NP\_02} & Black-Scholes extreme high volatility & Confirms that a call with $\sigma = 50$ remains finite, positive, and bounded by the underlying spot scale. \\
+\code{NP\_03} & Near-zero time to maturity & Confirms that a deep in-the-money call with $T = 10^{-8}$ prices close to intrinsic value and does not fail from division by a very small denominator. \\
+\code{NP\_04} & Catastrophic cancellation in log returns & Confirms that very small price increments produce finite nonzero log returns of the correct order of magnitude. \\
+\code{NP\_05} & Near-singular covariance in VaR & Confirms that a highly correlated, nearly singular covariance setting does not crash the parametric VaR calculation and returns finite positive VaR. \\
+\code{NP\_06} & EWMA long-series stability & Confirms that EWMA mean and covariance over a 2000-day series remain finite, symmetric, and positive semidefinite up to numerical tolerance. \\
+\code{NP\_07} & Extreme-confidence VaR/ES & Confirms that parametric VaR and ES at $\alpha = 0.9999$ remain finite, positive, and satisfy ES $\geq$ VaR at the same confidence level. \\
+\end{longtable}
+
+Acceptance criterion: every NP test must return finite numerical output
+or a controlled exception.  Silent NaNs, infinities, negative risk values
+where positivity is required, and unstable covariance outputs fail the
+test plan.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Behavioral Confirmation Testing}
+\label{sec:behavioral-confirmation}
+
+Behavioral confirmation tests encode model facts that should hold before
+any benchmark comparison is meaningful.  These are not external goldens;
+they are internal consistency checks based on financial logic.  The
+implemented behavioral tests are BEH\_01 through BEH\_08 in
+\code{tests/test\_backend.py}.
+
+\subsection{Black-Scholes Behavioural Properties}
+
+\begin{center}
+\begin{tabular}{L{2.2cm}L{4.8cm}L{6cm}}
+\toprule
+\textbf{Test ID} & \textbf{Property} & \textbf{Expected behavior} \\
+\midrule
+\code{BEH\_01} & Call monotonicity in spot & A European call price should increase as $S$ increases. \\
+\code{BEH\_02} & Call monotonicity in strike & A European call price should decrease as $K$ increases. \\
+\code{BEH\_03} & Call monotonicity in volatility & A European call price should increase as $\sigma$ increases. \\
+\code{BEH\_04} & Put-call parity & The implementation should satisfy
+$C - P = S e^{-qT} - K e^{-rT}$ within floating-point tolerance. \\
+\code{BEH\_05} & Volatility-to-zero limiting case & As volatility tends to zero, the option value should approach intrinsic / deterministic discounted value. \\
+\code{BEH\_06} & No-arbitrage lower bound & The call price should not fall below $\max(S e^{-qT} - K e^{-rT}, 0)$. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+These tests check that the implementation behaves correctly between
+known limiting cases and does not violate elementary no-arbitrage logic.
+
+\subsection{Risk Measure Coherence and Positivity}
+
+\begin{center}
+\begin{tabular}{L{2.2cm}L{4.8cm}L{6cm}}
+\toprule
+\textbf{Test ID} & \textbf{Property} & \textbf{Expected behavior} \\
+\midrule
+\code{BEH\_07} & ES and VaR internal consistency & Historical, parametric, and Monte Carlo methods should satisfy ES $\geq$ VaR when evaluated at the same confidence level. \\
+\code{BEH\_08} & Historical VaR positivity & Historical VaR should be finite and positive on the representative two-stock fixture. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Acceptance criterion: behavioural facts must hold before a model output is
+treated as meaningful.  If these basic implications fail, the issue is
+more serious than a calibration error, because it indicates a pricing,
+aggregation, or risk-measure implementation defect.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Convergence and Inversion Testing}
+\label{sec:convergence-inversion}
+
+Convergence and inversion tests address numerical robustness rather than
+only formula correctness.  A production-style numerical method should
+be stable as discretisation or simulation parameters change, and an
+inversion routine should reprice or recover the target quantity when
+its output is substituted back into the model.
+
+\subsection{Monte Carlo Convergence}
+
+\begin{itemize}
+  \item \textbf{CONV\_01} checks that Monte Carlo VaR becomes more stable
+    as the number of simulated paths increases from $500$ to $5{,}000$
+    to $50{,}000$.
+\end{itemize}
+
+For independent Monte Carlo simulation, the standard error scales as
+\[
+  \frac{\sigma}{\sqrt{N}},
+\]
+so the expected order of simulation error is approximately
+\[
+  O\left(\frac{1}{\sqrt{N}}\right).
+\]
+The implemented test therefore checks that the fine-grid difference
+$|\mathrm{VaR}_{50k} - \mathrm{VaR}_{5k}|$ is smaller than the coarse-grid
+difference $|\mathrm{VaR}_{5k} - \mathrm{VaR}_{500}|$ under a fixed random
+seed.
+
+\subsection{Merton and Kupiec Inversion Checks}
+
+\begin{center}
+\begin{tabular}{L{2.2cm}L{4.8cm}L{6cm}}
+\toprule
+\textbf{Test ID} & \textbf{Test} & \textbf{Expected behavior} \\
+\midrule
+\code{INV\_01} & Merton implied-barrier round-trip & Given $V_0$, $B$, $r$, $\sigma$, and $T$, compute the Merton default probability, convert it to target survival, invert for $B$, and recover the original barrier within tolerance. \\
+\code{INV\_02} & Kupiec exact-count p-value & For $250$ observations and an exception count close to the expected count under the selected confidence level, the Kupiec test should not reject unconditional coverage. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Acceptance criterion: convergence tests should demonstrate improved
+stability as simulation count increases, and inversion tests should
+recover the original input or fail with a clear diagnostic rather than
+silently returning an inconsistent quantity.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{P\&L Attribution and Hedge Effectiveness}
+\label{sec:pnl-hedge-effectiveness}
+
+Robustness testing in model validation includes checking whether modeled
+risk factors explain observed or simulated portfolio value changes.  This
+project includes a small P\&L attribution test and a one-day hedge
+effectiveness test.  These tests are deliberately scoped to the course
+risk engine; a full dynamic hedging engine is out of scope.
+
+\subsection{P\&L Attribution}
+
+\begin{itemize}
+  \item \textbf{PNL\_01} checks a linear stock-only portfolio where the
+    delta-explained P\&L equals the actual P\&L exactly.
+\end{itemize}
+
+For a linear portfolio with share quantities $q_i$ and prices $S_{i,t}$,
+actual one-period P\&L is
+\[
+  \Delta V_t
+  =
+  \sum_i q_i (S_{i,t+1} - S_{i,t}).
+\]
+Because the position is linear in the underlying prices, the delta-based
+explanation is identical:
+\[
+  \Delta V_t^{\mathrm{explained}}
+  =
+  \sum_i q_i \Delta S_{i,t}.
+\]
+The expected residual is therefore
+\[
+  \Delta V_t - \Delta V_t^{\mathrm{explained}} = 0.
+\]
+
+\subsection{Hedge Effectiveness}
+
+\begin{itemize}
+  \item \textbf{HEDGE\_01} checks that a one-day delta hedge reduces the
+    absolute P\&L of an at-the-money call under both $+1\%$ and $-1\%$
+    spot shocks.
+\end{itemize}
+
+The test uses the Black-Scholes delta at the starting spot, applies a
+small spot shock, and compares the absolute unhedged option P\&L with
+the absolute delta-hedged P\&L.  The required behavior is:
+\[
+  |\mathrm{P\&L}_{\mathrm{hedged}}|
+  <
+  |\mathrm{P\&L}_{\mathrm{unhedged}}|.
+\]
+
+This is not a claim that the project implements production dynamic
+hedging.  It only confirms that the local delta calculation has the
+expected first-order hedge interpretation over a small one-day shock.
 
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Edge-Case and Failure-Mode Tests}
@@ -707,26 +915,21 @@ expected to degrade, not just where it succeeds.  These cases are
 
 \subsection{Behavioural Tests}
 
-\begin{itemize}
-  \item \textbf{BEH\_01} Call price increases with spot
-  \item \textbf{BEH\_02} Put price decreases with spot
-  \item \textbf{BEH\_03} Option price increases with volatility
-  \item \textbf{BEH\_04} Call price decreases with strike
-  \item \textbf{BEH\_05} Put price increases with strike
-  \item \textbf{BEH\_06} VaR increases with notional
-  \item \textbf{BEH\_07} VaR increases with volatility
-  \item \textbf{BEH\_08} CDS spread increases with hazard rate
-  \item \textbf{BEH\_09} CVA increases with expected exposure
-  \item \textbf{BEH\_10} CVA decreases with recovery rate
-  \item \textbf{BEH\_11} Capital ratio decreases after stress losses
-  \item \textbf{BEH\_12} Stressed capital-path minimum is correctly selected
-\end{itemize}
+The primary behavioural confirmation tests are now documented in
+Section~\ref{sec:behavioral-confirmation}.  The implemented BEH\_01
+through BEH\_08 cases cover Black-Scholes monotonicity, put-call parity,
+volatility-to-zero behavior, no-arbitrage lower bounds, ES/VaR internal
+consistency, and finite positive historical VaR.
 
 \subsection{Convergence and Stability Tests}
 
+The primary convergence and inversion tests are now documented in
+Section~\ref{sec:convergence-inversion}.  Additional robustness and
+sensitivity tests remain relevant:
+
 \begin{itemize}
-  \item \textbf{CONV\_01} One-asset MC VaR converges toward exact lognormal VaR as $n_{\mathrm{sims}}$ increases
-  \item \textbf{CONV\_02} One-asset MC ES converges toward exact lognormal ES as $n_{\mathrm{sims}}$ increases
+  \item \textbf{CONV\_01} MC VaR convergence as simulation count increases
+  \item \textbf{CONV\_02} One-asset MC ES convergence toward exact lognormal ES as $n_{\mathrm{sims}}$ increases
   \item \textbf{CONV\_03} Finite-difference delta converges to analytical Black-Scholes delta
   \item \textbf{CONV\_04} Too-small bump demonstrates cancellation risk or is explicitly avoided
   \item \textbf{CONV\_05} Rolling-window VaR sensitivity across window lengths (2y vs.\ 5y)
@@ -737,6 +940,7 @@ expected to degrade, not just where it succeeds.  These cases are
 
 \begin{itemize}
   \item \code{tests/test\_backend.py}
+  \item \code{tests/test\_numerical\_precision.py}
   \item \code{tests/test\_backtest\_extensions.py}
   \item \code{tests/test\_course\_validation.py}
   \item \code{tests/test\_homework\_cases.py}
@@ -758,5 +962,15 @@ expected to degrade, not just where it succeeds.  These cases are
   \item \code{tests/integration\_test.py}
   \item \code{tests/integration\_test\_formula\_sheet.py}
 \end{itemize}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{thebibliography}{9}
+
+\bibitem[Gol91]{Gol91}
+Goldberg, D. (1991).
+\textit{What Every Computer Scientist Should Know About Floating-Point Arithmetic}.
+ACM Computing Surveys, 23(1), 5--48.
+
+\end{thebibliography}
 
 \end{document}

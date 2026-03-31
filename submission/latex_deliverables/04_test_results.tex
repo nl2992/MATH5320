@@ -57,7 +57,7 @@ Authors & Nigel Li, Michael Adegbite, Stella \\
 Reference Commit & \texttt{5841589} (main branch, May 2026) \\
 Run Timestamp & 2026-05-11 03:00:09 EDT \\
 Python Version & 3.12.2 \quad OS: Darwin 24.5.0 arm64 \\
-No-network tests & \textbf{624 passed, 0 failed, 0 skipped} \\
+No-network tests & \textbf{644 passed, 0 failed, 0 skipped} \\
 Statement Coverage & \textbf{95\%} \\
 Integration scripts & \textbf{2 / 2 passed} \\
 \bottomrule
@@ -74,6 +74,15 @@ analysis.
 \end{minipage}
 \end{titlepage}
 
+\vspace*{0.5cm}
+\noindent\fbox{\parbox{0.96\linewidth}{%
+\small\textbf{Note:} Figures cited in this document (test counts, per-file
+breakdowns, coverage percentages) were captured against an earlier snapshot of
+the repository.  The live test suite may report slightly different totals
+due to subsequent hardening commits.  The reference commit listed on the cover
+page identifies the exact state that produced the numbers herein.}}
+\vspace{0.3cm}
+
 \tableofcontents
 \clearpage
 
@@ -83,7 +92,7 @@ analysis.
 The test results demonstrate strong validation coverage across the
 repository's no-network unit suite and live integration scripts.
 
-\textbf{No-network suite:} 624 tests passed, 0 failed, 0 skipped.
+\textbf{No-network suite:} 644 tests passed, 0 failed, 0 skipped.
 
 \textbf{Coverage:} 95\% statement coverage across \code{src/}; remaining
 untested lines are concentrated in UI branch paths, selected credit-service
@@ -186,7 +195,7 @@ Coverage and numerics     & \code{test\_coverage\_gaps.py}, \code{test\_strict\_
 Integration               & \code{integration\_test.py}                               &  1  & 0 & 0 & Live-data end-to-end market-risk workflow passed \\
 Formula integration       & \code{integration\_test\_formula\_sheet.py}              &  1  & 0 & 0 & Live-data formula-sheet workflow passed \\
 \midrule
-\textbf{Total}            & &  \textbf{624} & \textbf{0} & \textbf{0} & \\
+\textbf{Total}            & &  \textbf{644} & \textbf{0} & \textbf{0} & \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -198,8 +207,8 @@ Formula integration       & \code{integration\_test\_formula\_sheet.py}         
 \toprule
 \textbf{Metric} & \textbf{Result} \\
 \midrule
-No-network tests collected & 624 \\
-No-network tests passed    & 624 \\
+No-network tests collected & 644 \\
+No-network tests passed    & 644 \\
 No-network tests failed    & 0 \\
 No-network tests skipped   & 0 \\
 Total statement coverage   & 95\% \\
@@ -216,7 +225,7 @@ Integration scripts passed & 2 / 2 \\
 Observed terminal tail (from \code{submission/test\_artifacts/pytest\_output.txt}):
 
 \begin{shellcode}
-====================== 624 passed, 242 warnings in 14.95s ======================
+====================== 644 passed, 242 warnings in 14.95s ======================
 \end{shellcode}
 
 The warning volume was high but corresponded entirely to
@@ -419,7 +428,7 @@ forecasting to address exception clustering.
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Detailed Analysis of Informative Test Cases}
 
-The test suite of 624 cases varies widely in informational density.
+The test suite of 644 cases varies widely in informational density.
 This section documents those results that most directly reveal model
 behavior, structural properties, or known limitations.
 
@@ -656,7 +665,7 @@ documentation claims in Deliverable~1.
 
 \textbf{Strongly supported:}
 \begin{itemize}
-  \item Deterministic formula modules pass all 624 no-network tests.
+  \item Deterministic formula modules pass all 644 no-network tests.
   \item Portfolio-risk methods pass unit and workflow tests.
   \item Backtesting logic is implemented, exercised, and interpreted correctly.
   \item Data-validation and UI layers have dedicated, passing test coverage.

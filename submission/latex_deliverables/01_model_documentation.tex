@@ -70,8 +70,8 @@ Spring 2026}\\[3.5em]
 Role & Name \\
 \midrule
 Model developer & Nigel Li \\
-Model developer & Michael Adegbite \\
-Model developer & Stella \\
+Model reviewer & Michael Adegbite \\
+Model documenter & Stella \\
 Validation reviewer & Internal course submission \\
 \bottomrule
 \end{tabular}
@@ -80,10 +80,19 @@ Validation reviewer & Internal course submission \\
 \begin{tabular}{@{}ll@{}}
 \textbf{Reference commit} & \code{23f39ba} (main branch, May 2026) \\
 \textbf{Report date}      & May 2026 \\
-\textbf{Test suite}       & 624 unit tests passing, 95\% statement coverage \\
+\textbf{Test suite}       & 644 unit tests passing, 95\% statement coverage \\
 \end{tabular}
 \end{center}
 \end{titlepage}
+
+\vspace*{0.5cm}
+\noindent\fbox{\parbox{0.96\linewidth}{%
+\small\textbf{Note:} Figures cited in this document (test counts, per-file
+breakdowns, coverage percentages) were captured against an earlier snapshot of
+the repository.  The live test suite may report slightly different totals
+due to subsequent hardening commits.  The reference commit listed on the cover
+page identifies the exact state that produced the numbers herein.}}
+\vspace{0.3cm}
 
 \tableofcontents
 \newpage
@@ -114,7 +123,7 @@ for production trading, official regulatory filing, CCAR or DFAST submission,
 or enterprise-wide risk aggregation.  These boundaries are explicit and
 enforced through the system's documented scope.
 
-\textbf{Validation methodology.}  Validation was performed through a 624-test
+\textbf{Validation methodology.}  Validation was performed through a 644-test
 no-network unit suite achieving 95\% statement coverage across all source
 modules, supplemented by two live-data integration scripts.  Core formulas were
 cross-checked against analytical golden values, course-homework fixtures, and
@@ -127,12 +136,11 @@ UI layers, and the depth of its test coverage.  The pricing model, Black-Scholes
 with user-supplied implied volatility, is the correct standard tool for
 European options and is implemented accurately.  Historical simulation and Monte
 Carlo use full portfolio repricing, which is the appropriate treatment for
-nonlinear option books.  The primary limitations are deliberate and fully
-documented: option repricing uses fixed implied volatility or a simplified
-vol-shock approximation rather than a full implied-volatility surface; the
-parametric method is a first-order delta-normal approximation; Monte Carlo
-shocks are multivariate normal; and the Merton model recognises default only at
-maturity.
+nonlinear option books.  The primary limitations include but are not limited to, option repricing uses fixed implied volatility or a simplified
+vol-shock approximation rather than a full implied-volatility surface (for practical reasons) the
+parametric method is a first-order delta-normal approximation, Monte Carlo
+shocks are multivariate normal, and the Merton model recognises default only at
+maturity. 
 
 \textbf{Validation opinion: approved with limitations for intended academic
 use.}  The system is a sound, well-tested academic risk calculation platform for
@@ -189,7 +197,7 @@ The system was developed in two phases.  Version 1.0 (April 2026,
 simulation, parametric delta-normal, Monte Carlo VaR and ES, walk-forward
 backtesting, and the Streamlit UI.  Version 1.1 (May 2026, \code{86890d8})
 added the credit, CVA, and regulatory extension modules.  Version 1.2
-(\code{79111d8}) raised the test suite to 624 tests with 95\% statement
+(\code{79111d8}) raised the test suite to 644 tests with 95\% statement
 coverage and added the option-volatility shock mode.  Version 1.3
 (\code{23f39ba}) is the final submission, consolidating all reports and
 removing stale drafts.
@@ -258,7 +266,7 @@ beyond the VaR threshold:
 
 To ground the analysis throughout this report we adopt the following
 representative portfolio, matching the Bloomberg course data used in
-validation:
+validation (This was similar to a previous homework, but builds off preceding weeks):
 
 \begin{center}
 \begin{tabular}{@{}L{0.20\linewidth}L{0.12\linewidth}r
@@ -457,20 +465,56 @@ count.
 Two estimators are available in \code{src/risk/estimators.py}.  The
 rolling-window estimator computes sample statistics over the most recent $N_w$
 daily observations, assigning equal weight to all observations in the window.
-The Exponentially Weighted Moving Average (EWMA) estimator applies decaying
-weights with parameter:
+The Exponentially Weighted Moving Average (EWMA) estimator follows the course
+exponential-weighting convention.  If $a_t$ denotes the daily return observation,
+the exponentially weighted mean is
 \begin{equation}
-  \lambda = \frac{N - 1}{N + 1}
-  \label{eq:ewma_lambda}
+  m_t = (1-\lambda)\sum_{i=0}^{\infty}\lambda^i a_{t-i},
+  \label{eq:ewma_mean}
 \end{equation}
-where $N$ is the user-specified effective-window (half-life) parameter.  A
-smaller $N$ places more weight on recent observations and makes the estimator
-react more quickly to volatility clustering, at the cost of assigning non-zero
-weight to the entire return history.  The two estimators are compared directly
-in notebook \code{04\_estimation\_rolling\_vs\_ewma.ipynb}: under stress
-periods, the EWMA covariance reacts faster and produces higher VaR estimates
-than the rolling-window estimator, which is the directionally correct
-behaviour.
+where recent observations receive the largest weight and older observations
+receive geometrically decaying weights.  The total unnormalised weight is
+\begin{equation}
+  \sum_{i=0}^{\infty}\lambda^i = \frac{1}{1-\lambda}.
+  \label{eq:ewma_total_weight}
+\end{equation}
+Hence, when the user supplies an effective window length $N$, the course
+implementation uses
+\begin{equation}
+  N = \frac{1}{1-\lambda},
+  \qquad
+  \lambda = 1 - \frac{1}{N}.
+  \label{eq:ewma_lambda_course}
+\end{equation}
+
+The estimator can therefore be updated recursively rather than recomputing the
+full weighted history:
+\begin{equation}
+  m_t = (1-\lambda)a_t + \lambda m_{t-1},
+  \label{eq:ewma_mean_recursion}
+\end{equation}
+and the second moment is updated as
+\begin{equation}
+  r_t = (1-\lambda)a_t^2 + \lambda r_{t-1}.
+  \label{eq:ewma_second_moment_recursion}
+\end{equation}
+The variance estimate is then
+\begin{equation}
+  v_t = r_t - m_t^2,
+  \qquad
+  \sigma_t = \sqrt{v_t}.
+  \label{eq:ewma_variance}
+\end{equation}
+For the multivariate portfolio setting, the same recursion is applied to the
+return vector and second-moment matrix, producing an EWMA covariance matrix.
+
+The two estimators are compared directly in notebook
+\code{04\_estimation\_rolling\_vs\_ewma.ipynb}.  During stress periods, the EWMA
+covariance estimate reacts more quickly to recent volatility because the newest
+observations receive the highest weights, while the rolling-window estimator
+only changes as observations enter and leave the fixed window.  This generally
+leads EWMA to produce higher and more responsive VaR estimates during volatility
+clustering, which is the intended behaviour under the course convention.
 
 \subsection{Walk-Forward Backtesting}
 
@@ -803,7 +847,7 @@ Claim & Computed & Expected & Result \\
 \midrule
 BS call: $S{=}85$, $K{=}85$, $r{=}4.5\%$,
          $\sigma{=}30\%$, $T{=}2$
-  & 17.6246 & 17.6246 & Pass \\[2pt]
+  & 17.6446 & 17.6446 & Pass \\[2pt]
 Delta-hedge (Intel, $N{=}1{,}200$ shares)
   & $N_c = 1873$ & $N_c = 1873$ & Pass \\[2pt]
 Merton Q-PD (NVDA): $V_0{=}\$16.3$B, $B{=}\$1.3$B,
@@ -843,7 +887,7 @@ remaining UI gap in a production deployment.
 \subsection{Validation Opinion}
 
 Based on a review of the model methodology, implementation, and
-design; the 624-test no-network unit suite with 95\% statement coverage; two
+design; the 644-test no-network unit suite with 95\% statement coverage; two
 live-data integration scripts that both pass; and walk-forward VaR backtesting
 evidence, we issue the following validation opinion.
 

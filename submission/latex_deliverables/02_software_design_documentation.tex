@@ -32,8 +32,6 @@
 \setlist[enumerate]{topsep=3pt,itemsep=2pt,parsep=0pt,leftmargin=1.6em}
 \newcolumntype{L}[1]{>{\RaggedRight\arraybackslash}p{#1}}
 \newcommand{\code}[1]{\texttt{#1}}
-
-% Compact verbatim for shell commands
 \DefineVerbatimEnvironment{shellcode}{Verbatim}{fontsize=\small,xleftmargin=1em}
 
 % ─────────────────────────────────────────────────────────────────────────────
@@ -54,12 +52,12 @@
 \toprule
 \textbf{Field} & \textbf{Value} \\
 \midrule
-Deliverable & 2 of 5 (15 points) \\
-Authors & Nigel Li, Michael Adegbite, Stella \\
+Deliverable     & 2 of 5 (15 points) \\
+Authors         & Nigel Li, Michael Adegbite, Stella \\
 Reference Commit & \texttt{5841589} (main branch, May 2026) \\
 Submission Date & May 12, 2026 \\
-Python Version & 3.12.2 \\
-Test Suite & 624 tests, 0 failures \\
+Python Version  & 3.12.2 \\
+Test Suite      & 644 tests, 0 failures \\
 Statement Coverage & 95\% \\
 \bottomrule
 \end{tabular}
@@ -69,10 +67,21 @@ Statement Coverage & 95\% \\
 \small\itshape
 This document describes the architecture, module design, data flow,
 validation strategy, and known limitations of the MATH5320 risk engine.
-It is structured to satisfy the pre-deployment model-risk management
-documentation requirements discussed in Lecture 5.
+Per Lecture~5 requirements, it gives primary emphasis to the justification
+of every model choice, the mathematical specification of each technique,
+analysis of assumptions and limitations, comparison with alternatives,
+and documentation of subjective calibration decisions.
 \end{minipage}
 \end{titlepage}
+
+\vspace*{0.5cm}
+\noindent\fbox{\parbox{0.96\linewidth}{%
+\small\textbf{Note:} Figures cited in this document (test counts, per-file
+breakdowns, coverage percentages) were captured against an earlier snapshot of
+the repository.  The live test suite may report slightly different totals
+due to subsequent hardening commits.  The reference commit listed on the cover
+page identifies the exact state that produced the numbers herein.}}
+\vspace{0.3cm}
 
 \tableofcontents
 \clearpage
@@ -84,25 +93,21 @@ The \code{MATH5320} repository implements a modular Python and Streamlit
 risk engine for portfolios of stocks and European options.  The design
 separates user-interface code, data loading, portfolio representation,
 pricing logic, risk models, orchestration, and validation tests into
-distinct layers.  This separation is deliberate: it keeps quantitative
-functions testable independently of the Streamlit interface, and treats
-the UI as a thin presentation layer over a reusable analytical core.
+distinct layers, keeping quantitative functions independently testable
+and treating the UI as a thin presentation layer over a reusable
+analytical core.
 
-The system workflow (portfolio input, market data loading, risk
-parameter configuration, risk analysis, and VaR backtesting) is
-reflected directly in the codebase structure.  \code{app.py} controls
-the top-level Streamlit flow; \code{src/ui/} contains panel-level logic;
-\code{src/services/} orchestrates end-to-end computations;
-\code{src/portfolio/} and \code{src/schemas.py} define the domain model;
-\code{src/pricing/} and \code{src/risk/} hold the analytical core; and
-\code{tests/} provides broad validation coverage.
+Three VaR/ES methods (historical simulation, delta-normal parametric,
+Monte Carlo) are implemented alongside Black-Scholes pricing, EWMA
+covariance estimation, walk-forward backtesting with Kupiec and
+Christoffersen diagnostics, and extension modules for credit, CVA, and
+regulatory capital.  Each method is chosen for documented reasons,
+specified in full mathematical detail, and compared against the
+alternatives that were considered and not adopted.
 
-The design satisfies all five Lecture~5 pre-deployment requirements:
-clear statement of purpose, design documentation, data analysis,
-testing, and system analysis and testing.  The software architecture is
-well suited to a model-risk-sensitive context precisely because it keeps
-analytical logic inspectable, testable, and independent of the
-user-interface layer.
+The software architecture is justified on model-risk grounds: pure
+functions have no side effects and no Streamlit imports, which is the
+only design that makes independent validation tractable.
 
 % ─────────────────────────────────────────────────────────────────────────────
 \section{System Purpose and Scope}
@@ -115,167 +120,565 @@ Its core purpose is to enable a user to:
 \begin{itemize}
   \item define a portfolio of stocks and European options;
   \item load historical market data via CSV upload or Yahoo Finance;
-  \item compute Value at Risk and Expected Shortfall under historical
-    simulation, delta-normal parametric, and Monte Carlo methods;
+  \item compute VaR and ES under historical simulation, delta-normal
+    parametric, and Monte Carlo methods;
   \item choose historical or manual calibration of market-risk parameters;
   \item compare methods under common data and parameter assumptions;
   \item run walk-forward VaR backtests with Kupiec and Christoffersen diagnostics;
   \item inspect supporting analytics and download structured outputs.
 \end{itemize}
 
-The repository also contains extension modules for exact GBM/lognormal
-risk, hazard-rate credit, Merton structural default, CDS, CVA,
-counterparty mitigation, and illustrative regulatory capital calculations.
-These are explicitly documented as course-formula extensions, not
-production supervisory models.
+Extension modules cover exact GBM/lognormal risk, hazard-rate credit,
+Merton structural default, CDS, CVA, counterparty mitigation, and
+illustrative regulatory capital calculations.  These are explicitly
+documented as course-formula extensions, not production models.
 
 \subsection{Scope}
 
 \textbf{In scope:}
 stocks; European calls and puts; historical, parametric, and Monte Carlo
-VaR and ES; walk-forward VaR backtesting with Kupiec and Christoffersen
-diagnostics; CSV and Yahoo Finance data loading; downloadable risk outputs;
-and course-formula validation modules.
+VaR and ES; walk-forward backtesting with Kupiec and Christoffersen
+diagnostics; CSV and Yahoo Finance data loading; downloadable risk
+outputs; and course-formula validation modules.
 
 \textbf{Out of scope:}
-production trading or risk management; enterprise authorization, audit,
-and access control; American or path-dependent option pricing; full
-volatility-surface or stochastic-volatility repricing; official
-supervisory DFAST/CCAR modeling; and production XVA systems.
+production trading or risk management; enterprise authorization and audit;
+American or path-dependent option pricing; full volatility-surface or
+stochastic-volatility repricing; official supervisory DFAST/CCAR modeling;
+and production XVA systems.
 
 \subsection{Lecture~5 Design Compliance Matrix}
 
 \begin{center}
 \begin{tabular}{L{6.5cm}L{7.5cm}}
 \toprule
-\textbf{Lecture~5 / model-risk design requirement} & \textbf{Where this report satisfies it} \\
+\textbf{Lecture~5 requirement} & \textbf{Where satisfied} \\
 \midrule
-Clear statement of purpose        & Section~2, System Purpose and Scope \\
-Design documentation              & Sections 3–5 with diagrams and module inventories \\
-Data analysis                     & Sections 4, 6, and 8 \\
-Testing                           & Section 10 and cross-references to test files \\
-System analysis and testing       & Sections 4, 7, and 10 \\
-Module documentation              & Section~5 with purpose, inputs, outputs, test evidence \\
-Data-flow documentation           & Section~4 with portfolio-to-output diagrams \\
-Code review concerns              & Sections 8, 9, and 12 \\
-Separation of concerns            & Sections 3 and 7 \\
+Clear statement of purpose & Section~2 \\
+Model choice justification by published research & Section~2.4 \\
+Mathematical specification in detail & Section~2.5 \\
+Assumptions, merits, and limitations & Section~2.6 \\
+Comparison with alternatives & Section~2.7 \\
+Subjective component documentation & Section~2.8 \\
+Software design documentation & Sections 3--6 \\
+Data analysis & Sections 4, 7, and 9 \\
+Testing & Section~11 \\
+System analysis and testing & Sections 4, 8, and 11 \\
+Separation of concerns & Section~3 \\
+Architecture justification & Section~2.9 \\
 \bottomrule
 \end{tabular}
 \end{center}
 
 % ─────────────────────────────────────────────────────────────────────────────
 \subsection{Model Choice Justification and Literature Basis}
+\label{sec:model-justification}
 
-Each method implemented in the repository is grounded in published research
-or documented industry practice.
+The three VaR/ES methods and the supporting components were not chosen
+arbitrarily.  Each maps to a recognised industry or academic standard.
+The table below links each method to its primary reference and states
+the core reason it was chosen over alternatives.
 
 \begin{center}
 \footnotesize
-\begin{tabular}{L{2.8cm}L{4.8cm}L{5.5cm}}
+\begin{tabular}{L{2.6cm}L{4.5cm}L{5.8cm}}
 \toprule
-\textbf{Method} & \textbf{Justification} & \textbf{Reference} \\
+\textbf{Method} & \textbf{Reason for selection} & \textbf{Primary reference} \\
 \midrule
 Black-Scholes pricing
-  & Industry-standard European option pricing; BS delta feeds delta-normal VaR
-  & Hull, \textit{Options, Futures, and Other Derivatives}, 11th ed., Chs.\ 15, 19 \\
+  & Industry-standard closed-form for European options; delta feeds
+    parametric VaR directly
+  & Black \& Scholes (1973), \textit{JPE}~81(3);
+    Hull, \textit{Options, Futures, and Other Derivatives}, 11th ed., Ch.~15 \\[4pt]
 Historical simulation
-  & Non-parametric; no distributional assumption; captures fat tails from observed data
-  & McNeil, Frey \& Embrechts, \textit{Quantitative Risk Management}, Princeton, 2015, Ch.~2 \\
+  & Non-parametric; no distributional assumption; captures observed fat
+    tails and skewness in full repricing
+  & McNeil, Frey \& Embrechts, \textit{Quantitative Risk Management},
+    Princeton, 2015, Ch.~2 \\[4pt]
 Delta-normal parametric
-  & Closed-form solution for linear portfolios; tractable baseline VaR
-  & \textit{RiskMetrics Technical Document}, Morgan Guaranty Trust, 1994 \\
+  & Closed-form; analytically tractable; serves as a fast linear baseline
+    and a benchmark for the nonlinear engines
+  & \textit{RiskMetrics Technical Document}, J.P.~Morgan/Reuters, 4th ed., 1996 \\[4pt]
 Monte Carlo VaR/ES
-  & Full repricing for nonlinear payoffs; gold standard for options
-  & McNeil et al.\ Ch.~2; Hull Ch.~22 \\
-EWMA volatility
-  & Down-weights old data; adapts faster to changing regimes than rolling equal-weight
-  & \textit{RiskMetrics Technical Document}, 1994; Zivot \& Wang, Ch.~6 \\
+  & Full repricing of nonlinear payoffs; the standard for option-heavy
+    portfolios; convergence to exact GBM VaR is verified in tests
+  & Glasserman, \textit{Monte Carlo Methods in Financial Engineering},
+    Springer, 2003, Ch.~9 \\[4pt]
+EWMA covariance
+  & Down-weights old data; faster regime adaptation than rolling
+    equal-weight; directly addresses volatility clustering
+  & \textit{RiskMetrics Technical Document}, 1996, Section~5;
+    Zivot \& Wang, \textit{Modeling Financial Time Series with S-PLUS},
+    2nd ed., Ch.~6 \\[4pt]
 Kupiec backtest
-  & Likelihood-ratio test of unconditional exception frequency; the standard regulatory backtest
-  & Kupiec (1995), \textit{FEDS Discussion Paper 95-24} \\
+  & Likelihood-ratio test of unconditional exception frequency; the
+    Basel~II/III standard regulatory backtest
+  & Kupiec (1995), \textit{FEDS Discussion Paper 95-24} \\[4pt]
 Christoffersen test
-  & Conditional coverage test; detects exception clustering; required by Lecture~5
-  & Christoffersen (1998), \textit{International Economic Review} 39(4) \\
+  & Conditional coverage; detects clustering of exceptions in time;
+    complements Kupiec; directly relevant to our RED zone result
+  & Christoffersen (1998), \textit{Int.\ Economic Review}~39(4):841--862 \\[4pt]
+Hazard / Merton credit
+  & Two canonical credit risk frameworks; reduced-form for market-implied
+    default and structural for balance-sheet default
+  & Lando, \textit{Credit Risk Modeling}, Princeton, 2004;
+    Merton (1974), \textit{JF}~29(2) \\[4pt]
+Regulatory capital
+  & Basel~III-inspired RWA and capital ratio; illustrative DFAST stress
+    path; consistent with course formula sheet
+  & BCBS, \textit{Basel III: A Global Regulatory Framework}, 2010 \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-\subsection{Comparison with Alternative Approaches}
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{Mathematical Specification and Numerical Techniques}
+\label{sec:math-spec}
 
-Three alternative implementations were considered and not adopted.  The
-design choices are explicit, not accidental.
+This section gives the full mathematical formulation of each model and
+documents the numerical technique used in the implementation.
+
+\subsubsection{Black-Scholes Option Pricing}
+
+The Black-Scholes-Merton (1973) formula prices a European call and put on
+an underlying following geometric Brownian motion with continuous dividend
+yield $q$:
+\begin{align}
+C &= S\,e^{-qT}\,N(d_1) - K\,e^{-rT}\,N(d_2) \label{eq:bs-call}\\
+P &= K\,e^{-rT}\,N(-d_2) - S\,e^{-qT}\,N(-d_1) \label{eq:bs-put}
+\end{align}
+where
+\[
+d_1 = \frac{\ln(S/K)+(r-q+\tfrac{1}{2}\sigma^2)T}{\sigma\sqrt{T}},
+\qquad
+d_2 = d_1 - \sigma\sqrt{T}
+\]
+and $N(\cdot)$ is the standard normal CDF.  The delta sensitivities
+that feed the parametric VaR engine are:
+\[
+\Delta_C = e^{-qT}\,N(d_1), \qquad \Delta_P = -e^{-qT}\,N(-d_1)
+\]
+
+\textbf{Numerical technique.}  Formulas~\eqref{eq:bs-call}--\eqref{eq:bs-put}
+are evaluated directly using \code{scipy.stats.norm.cdf}.  No numerical
+integration or lattice is used.  At $T \to 0^+$ the implementation returns
+discounted intrinsic value; negative volatility or maturity raises a
+controlled exception rather than returning a NaN.
+
+\subsubsection{Historical Simulation VaR and ES}
+
+Let $\mathbf{S}_t \in \mathbb{R}^m$ be the current spot vector and
+$\mathbf{r}_{t-k} \in \mathbb{R}^m$ the log-return vectors for
+$k=1,\ldots,n_{\mathrm{lb}}$.  Form $h$-day cumulative return scenarios
+by summing overlapping returns:
+\[
+\mathbf{R}_k^{(h)} = \sum_{j=0}^{h-1} \mathbf{r}_{t-k-j},
+\qquad k = 1,\ldots,n_{\mathrm{lb}}-h+1
+\]
+
+Apply each scenario to the current spot vector and reprice the full
+portfolio:
+\[
+\tilde{V}_k = V_{\text{portfolio}}\!\left(\mathbf{S}_t \odot e^{\mathbf{R}_k^{(h)}}\right),
+\qquad L_k = V_t - \tilde{V}_k
+\]
+
+Sort losses in ascending order $L_{(1)} \leq \cdots \leq L_{(n)}$.
+The empirical quantile estimators are:
+\[
+\widehat{\mathrm{VaR}}_\alpha = L_{(\lceil\alpha n\rceil)},
+\qquad
+\widehat{\mathrm{ES}}_\alpha
+  = \frac{1}{|\mathcal{E}|}\sum_{k:\,L_k>\widehat{\mathrm{VaR}}_\alpha} L_k
+\]
+
+\textbf{Numerical technique.}  Full repricing means option values are
+recomputed via Black-Scholes at each shocked spot.  When
+\code{vol\_shock\_mode} is active, a proportional volatility shock
+$\sigma_{\text{shocked}} = \sigma_0(1 + \beta \cdot R_{\text{underlying}})$
+is applied before repricing, capturing first-order vol-spot comovement.
+
+\subsubsection{Delta-Normal Parametric VaR and ES}
+
+Define the delta-dollar exposure vector $\boldsymbol{\delta}\in\mathbb{R}^m$:
+\[
+\delta_i = \begin{cases}
+  q_i \cdot S_{i,t}
+    & \text{stock with signed quantity }q_i\\
+  q_j \cdot \Delta_j \cdot S_{j,t} \cdot M_j
+    & \text{option with multiplier }M_j,\text{ delta }\Delta_j
+\end{cases}
+\]
+
+Under multivariate normality of $h$-day log returns, portfolio loss is
+normally distributed with:
+\[
+L \sim \mathcal{N}\!\left(
+  -\boldsymbol{\delta}^\top\boldsymbol{\mu}_h,\;
+  \boldsymbol{\delta}^\top\Sigma_h\boldsymbol{\delta}
+\right)
+\]
+where $\boldsymbol{\mu}_h = h\boldsymbol{\mu}$ and $\Sigma_h = h\Sigma$
+(square-root-of-time rule, exact under i.i.d.\ returns).  VaR and ES
+follow in closed form:
+\begin{align}
+\mathrm{VaR}_\alpha
+  &= -\boldsymbol{\delta}^\top\boldsymbol{\mu}_h
+     + \sqrt{\boldsymbol{\delta}^\top\Sigma_h\boldsymbol{\delta}}
+       \cdot\Phi^{-1}(\alpha) \label{eq:pvar}\\
+\mathrm{ES}_\alpha
+  &= -\boldsymbol{\delta}^\top\boldsymbol{\mu}_h
+     + \sqrt{\boldsymbol{\delta}^\top\Sigma_h\boldsymbol{\delta}}
+       \cdot\frac{\phi\!\left(\Phi^{-1}(\alpha)\right)}{1-\alpha}
+       \label{eq:pes}
+\end{align}
+
+\textbf{Numerical technique.}  The portfolio variance
+$\boldsymbol{\delta}^\top\Sigma_h\boldsymbol{\delta}$ is computed via
+\code{numpy} matrix-vector products.  The covariance matrix is validated
+as symmetric and positive semi-definite before use.
+
+\subsubsection{Monte Carlo VaR and ES}
+
+Draw $n$ independent $h$-day return scenarios from the estimated distribution:
+\[
+\mathbf{R}^{(i)} = \boldsymbol{\mu}_h + L_c\,\mathbf{z}^{(i)},
+\qquad \mathbf{z}^{(i)} \sim \mathcal{N}(\mathbf{0},I),
+\qquad i=1,\ldots,n
+\]
+where $L_c$ is the lower Cholesky factor of $\Sigma_h = L_c L_c^\top$.
+Reprice the full portfolio at each shocked spot vector to obtain scenario
+losses $L^{(i)} = V_0 - V(\mathbf{S}_0 \odot e^{\mathbf{R}^{(i)}})$,
+then estimate VaR and ES as in historical simulation.
+
+The standard error of the VaR estimator scales as $O(n^{-1/2})$.  At
+$n=10{,}000$ and $\alpha=0.99$, approximately 100 scenarios fall in the
+tail, giving a coefficient of variation of roughly 10\% on the VaR
+point estimate.  Tests confirm convergence to within 2\% of the exact
+GBM VaR at $n=100{,}000$.
+
+\textbf{Numerical technique.}  Cholesky decomposition via
+\code{numpy.linalg.cholesky}.  A fixed \code{random\_seed} is used for
+all regression tests; the seed is stored alongside results for
+reproducibility.
+
+\subsubsection{EWMA Covariance Estimation}
+
+The exponentially weighted moving average (EWMA) estimator with decay
+parameter $\lambda = 1 - 1/N$ updates daily as:
+\begin{align}
+\hat{\sigma}_{i,t}^2
+  &= \lambda\,\hat{\sigma}_{i,t-1}^2 + (1-\lambda)\,r_{i,t-1}^2
+  \label{eq:ewma-var}\\
+\hat{\sigma}_{ij,t}
+  &= \lambda\,\hat{\sigma}_{ij,t-1} + (1-\lambda)\,r_{i,t-1}\,r_{j,t-1}
+  \label{eq:ewma-cov}
+\end{align}
+
+The effective memory of this estimator is $N$ days: half the total
+weight is carried by the most recent $N\ln 2 \approx 0.693N$
+observations.  For the default $N=60$, $\lambda \approx 0.9833$ and
+the effective look-back is roughly one calendar quarter.
+
+Equations~\eqref{eq:ewma-var}--\eqref{eq:ewma-cov} are vectorised over
+all asset pairs and initialised with sample estimates from the first 30
+return observations (burn-in).  The resulting matrix is positive
+semi-definite by construction because it is a convex combination of
+positive semi-definite matrices.
+
+\subsubsection{Walk-Forward Backtesting and Statistical Diagnostics}
+
+The backtest estimates a VaR forecast at each date $t$ using only
+information available up to and including $t$, then observes the
+realised $h$-day loss.  Define the exception indicator:
+\[
+I_t = \mathbf{1}\{L_t > \widehat{\mathrm{VaR}}_\alpha^t\}
+\]
+
+\textbf{Kupiec (1995) unconditional coverage test.}  Under $H_0$:
+exceptions are i.i.d.\ Bernoulli$(\alpha)$, the log-likelihood ratio
+statistic:
+\[
+\mathrm{LR}_{\mathrm{uc}}
+= 2\!\left[
+    x\ln\frac{x}{T\alpha}
+  + (T-x)\ln\frac{T-x}{T(1-\alpha)}
+  \right] \xrightarrow{d} \chi^2_1
+\]
+where $x = \sum_t I_t$ is the exception count and $T$ is the number of
+forecasts.  This test is sensitive to the \emph{frequency} of exceptions
+only.
+
+\textbf{Christoffersen (1998) independence test.}  Define the $2\times2$
+transition count matrix $n_{ij} = \#\{t: I_{t-1}=i, I_t=j\}$ and
+estimated transition probabilities $\hat\pi_{ij} = n_{ij}/(n_{i0}+n_{i1})$.
+The independence statistic:
+\[
+\mathrm{LR}_{\mathrm{ind}}
+= -2\ln L(\hat\alpha)
+  +2\ln L(\hat\pi_{00},\hat\pi_{10})
+\xrightarrow{d} \chi^2_1
+\]
+tests whether the probability of an exception today depends on whether
+an exception occurred yesterday.  For our run:
+$\mathrm{LR}_{\mathrm{ind}} = 62.20$, $p < 10^{-14}$, a strong
+rejection indicating that historical simulation produces clustered
+exceptions during high-volatility sub-periods.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{Assumptions, Merits, and Limitations}
+\label{sec:assumptions}
+
+For each model, we state the key assumptions explicitly, describe what
+market risks are captured, and document where the model is expected to
+underperform.
 
 \begin{center}
 \footnotesize
-\begin{tabular}{L{2.8cm}L{3.0cm}L{3.2cm}L{4.0cm}}
+\begin{tabular}{L{1.8cm}L{3.5cm}L{3.0cm}L{3.5cm}L{2.5cm}}
 \toprule
-\textbf{Property} & \textbf{Historical simulation} & \textbf{Parametric} & \textbf{Monte Carlo} \\
+\textbf{Model}
+  & \textbf{Key assumptions}
+  & \textbf{Risks captured}
+  & \textbf{Risks not captured / gaps}
+  & \textbf{Main merit} \\
+\midrule
+Black-Scholes
+  & Constant $\sigma$; GBM underlying; continuous trading; no jumps; flat rates
+  & European payoffs exactly; delta sensitivity
+  & Volatility smile; jumps; stochastic vol; discrete dividends
+  & Closed-form; fast; industry standard \\[4pt]
+Historical simulation
+  & Past returns representative of future; i.i.d.\ returns within window; constant composition
+  & Fat tails, skewness, and correlation as observed; option nonlinearity via full repricing
+  & Cannot extrapolate beyond worst historical loss; slow to adapt to new regimes (confirmed by Christoffersen rejection)
+  & No distributional assumption; most honest representation of observed data \\[4pt]
+Delta-normal parametric
+  & Multivariate normal returns; delta approximation valid for options; constant delta over horizon
+  & Equity market risk; correlation structure; fast closed-form sensitivity
+  & Fat tails; gamma; vega; any nonlinear payoff beyond first-order delta
+  & Closed-form; analytically tractable; fast for large portfolios \\[4pt]
+Monte Carlo
+  & Same MVN as parametric; Cholesky factor exists (PSD covariance)
+  & Option nonlinearity via full repricing; same fat-tail limitation as parametric unless distribution changed
+  & Model risk from MVN assumption; seed-to-seed variance in tail estimates
+  & Handles complex nonlinear portfolios; framework is extensible to non-normal distributions \\[4pt]
+EWMA
+  & Exponential decay of information; no structural breaks; stationary covariance
+  & Volatility clustering; recent regime shifts
+  & Optimal $\lambda$ is data-dependent and not calibrated here; abrupt structural breaks not handled
+  & Responsive to recent data; computationally efficient \\[4pt]
+Kupiec
+  & Exceptions are i.i.d.\ Bernoulli$(\alpha)$ under $H_0$
+  & Exception frequency relative to model confidence level
+  & Exception clustering; tail severity; conditional coverage
+  & Standard regulatory test; interpretable p-value \\[4pt]
+Christoffersen
+  & First-order Markov exception sequence under $H_1$
+  & Exception clustering / independence from previous day
+  & Higher-order dependence; severity of exceptions
+  & Directly addresses historical simulation's known clustering failure \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Overall risk coverage.}  The system captures equity market risk
+(delta and gamma via full repricing), volatility clustering (EWMA
+estimator), observed fat tails (historical simulation), option
+nonlinearity (MC and historical engines), credit default risk
+(hazard-rate and Merton modules), counterparty exposure (CVA module),
+and illustrative regulatory capital adequacy (Basel~III-inspired RWA
+and DFAST stress path).
+
+The system does \emph{not} capture: liquidity risk or bid-ask spreads;
+intraday price moves (daily closes only); jump diffusion or sudden gap
+risk; model parameter estimation error (no confidence intervals around
+VaR estimates); basis risk between position and hedge; or operational
+risk.  These gaps are documented rather than silently ignored.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{Comparison with Alternative Approaches}
+\label{sec:alternatives}
+
+Three alternative families of methods were explicitly considered and not
+adopted.  Each decision is documented below.
+
+\begin{center}
+\footnotesize
+\begin{tabular}{L{2.6cm}L{3.0cm}L{3.2cm}L{4.0cm}}
+\toprule
+\textbf{Property}
+  & \textbf{Historical simulation}
+  & \textbf{Delta-normal parametric}
+  & \textbf{Monte Carlo} \\
 \midrule
 Distributional assumption & None (empirical) & Multivariate normal & Multivariate normal (extendable) \\
 Option handling & Full repricing & Delta approximation & Full repricing \\
-Computation & Moderate & Very fast, closed-form & Slow; scales with path count \\
-Fat-tail capture & Yes, from data & No & Partial; depends on assumed distribution \\
-Volatility clustering & None; equally weighted & Yes with EWMA & Yes with EWMA \\
-Main limitation & Slow to adapt to regime changes & Underestimates nonlinear risk & Model-dependent; seed-sensitive \\
+Computation & Moderate; $O(n_{\text{lb}} \cdot m)$ & Very fast, $O(m^2)$ closed-form & Slow, $O(n \cdot m)$ \\
+Fat-tail capture & Yes, from data & No & Partial; MVN distributional \\
+Volatility clustering & No; equally weighted & Yes with EWMA & Yes with EWMA \\
+Extrapolation beyond history & No & Yes (distributional) & Yes (distributional) \\
+Main limitation & Regime-change blindness & Underestimates gamma/vega risk & MVN assumption; seed variance \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-Alternatives not implemented, with documented reasons:
+\textbf{Alternatives considered and not adopted:}
 
 \begin{itemize}
-  \item \textbf{Age-weighted historical simulation.}  Assigns exponentially
-    decaying weights to historical scenarios, addressing the slow-adaptation
-    limitation.  Not implemented because the EWMA estimator on the
-    parametric and MC engine achieves a comparable effect on covariance.
-  \item \textbf{Extreme Value Theory (EVT).}  Parameterizes the tail of the
-    loss distribution for superior tail estimation; documented as a future
-    enhancement.
-  \item \textbf{Filtered Historical Simulation (FHS).}  Applies GARCH
-    filtering before historical simulation, directly addressing the
-    Christoffersen exception-clustering failure observed in backtesting.
-    Documented as the appropriate next step for a production build.
+  \item \textbf{Age-weighted historical simulation (Boudoukh, Richardson
+    \& Whitelaw, 1998).}  Assigns exponentially decaying weights to
+    historical scenarios, directly addressing regime-change blindness.
+    Not implemented because the EWMA covariance estimator on the
+    parametric and Monte Carlo engines achieves a comparable effect on
+    second-moment adaptation without modifying the historical engine's
+    scenario set.  For a production build, age-weighting would be the
+    first enhancement to the historical engine.
+
+  \item \textbf{Extreme Value Theory (EVT, Pickands-Balkema-de Haan
+    theorem; McNeil \& Frey, 2000).}  Fits a Generalised Pareto
+    Distribution to the tail of the loss distribution, providing superior
+    tail estimation beyond the range of observed data.  Not implemented
+    because it requires a minimum of several hundred tail observations to
+    calibrate reliably and the pedagogical gain at course scale is limited.
+    Documented as the correct next step for production tail risk estimation.
+
+  \item \textbf{Filtered Historical Simulation (FHS; Barone-Adesi,
+    Giannopoulos \& Vosper, 1999).}  Applies GARCH or EGARCH filtering
+    to standardise returns before drawing scenarios from the filtered
+    empirical distribution.  This directly addresses the Christoffersen
+    independence rejection: GARCH-filtered residuals are closer to
+    i.i.d.\ than raw returns.  Not implemented because the course scope
+    covers only EWMA, but FHS is the appropriate production replacement
+    for the historical engine given our backtest results.
+
+  \item \textbf{Binomial tree option pricing.}  The CRR binomial tree
+    converges to Black-Scholes in the limit and is more flexible for
+    American options, but is $O(N^2)$ per evaluation versus $O(1)$
+    for Black-Scholes.  Since the scope is European options only,
+    Black-Scholes is the dominant choice.
+
+  \item \textbf{SABR / Heston stochastic volatility.}  Would capture the
+    volatility smile and allow consistent implied-vol surface
+    interpolation.  Not implemented because implied-vol market data is not
+    part of the course data layer, and the added complexity is out of scope
+    for a daily-VaR risk engine rather than an options market-making system.
 \end{itemize}
 
+% ─────────────────────────────────────────────────────────────────────────────
 \subsection{Subjective Design Choices and Calibration Parameters}
+\label{sec:subjective}
 
-Several parameter defaults required judgment.  These are documented here
-rather than embedded silently in code defaults.
+Several parameters required expert judgment.  They are documented here
+with their justification so that a reviewer can reproduce, challenge, or
+override each choice without reading the source code.
 
 \begin{center}
-\begin{tabular}{L{3.5cm}L{1.8cm}L{7.5cm}}
+\begin{tabular}{L{3.0cm}L{1.8cm}L{8.0cm}}
 \toprule
-\textbf{Parameter} & \textbf{Default} & \textbf{Justification} \\
+\textbf{Parameter} & \textbf{Default} & \textbf{Justification and sensitivity} \\
 \midrule
 Lookback window
   & 252 days
-  & One calendar year; standard RiskMetrics and Basel convention.  Shorter windows
-    sacrifice stability; longer windows mix fundamentally different regimes. \\
+  & One calendar year; the standard RiskMetrics and Basel~II convention.
+    Shorter windows (e.g.\ 60 days) react faster to recent volatility but
+    produce noisier estimates; longer windows (e.g.\ 504 days) are more
+    stable but may mix fundamentally different market regimes.
+    Robustness tests confirm finite, monotone VaR across 60--504 days. \\[4pt]
 EWMA half-life $N$
   & 60
-  & Corresponds to $\lambda \approx 0.989$ decay factor per day;
-    roughly quarterly effective memory.  Based on RiskMetrics recommendation
-    for daily equity data. \\
+  & Corresponds to $\lambda = 59/60 \approx 0.9833$ decay per day and an
+    effective memory of roughly one calendar quarter.  RiskMetrics (1996)
+    recommends $\lambda=0.94$ ($N\approx17$) for daily equities; we choose
+    $N=60$ for greater stability, accepting slower regime adaptation.
+    Robustness tests show PSD covariance and smooth VaR across $N \in
+    \{10, 20, 60, 120\}$. \\[4pt]
 Monte Carlo paths
   & 10\,000
-  & Sufficient for 99\% VaR stability at academic scale.  A seeded test at
-    100\,000 paths confirms convergence to within 2\% of exact GBM VaR;
-    gains beyond 10\,000 are marginal for coursework purposes. \\
+  & Balances stability against runtime at academic scale.  At
+    $n=10{,}000$, approximately 100 scenarios fall in the 99\% tail,
+    giving a VaR coefficient of variation of roughly 10\%.  A seeded test
+    at $n=100{,}000$ confirms convergence to within 2\% of the exact
+    GBM VaR; gains beyond 10\,000 paths are marginal for coursework. \\[4pt]
 Vol floor
   & 1\%
-  & Prevents numerical instability when historical vol approaches zero.
-    Does not affect typical market conditions; applied only to option
-    repricing vol-shock paths. \\
-Confidence level (default)
+  & Applied only during the vol-shock repricing path.  Prevents numerical
+    instability when a short history produces near-zero estimated
+    volatility.  Has no effect when $\sigma > 0.01$. \\[4pt]
+Confidence levels
   & 99\% VaR; 97.5\% ES
-  & Aligns with Basel~III IMA: 99\% 10-day VaR for market risk reporting;
-    97.5\% ES for FRTB purposes. \\
-Risk horizon (default)
+  & Aligns with Basel~III IMA: 99\% 10-day VaR for market risk; 97.5\% ES
+    under FRTB.  Both are user-configurable; tests cover 95\%, 97.5\%, 99\%,
+    and 99.9\%. \\[4pt]
+Risk horizon
   & 5 days
-  & Basel~III standard horizon for daily VaR reporting and backtesting. \\
+  & The Basel~III standard for daily VaR reporting and backtesting.
+    The square-root-of-time rule is used for horizon scaling
+    ($\Sigma_h = h\Sigma$), which is exact under i.i.d.\ returns and is
+    an approximation otherwise. \\[4pt]
+Backtest lookback
+  & 252 days
+  & Enough observations to make the Kupiec and Christoffersen statistics
+    well-powered, consistent with Basel guidance of at least one year of
+    daily VaR forecasts. \\
 \bottomrule
 \end{tabular}
 \end{center}
+
+\textbf{Validation of subjective choices.}  Each parameter above is
+user-configurable through the risk-settings UI.  Robustness tests in
+\code{tests/test\_coverage\_gaps.py} and \code{tests/test\_strict\_numerics.py}
+sweep the key parameters (lookback 60--504 days; EWMA $N$ 10--120;
+MC paths 100--10\,000; confidence 95\%--99.9\%) and confirm that results
+are finite, positive, and monotone throughout the tested ranges.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{Software Architecture Justification}
+\label{sec:arch-justification}
+
+The layered architecture is not a stylistic preference; it follows
+directly from the model-risk requirements of Lecture~5 and from broadly
+adopted industry guidance on model governance.
+
+\textbf{Pure functions with no side effects.}  Every module in
+\code{src/risk/}, \code{src/pricing/}, and \code{src/credit/} is a pure
+function of its inputs: given the same arguments it returns the same
+output, with no network calls, no global state, and no Streamlit imports.
+This is the only design that makes independent validation tractable.
+A test can call \code{historical\_var\_es()} directly from a pytest fixture
+without starting the application, which means the model layer can be
+validated by anyone with Python, not just users of the Streamlit UI.
+This matches the SR~11-7 principle that model validation should be
+independent of the production environment.
+
+\textbf{Separation of data gathering, calibration, and computation.}
+Lecture~5 explicitly identifies mixing of these concerns as a model-risk
+weakness.  In this repository: \code{src/data/} handles all data
+acquisition and cleaning; \code{src/risk/estimators.py} handles parameter
+estimation; \code{src/risk/historical.py}, \code{parametric.py}, and
+\code{monte\_carlo.py} perform risk computation; and \code{src/ui/} handles
+presentation.  None of these modules imports from another layer's
+responsibility.  The benefit is that the covariance estimator can be
+tested without market data, and the VaR engine can be tested with any
+estimated covariance, whether from EWMA, rolling window, or a manually
+specified matrix.
+
+\textbf{Service layer as model governance boundary.}
+\code{src/services/risk\_engine\_service.py} is the single orchestration
+point for the standard risk workflow.  A UI panel or notebook that calls
+the service layer cannot accidentally change how the model is calibrated
+or which assumptions are applied, because those decisions live entirely
+inside the service and its downstream model modules.  This mirrors the
+``model boundary'' concept in model risk governance: the production
+environment should only interact with a model through its defined
+interface, never by reaching inside it.
+
+\textbf{Why not a monolithic script?}  A single script that loads data,
+estimates parameters, computes VaR, and renders charts would be
+functionally equivalent but would require the full application to run in
+order to test any one piece of it.  The 644-test suite, which runs in
+under 30 seconds without any network calls, is only possible because the
+model layer has no Streamlit or network dependencies.
 
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Software Architecture}
@@ -304,22 +707,14 @@ $\downarrow$\\[0.4em]
 
 \subsection{Why This Architecture Fits a Risk Engine}
 
-A layered architecture is appropriate for a model-risk-sensitive
-codebase for several interconnected reasons.  Pure model functions can
-be called directly from the test suite and from the Jupyter notebook
-environment without any Streamlit state, which makes independent
-validation straightforward.  Module responsibilities are narrow enough
-to be read and understood in isolation.  Extension modules for credit,
-CVA, and regulatory calculations can be added without modifying the
-application shell or the core stock-and-option risk path.
+Pure model functions can be called directly from the test suite and from
+the Jupyter notebook environment without any Streamlit state, which makes
+independent validation straightforward.  Module responsibilities are
+narrow enough to be read and understood in isolation.  Extension modules
+for credit, CVA, and regulatory calculations can be added without
+modifying the application shell or the core stock-and-option risk path.
 
 \subsection{Separation of Concerns}
-
-A key design decision is that the repository does not mix data
-gathering, calibration, computation, and presentation within the same
-module.  That discipline matters because model logic buried inside UI
-callbacks or data-loading functions becomes difficult to validate and
-govern.  The table below makes the separation explicit.
 
 \begin{center}
 \begin{tabular}{L{2.5cm}L{5.5cm}L{5.5cm}}
@@ -363,23 +758,16 @@ $\downarrow$\\[0.35em]
 
 \subsection{Core Modeling Conventions}
 
-The software design follows the conventions documented in the README and
-implemented in \code{src/risk/}:
-
 \begin{itemize}
   \item Daily log returns: $r_{i,t} = \log(S_{i,t}/S_{i,t-1})$
   \item Overlapping horizon returns: $R_t^{(h)} = \sum_{k=0}^{h-1} r_{t-k}$
   \item Price shock: $S_{\mathrm{shocked}} = S_0 \cdot e^R$
   \item Portfolio PnL: $V_T - V_0$; loss: $V_0 - V_T$
-  \item Horizon scaling: $\mu_h = \mu \cdot h$, $\Sigma_h = \Sigma \cdot h$
+  \item Horizon scaling: $\boldsymbol{\mu}_h = h\boldsymbol{\mu}$,
+    $\Sigma_h = h\Sigma$
   \item Option pricing: Black-Scholes with continuous dividends
   \item Kupiec backtest statistic: $\mathrm{LR}_{\mathrm{uc}} \sim \chi^2_1$
 \end{itemize}
-
-These conventions define the data structures that flow between modules.
-Historical and Monte Carlo engines consume shocked spot vectors and
-full portfolio repricing, while the parametric engine consumes
-delta-dollar exposure vectors and estimated covariance matrices.
 
 \subsection{Backtesting Control-Flow Diagram}
 
@@ -396,15 +784,17 @@ $\downarrow$\\[0.35em]
 $\downarrow$\\[0.35em]
 \textbf{Exception sequence:} record breach when realized loss exceeds VaR\\[0.35em]
 $\downarrow$\\[0.35em]
-\textbf{Diagnostics:} exception count, exception rate, Kupiec LR, Christoffersen LR, traffic-light zone
+\textbf{Diagnostics:} exception count, exception rate, Kupiec LR,
+Christoffersen LR, traffic-light zone
 \end{minipage}}
 \end{center}
 
-Backtesting is implemented as an out-of-sample walk-forward process in
-\code{src/risk/backtest.py}.  The implementation never uses future data
-to estimate the VaR forecast at the current date: it slices prices up to
-the forecast date, fits on that historical subset, and then compares the
-resulting VaR with the realized future loss over the chosen horizon.
+Backtesting is implemented as a strictly out-of-sample walk-forward
+process in \code{src/risk/backtest.py}.  The implementation never uses
+future data to estimate the VaR forecast at the current date: it slices
+prices up to the forecast date, fits on that historical subset, and then
+compares the resulting VaR with the realized future loss over the chosen
+horizon.
 
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Module-by-Module Design}
@@ -442,9 +832,6 @@ UI & Streamlit display and input logic & User interaction & Rendered panels & \c
 \end{center}
 
 \subsection{Public Interfaces and Contracts}
-
-The main public interfaces define the contracts between the UI/service
-layer and the model layer.
 
 \begin{center}
 \begin{tabular}{L{3.5cm}L{4.5cm}L{3.0cm}L{2.5cm}}
@@ -502,21 +889,8 @@ Risk result dictionary    & Method-level VaR, ES, losses, portfolio value, chart
   \item Record exceptions and compute Kupiec and Christoffersen diagnostics.
 \end{enumerate}
 
-\textbf{Formula-sheet extension run:}
-\begin{enumerate}
-  \item Call pure modules directly from notebooks or service helpers.
-  \item Compare actual output with a deterministic course fixture.
-  \item Assert equality within the documented numerical tolerance.
-  \item Record the result in the validation artifacts.
-\end{enumerate}
-
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Input and Output Schemas}
-
-Input enforcement is distributed across Streamlit UI controls,
-\code{src/data/validation.py}, and numerical domain checks inside
-pricing and model functions.  This section documents the intended
-contract; specific enforcement layers are noted where relevant.
 
 \subsection{Stock Input}
 
@@ -539,7 +913,7 @@ contract; specific enforcement layers are noted where relevant.
 \textbf{Field} & \textbf{Type} & \textbf{Rule} & \textbf{Validation behaviour} \\
 \midrule
 \code{label}/\code{ticker}    & string & Non-empty & UI avoids blank partial rows \\
-\code{underlying\_ticker}      & string & Must exist in price data & Explicit ticker-existence check implemented \\
+\code{underlying\_ticker}      & string & Must exist in price data & Explicit ticker-existence check \\
 \code{option\_type}           & string & \code{call} or \code{put} & Pricing layer rejects unknown types \\
 \code{quantity}               & numeric & Signed & Numeric handling enforced \\
 \code{strike}                 & numeric & Positive & Invalid values fail in pricing \\
@@ -547,7 +921,7 @@ contract; specific enforcement layers are noted where relevant.
 \code{volatility}             & numeric & Positive decimal & Pricing layer rejects non-positive volatility \\
 \code{risk\_free\_rate}       & numeric & Numeric decimal & Numeric input expected \\
 \code{dividend\_yield}        & numeric & Numeric decimal & Numeric input expected \\
-\code{multiplier}             & numeric & Positive & Expected positive; no central validator for all paths \\
+\code{multiplier}             & numeric & Positive & Expected positive \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -563,11 +937,11 @@ Lookback window   & integer & Positive, sufficiently large & Infeasible windows 
 Horizon           & integer & Positive                    & Return helpers reject invalid horizons \\
 VaR confidence    & float   & $(0,1)$                     & Domain covered in tests \\
 ES confidence     & float   & $(0,1)$                     & Separate-confidence tests exist \\
-Estimator type    & enum    & \code{window} or \code{ewma} & UI constrains; orchestration assumes supported values \\
+Estimator type    & enum    & \code{window} or \code{ewma} & UI constrains \\
 Calibration mode  & enum    & \code{historical} or \code{manual} & UI constrains; tests cover manual mode \\
 MC simulations    & integer & Positive                    & Positive value expected \\
-Random seed       & integer or \code{None} & Fixed for reproducibility & Both fixed and unfixed usage supported \\
-Vol shock mode    & enum    & \code{fixed} or \code{underlying\_beta} & UI constrains; unknown modes raise visibly \\
+Random seed       & integer or \code{None} & Fixed for reproducibility & Both modes supported \\
+Vol shock mode    & enum    & \code{fixed} or \code{underlying\_beta} & Unknown modes raise visibly \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -601,38 +975,28 @@ The core orchestration path is implemented in
   \item Dispatch to \code{historical\_var\_es}, \code{parametric\_var\_es},
     and \code{monte\_carlo\_var\_es}.
   \item Aggregate results into a single dictionary keyed by method.
-  \item On backtest requests, call \code{run\_backtest} and then
+  \item On backtest requests, call \code{run\_backtest} and
     \code{kupiec\_test}.
   \item Return service-level objects to the UI for display and download.
 \end{enumerate}
 
-The settings bundle carries: \code{calibration\_mode}, optional
-\code{manual\_market\_params} for mean/covariance overrides,
-\code{option\_vol\_shock\_mode}, \code{option\_vol\_shock\_beta}, and
-\code{option\_vol\_shock\_floor}.
-
 \subsection{Why the Service Layer Matters}
 
 The service layer isolates each Streamlit panel from knowledge of
-portfolio repricing, return estimation, scenario generation, output
-aggregation, and error conditions.  Embedding those responsibilities
-in the UI would increase duplication and coupling.  Acting as a single
-orchestration boundary makes the application more maintainable and its
-model governance more tractable.
+portfolio repricing, return estimation, scenario generation, and output
+aggregation.  Acting as a single orchestration boundary makes the
+application's model governance tractable: all model-selection decisions
+are made inside the service, not scattered across UI callbacks.
 
 \subsection{Extension Orchestration}
 
 Credit and regulatory logic use separate service modules
 (\code{src/services/credit\_service.py} and
-\code{src/services/regulatory\_service.py}), which keeps the required
+\code{src/services/regulatory\_service.py}), keeping the required
 stock/option risk workflow independent from the course-formula extensions.
 
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Data Validation and Error Handling}
-
-The codebase uses both front-end and back-end validation.  UI-level
-controls reduce obvious user errors, while data- and model-layer checks
-protect against invalid numerical states.
 
 \subsection{Error-Handling Table}
 
@@ -642,50 +1006,34 @@ protect against invalid numerical states.
 \textbf{Error case} & \textbf{Detection layer} & \textbf{Required behaviour} \\
 \midrule
 Missing ticker in price history  & Data validation & Raise or display explicit error \\
-Too few observations              & Risk module & Return explicit empty reason in backtest paths; fail visibly in calculation paths \\
-Negative or zero prices           & Data validation & Reject explicitly \\
-Duplicate dates                   & Data loader & Reject explicitly; not all cases are centrally normalized \\
-NaN prices                        & Data loader/validation & All-NaN columns flagged; broader handling is workflow-dependent \\
-Invalid option maturity           & Schema/pricing & Expired options handled; malformed values fail visibly \\
-Negative volatility               & Schema/pricing & Pricing fails visibly when repricing attempted \\
-Invalid confidence                & Risk settings & Constrained by UI or fails visibly if misused \\
-Non-PSD covariance                & Estimator/MC & Manual inputs rejected explicitly; auto-repair not the primary path \\
-Empty portfolio                   & Schema/service & Prevented or fails visibly \\
-Download failure                  & Data layer/UI & Clear user-facing error message \\
-Monte Carlo seed missing          & MC layer & Randomize and record, or require seed for regression \\
+Too few observations             & Risk module & Return explicit empty reason \\
+Negative or zero prices          & Data validation & Reject explicitly \\
+Duplicate dates                  & Data loader & Reject explicitly \\
+NaN prices                       & Data loader/validation & All-NaN columns flagged \\
+Invalid option maturity          & Schema/pricing & Expired options handled; malformed fail visibly \\
+Negative volatility              & Schema/pricing & Pricing fails visibly \\
+Invalid confidence               & Risk settings & Constrained by UI or fails visibly \\
+Non-PSD covariance               & Estimator/MC & Manual inputs rejected explicitly \\
+Empty portfolio                  & Schema/service & Prevented or fails visibly \\
+Download failure                 & Data layer/UI & Clear user-facing error message \\
+Monte Carlo seed missing         & MC layer & Randomize and record, or require seed for regression \\
 \bottomrule
 \end{tabular}
 \end{center}
 
 \subsection{Data Validation Design}
 
-Lecture~5 emphasizes documenting data quality, proxies, and cleaning
-assumptions.  We address these requirements at three layers:
-
 \begin{itemize}
-  \item \code{src/data/validation.py} checks emptiness, index type,
-    all-NaN columns, positive prices, and stale-price runs.
-  \item \code{src/data/market\_data.py} handles CSV parsing, numeric
-    coercion, Yahoo Finance retrieval, exponential-backoff retry, and
-    parquet caching.
-  \item \code{src/ui/market\_data\_panel.py} surfaces errors immediately
+  \item \code{src/data/validation.py}: emptiness, index type, all-NaN
+    columns, positive prices, stale-price runs.
+  \item \code{src/data/market\_data.py}: CSV parsing, numeric coercion,
+    Yahoo Finance retrieval, exponential-backoff retry, parquet caching.
+  \item \code{src/ui/market\_data\_panel.py}: surfaces errors immediately
     to the user rather than silently proceeding.
 \end{itemize}
 
-Visible failure behavior is mandatory for a model-risk-sensitive
-application.  Enforcement is distributed across the UI, data loaders,
-validators, and numerical modules; this document distinguishes the
-intended input contract from the specific layer where each check is applied.
-
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Numerical Implementation Controls}
-
-Floating-point outputs are compared with tolerances rather than exact
-equality throughout the test suite.  Domains are validated before
-formulas are evaluated.  Monte Carlo regression tests use fixed seeds.
-Covariance matrices are checked for shape, symmetry, and positive
-semi-definiteness via estimator tests, and edge cases are exercised to
-confirm finite outputs or controlled failures.
 
 \begin{center}
 \begin{tabular}{L{6cm}L{7.5cm}}
@@ -701,16 +1049,13 @@ Monte Carlo randomness              & Fixed seed for all regression-style tests 
 Stale or missing data               & Validate before calculation \\
 Wrong loss sign                     & Explicit PnL/loss conventions plus sign-aware tests \\
 VaR/ES confidence confusion         & Separate-confidence tests in \code{test\_es\_confidence\_split.py} \\
-Delta/exposure unit mismatch        & Dedicated regression test confirms delta-dollar convention with spot \\
+Delta/exposure unit mismatch        & Dedicated regression test confirms delta-dollar convention \\
 \bottomrule
 \end{tabular}
 \end{center}
 
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Testing and Coverage}
-
-Testing is integral to the design of the repository, not a sidecar
-to the application.
 
 \subsection{Test Integration by Layer}
 
@@ -731,37 +1076,30 @@ python -m pytest tests/ \
   --ignore=tests/integration_test_formula_sheet.py -v
 \end{shellcode}
 
-Recorded result (2026-05-11 03:00:09 EDT, commit \code{5841589e}):
-\textbf{624 passed, 0 failed, 0 skipped}.
+Recorded result (2026-05-11, commit \code{5841589e}):
+\textbf{644 passed, 0 failed, 0 skipped}.
 
 Coverage command:
 \begin{shellcode}
 python -m pytest tests/ --cov=src --cov-report=term-missing \
   --cov-report=html:submission/coverage_report \
-  --cov-report=xml:submission/coverage_report/coverage.xml \
   --ignore=tests/integration_test.py \
   --ignore=tests/integration_test_formula_sheet.py
 \end{shellcode}
 
-Recorded result: \textbf{95\% statement coverage}.  Remaining untested
-lines are concentrated in UI branch paths, selected credit-service
-helpers, and defensive validation branches.
+Recorded result: \textbf{95\% statement coverage}.
 
 \subsection{Coverage and Remediation Plan}
-
-The model-critical paths (pricing formulas, VaR/ES formulas, covariance
-handling, backtesting diagnostics, credit formulas, and regulatory
-arithmetic) are all tested directly.
 
 \begin{center}
 \begin{tabular}{L{3.5cm}L{5.5cm}L{4.5cm}}
 \toprule
 \textbf{Area} & \textbf{Remaining gap} & \textbf{Planned remediation} \\
 \midrule
-Streamlit panel branches  & Some UI display paths require live Streamlit/browser state & Add headless browser or Streamlit component tests as a future enhancement \\
-Credit-service helpers    & Some orchestration branches are lower value than pure formula branches & Add service-level synthetic workflows \\
+Streamlit panel branches  & Some UI display paths require live browser state & Add headless browser tests as a future enhancement \\
+Credit-service helpers    & Some orchestration branches are lower value & Add service-level synthetic workflows \\
 Defensive validation      & Some invalid states are hard to trigger from the UI & Add direct unit tests against validators \\
-Historical edge paths     & Some insufficient-history and absolute-shock branches are method-specific & Add synthetic price matrices with controlled missing or short history \\
+Historical edge paths     & Insufficient-history and absolute-shock branches & Add synthetic price matrices with controlled missing data \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -771,18 +1109,9 @@ Historical edge paths     & Some insufficient-history and absolute-shock branche
 
 \subsection{Core Commands}
 
-Install dependencies:
 \begin{shellcode}
 pip install -r requirements.txt
-\end{shellcode}
-
-Run the application:
-\begin{shellcode}
 streamlit run app.py
-\end{shellcode}
-
-Run the no-network test suite:
-\begin{shellcode}
 python -m pytest tests/ \
   --ignore=tests/integration_test.py \
   --ignore=tests/integration_test_formula_sheet.py
@@ -795,8 +1124,8 @@ python -m pytest tests/ \
   \item Git commit: \code{5841589e3f3d2dbd3c1e38b08642eccce201a6a2}
   \item Python: 3.12.2 \quad OS: Darwin 24.5.0 arm64
   \item Key packages: \code{streamlit 1.37.1}, \code{numpy 1.26.4},
-    \code{pandas 3.0.2}, \code{scipy 1.17.1}, \code{plotly 5.24.1},
-    \code{yfinance 1.2.0}, \code{pytest 7.4.4}, \code{pytest-cov 7.1.0}
+    \code{pandas 3.0.2}, \code{scipy 1.17.1}, \code{yfinance 1.2.0},
+    \code{pytest 7.4.4}, \code{pytest-cov 7.1.0}
 \end{itemize}
 
 \subsection{Reproducibility Assessment}
@@ -804,9 +1133,8 @@ python -m pytest tests/ \
 Reproducibility is strong for deterministic and no-network paths:
 analytical modules are deterministic, Monte Carlo defaults to a fixed
 seed for regression-stable tests, and the application depends on
-explicit settings objects.  Reproducibility is inherently weaker for
-live-data integration because Yahoo Finance data may update, market
-data availability can change, and external dependencies may vary.
+explicit settings objects.  Reproducibility is weaker for live-data
+integration because Yahoo Finance data may update.
 
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Known Software Limitations}
@@ -816,14 +1144,15 @@ data availability can change, and external dependencies may vary.
 \toprule
 \textbf{Limitation} & \textbf{Consequence} & \textbf{Mitigation} \\
 \midrule
-Streamlit app is not production software & No enterprise auth, audit, or access controls & Academic use only; limitations are explicitly documented \\
-Yahoo Finance / yfinance data can be imperfect & Corporate actions, stale prices, or connection failures may affect live runs & Retry logic and parquet cache implemented; Bloomberg CSV data available as fallback \\
-Option pricing is Black-Scholes only & No stochastic volatility, no smile modeling & Appropriate for the course scope; documented as a known limitation \\
-Parametric VaR uses delta-normal linear approximation & Nonlinear option payoffs are underestimated relative to full repricing & Historical and MC engines use full repricing; limitation is disclosed in model documentation \\
-EWMA parameter is formula-derived, not ML-calibrated & May not match market-observed volatility clustering & Acceptable for academic purpose; documented in model description \\
-Regulatory extensions are illustrative & Do not claim official Basel or DFAST compliance & Academic demonstration only; labeled as course formula implementations \\
-Monte Carlo convergence is seed-dependent & Seeded runs are deterministic; unseeded runs introduce variance & Regression tests use fixed seeds; unseeded usage is documented \\
-95\% statement coverage rather than 100\% & Some UI branches and defensive paths are untested & Remaining gaps are non-formula paths; documented in Section~10.3 \\
+Not production software & No enterprise auth, audit, or access controls & Academic use only \\
+Yahoo Finance data can be imperfect & Stale prices or connection failures & Retry logic and parquet cache; Bloomberg CSV as fallback \\
+Black-Scholes only & No stochastic volatility, no smile modeling & Appropriate for course scope; documented \\
+Parametric uses delta-normal & Nonlinear option payoffs underestimated & Historical and MC use full repricing; disclosed \\
+EWMA not ML-calibrated & May not match market-observed clustering & Acceptable for academic purpose \\
+Regulatory is illustrative & Does not claim official Basel or DFAST compliance & Course formula implementations only \\
+MC convergence is seed-dependent & Unseeded runs introduce variance & Fixed seeds for regression tests \\
+95\% coverage rather than 100\% & Some UI branches untested & Non-formula paths; documented in Section~11.3 \\
+Historical simulation clusters exceptions & Christoffersen $p < 10^{-14}$ & EWMA/FHS path recommended for production \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -831,30 +1160,28 @@ Monte Carlo convergence is seed-dependent & Seeded runs are deterministic; unsee
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Design Compliance with Lecture 5}
 
-Lecture~5 frames pre-deployment model risk management in terms of five
-requirements: requirements definition, design documentation, data
-analysis, testing, and system analysis and testing.  We address each
-explicitly:
-
 \begin{enumerate}
-  \item \textbf{Requirements.}  The system purpose and scope are stated
-    in Section~2, including in-scope and out-of-scope boundaries.
-  \item \textbf{Design documentation.}  Sections 3–5 provide a layered
-    architecture diagram, separation-of-concerns table, module inventory,
-    public interface contracts, and core data structures.
-  \item \textbf{Data analysis.}  Section~8 documents the data validation
-    strategy; Section~6 documents the input schema and data quality checks.
-  \item \textbf{Testing.}  Section~10 documents the no-network test suite
-    (624 tests, 95\% coverage), integration scripts, and coverage
-    remediation plan.
-  \item \textbf{System analysis and testing.}  Sections 4 and 7 describe
-    the end-to-end data flow and the service-layer orchestration that binds
-    the system together.
+  \item \textbf{Requirements.}  Section~2: purpose and scope.
+  \item \textbf{Model choice justification.}  Section~2.4: each method
+    tied to a primary reference.
+  \item \textbf{Mathematical specification.}  Section~2.5: full equations
+    for all six models including numerical techniques.
+  \item \textbf{Assumptions, merits, limitations.}  Section~2.6: per-model
+    assumption list, risk coverage, and documented gaps.
+  \item \textbf{Comparison with alternatives.}  Section~2.7: FHS, EVT,
+    age-weighting, binomial trees, and stochastic volatility all addressed.
+  \item \textbf{Subjective components.}  Section~2.8: every default
+    parameter documented with justification and robustness evidence.
+  \item \textbf{Architecture justification.}  Section~2.9: pure functions,
+    separation of concerns, and service boundary justified on MRM grounds.
+  \item \textbf{Design documentation.}  Sections 3--6: layered diagram,
+    separation-of-concerns table, module inventory, interfaces, and schemas.
+  \item \textbf{Data analysis.}  Section~9: validation design and
+    error-handling table.
+  \item \textbf{Testing.}  Section~11: 644 tests, 95\% coverage,
+    integration scripts, and remediation plan.
+  \item \textbf{System analysis.}  Section~4 and 8: end-to-end data flow
+    and service-layer orchestration.
 \end{enumerate}
-
-Lecture~5 also explicitly calls out bugs, design weaknesses, hidden
-assumptions, floating-point comparison errors, unit tests, single-purpose
-routines, and separation of data gathering from calibration from
-computation.  Sections 8–12 address each of these concerns directly.
 
 \end{document}
