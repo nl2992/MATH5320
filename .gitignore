@@ -15,3 +15,13 @@ htmlcov/
 dist/
 build/
 .claude/
+
+# LaTeX build artifacts
+submission/latex_deliverables/*.pdf
+submission/latex_deliverables/*.aux
+submission/latex_deliverables/*.log
+submission/latex_deliverables/*.out
+submission/latex_deliverables/*.toc
+submission/latex_deliverables/*.fls
+submission/latex_deliverables/*.fdb_latexmk
+submission/latex_deliverables/*.synctex.gz
