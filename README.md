@@ -336,35 +336,391 @@ submission/
 
 ## Programmatic API
 
-All quantitative modules are plain Python with no Streamlit dependency. The canonical entry point is `RiskEngineService`:
+All quantitative modules are plain Python — no Streamlit dependency — so you can call them directly from a notebook, script, or test without running the app.  The canonical entry points are described below, grouped by layer.
+
+### 1 · Data structures
 
 ```python
-from src.services.risk_engine_service import RiskEngineService
 from src.schemas import Portfolio, StockPosition, OptionPosition
 from datetime import date
 
+# Long 100 AAPL + long 1 call on AAPL
 portfolio = Portfolio(
     stocks=[StockPosition(ticker="AAPL", quantity=100)],
     options=[
         OptionPosition(
-            ticker="AAPL_C_200", underlying_ticker="AAPL",
-            option_type="call", quantity=1, strike=200.0,
-            maturity=date(2026, 12, 19), volatility=0.25,
-            risk_free_rate=0.045, dividend_yield=0.0, multiplier=100,
+            ticker="AAPL_C_200",
+            underlying_ticker="AAPL",
+            option_type="call",
+            quantity=1,
+            strike=200.0,
+            maturity=date(2026, 12, 19),
+            volatility=0.25,          # implied vol
+            risk_free_rate=0.045,
+            dividend_yield=0.0,
+            multiplier=100,
         )
     ],
 )
+```
 
-svc = RiskEngineService(
-    portfolio=portfolio, prices=prices,
-    pricing_date=date(2025, 1, 2),
-    lookback_days=252, horizon_days=10,
-    var_confidence=0.99, es_confidence=0.975,
-    estimator="window", n_simulations=10_000,
+`StockPosition` validates that `ticker` is non-empty and `quantity` is finite; `OptionPosition` validates all seven positivity and range constraints at construction time.
+
+---
+
+### 2 · Market data
+
+```python
+from src.data.market_data import (
+    load_price_history_csv,
+    download_adjusted_close,
+    download_adjusted_close_cached,
+    fetch_risk_free_rate,
 )
 
-results = svc.run_all()          # Historical, parametric, Monte Carlo
-bt = svc.run_backtest("historical")  # Walk-forward with Kupiec + Basel
+# From CSV (Bloomberg wide format)
+prices = load_price_history_csv("data/AAPL-bloomberg.csv")
+
+# From Yahoo Finance (plain, no cache)
+prices = download_adjusted_close(["AAPL", "MSFT"], start="2022-01-01", end="2025-01-01")
+
+# Fault-tolerant: parquet cache + retry + per-ticker fallback
+prices = download_adjusted_close_cached(
+    ["AAPL", "MSFT", "^GSPC"],
+    start="2022-01-01", end="2025-01-01",
+    cache_dir=".cache/prices", max_retries=3,
+)
+
+# Risk-free rate proxy from ^TNX (falls back to 0.04 on any failure)
+from datetime import date
+r = fetch_risk_free_rate(asof=date.today(), fallback=0.04)
 ```
+
+**Returns:** `pd.DataFrame` with `DatetimeIndex` and ticker columns; values are adjusted-close prices.
+
+---
+
+### 3 · Service layer (recommended entry point)
+
+`RiskEngineService` orchestrates all three VaR/ES models and the backtest:
+
+```python
+from src.services.risk_engine_service import RiskEngineService
+
+svc = RiskEngineService(
+    portfolio=portfolio,
+    prices=prices,
+    pricing_date=date(2025, 1, 2),
+    lookback_days=252,
+    horizon_days=10,
+    var_confidence=0.99,
+    es_confidence=0.975,
+    estimator="window",      # or "ewma"
+    ewma_N=60,
+    n_simulations=10_000,
+)
+
+# Current portfolio mark-to-market
+V0 = svc.portfolio_value()
+
+# All three models in one call
+results = svc.run_all()
+print(results["historical"]["var"])    # Historical VaR ($)
+print(results["parametric"]["es"])     # Parametric ES ($)
+print(results["monte_carlo"]["var"])   # Monte Carlo VaR ($)
+```
+
+`results["historical"]` / `results["parametric"]` / `results["monte_carlo"]` each contain at minimum `{"var": float, "es": float}`.
+
+#### Backtesting
+
+```python
+bt = svc.run_backtest(model="historical")  # or "parametric" / "monte_carlo"
+
+df = bt["backtest_df"]          # pd.DataFrame: date, var_forecast, realized_loss, exception
+kupiec = bt["kupiec"]           # {"p_hat", "lr_stat", "p_value", "reject_h0", ...}
+cc = bt["conditional_coverage"] # Christoffersen (independence + joint coverage)
+basel = bt["basel"]             # {"zone": "GREEN"|"YELLOW"|"RED", "n_exceptions": int, ...}
+severity = bt["severity"]       # {"exception_gap", "average_exception_loss", ...}
+```
+
+---
+
+### 4 · Risk modules (direct calls)
+
+Each risk module is a pure function; use these when you need fine-grained control.
+
+#### Historical VaR / ES
+
+```python
+from src.risk.historical import historical_var_es
+
+res = historical_var_es(
+    portfolio=portfolio,
+    prices=prices,
+    pricing_date=date(2025, 1, 2),
+    lookback_days=252,
+    horizon_days=10,
+    var_confidence=0.99,
+    es_confidence=0.975,
+)
+# res["var"], res["es"], res["losses"] (np.ndarray), res["n_scenarios"]
+```
+
+#### Parametric (Delta-Normal) VaR / ES
+
+```python
+from src.risk.parametric import parametric_var_es
+
+res = parametric_var_es(
+    portfolio=portfolio,
+    prices=prices,
+    pricing_date=date(2025, 1, 2),
+    lookback_days=252,
+    horizon_days=10,
+    var_confidence=0.99,
+    es_confidence=0.975,
+    estimator="ewma",
+    ewma_N=60,
+)
+# res["var"], res["es"], res["mean_pnl"], res["std_pnl"]
+```
+
+You can also pass **manual** mean / covariance parameters (e.g. from the course homework inputs):
+
+```python
+res = parametric_var_es(
+    ...,
+    calibration_mode="manual",
+    manual_market_params={
+        "mu_daily": {"AAPL": 0.0003, "MSFT": 0.0004},
+        "cov_daily": {
+            "AAPL": {"AAPL": 4e-4, "MSFT": 2e-4},
+            "MSFT": {"AAPL": 2e-4, "MSFT": 3e-4},
+        },
+    },
+)
+```
+
+#### Monte Carlo VaR / ES
+
+```python
+from src.risk.monte_carlo import monte_carlo_var_es
+
+res = monte_carlo_var_es(
+    portfolio=portfolio,
+    prices=prices,
+    pricing_date=date(2025, 1, 2),
+    lookback_days=252,
+    horizon_days=10,
+    var_confidence=0.99,
+    es_confidence=0.975,
+    n_simulations=20_000,
+    random_seed=42,
+)
+# res["var"], res["es"], res["losses"] (np.ndarray, length n_simulations)
+```
+
+---
+
+### 5 · Closed-form normal VaR / ES
+
+```python
+from src.risk.normal import normal_var, normal_es, portfolio_delta_normal_mean_var
+import numpy as np
+
+# If you already have exposures (x), daily mu, and daily Sigma:
+x   = np.array([100_000.0, -50_000.0])   # dollar-delta exposures
+mu  = np.array([0.0003, 0.0004]) * 10    # 10-day mean log returns
+cov = np.eye(2) * 1e-3 * 10             # 10-day covariance
+
+m, s = portfolio_delta_normal_mean_var(x, mu, cov)
+var  = normal_var(m, s, confidence=0.99)
+es   = normal_es(m, s, confidence=0.975)
+```
+
+---
+
+### 6 · Exact lognormal (GBM) VaR / ES
+
+```python
+from src.risk.lognormal import (
+    var_long_lognormal, es_long_lognormal,
+    var_short_lognormal, es_short_lognormal,
+)
+
+# 5-trading-day 99% VaR on a $100 000 long GBM position
+var = var_long_lognormal(V0=100_000, mu=0.08, sigma=0.20, h=5/252, p=0.99)
+es  = es_long_lognormal( V0=100_000, mu=0.08, sigma=0.20, h=5/252, p=0.975)
+
+# Short position — losses come from upward moves
+var_short = var_short_lognormal(V0=100_000, mu=0.08, sigma=0.20, h=5/252, p=0.99)
+```
+
+---
+
+### 7 · Credit modules
+
+#### Reduced-form hazard model
+
+```python
+from src.credit.hazard import survival, cumulative_default_prob, credit_spread, survival_piecewise
+
+# Constant hazard
+s5 = survival(t=5, lam=0.03)                     # P(tau > 5) under lambda=3%
+pd5 = cumulative_default_prob(t=5, lam=0.03)     # P(tau <= 5)
+spread = credit_spread(T=5, LGD=0.60, s_T=s5)   # Implied credit spread
+
+# Piecewise-constant hazard
+s = survival_piecewise(t=3.5, grid=[0,1,3,5,10], hazards=[0.01,0.02,0.03,0.04])
+```
+
+#### Merton structural model
+
+```python
+from src.credit.merton import merton_pd, merton_equity, merton_debt, merton_implied_B
+from src.services.credit_service import merton_summary
+
+# Full snapshot: Q-PD, P-PD, E0, D0 in one call
+snap = merton_summary(V0=100, B=80, r=0.05, mu=0.08, sigma=0.25, T=1)
+print(snap["Q"]["PD"])   # Risk-neutral default probability
+print(snap["P"]["PD"])   # Real-world default probability
+print(snap["E0"])        # Equity value
+print(snap["D0"])        # Risky debt value
+
+# Find the barrier B* that implies a target 1-year survival of 90%
+B_star = merton_implied_B(V0=100, target_survival=0.90, r=0.05, sigma=0.25, T=1)
+```
+
+#### CDS par spread
+
+```python
+from src.credit.cds import cds_par_spread_constant_hazard, cds_par_spread
+
+# Quick approximation: C ~ (1-R)*lambda  (~180 bps at lambda=3%, R=40%)
+spread_approx = cds_par_spread_constant_hazard(lam=0.03, R=0.40)
+
+# Full numerical formula with piecewise hazard
+spread_full = cds_par_spread(
+    payment_times=[1, 2, 3, 4, 5],
+    hazards=[0.03]*5,
+    r=0.03, R=0.40,
+)
+```
+
+#### CVA
+
+```python
+from src.credit.cva import cva_discrete, cva_continuous_constant_exposure
+from src.services.credit_service import cva_summary
+
+# Discrete CVA from EPE profile
+cva = cva_discrete(
+    exposures=[1_000, 800, 600, 400],          # EPE at t=1,2,3,4
+    marginal_default_probs=[0.02, 0.019, 0.018, 0.017],
+    R=0.40,
+)
+
+# Full summary with CVA as % of V0
+summary = cva_summary(exposures, marginal_default_probs, R=0.40, V0=50_000)
+print(summary["cva_pct"])
+```
+
+---
+
+### 8 · Regulatory capital
+
+```python
+from src.risk.regulatory import risk_weighted_assets, capital_ratio, apply_stress_scenario
+from src.services.regulatory_service import compute_rwa_and_ratio, run_dfast
+
+import pandas as pd
+from datetime import date
+
+spots = pd.Series({"AAPL": 200.0, "MSFT": 420.0})
+
+# RWA + capital ratio (uses BS-delta exposures for options)
+rwa_result = compute_rwa_and_ratio(
+    portfolio=portfolio,
+    prices=spots,
+    risk_weights={"AAPL": 1.0, "MSFT": 1.0},
+    equity=50_000.0,
+    pricing_date=date(2025, 1, 2),
+)
+print(rwa_result["ratio"], rwa_result["pass"])
+
+# DFAST equity stress scenarios (baseline / adverse / severely_adverse)
+dfast = run_dfast(portfolio=portfolio, prices=spots, pricing_date=date(2025, 1, 2))
+for name, res in dfast.items():
+    print(f"{name}: PnL = ${res['pnl']:,.0f}  ({res['equity_shock']:+.0%})")
+```
+
+---
+
+### 9 · Backtest statistics in isolation
+
+```python
+from src.risk.backtest import kupiec_test, christoffersen_test, conditional_coverage_test, basel_traffic_light
+import numpy as np
+
+# Suppose 250 backtest days with 6 exceptions
+kupiec = kupiec_test(n_observations=250, n_exceptions=6, var_confidence=0.99)
+# {"lr_stat", "p_value", "reject_h0", "p_hat", ...}
+
+exceptions = np.zeros(250, dtype=int)
+exceptions[[10, 50, 100, 150, 200, 240]] = 1
+cc = conditional_coverage_test(
+    n_observations=250, n_exceptions=6,
+    var_confidence=0.99, exceptions=exceptions,
+)
+# Adds {"lr_cc", "p_value_cc", "reject_cc", ...}
+
+zone = basel_traffic_light(n_exceptions=6)
+# {"zone": "GREEN", "n_exceptions": 6, "multiplier": 0.0, ...}
+```
+
+---
+
+### 10 · Covariance estimators
+
+```python
+from src.risk.estimators import get_mean_cov, manual_mean_cov
+from src.risk.returns import compute_log_returns
+
+log_ret = compute_log_returns(prices)
+
+# Rolling window
+mu, cov = get_mean_cov(log_ret, lookback_days=252, estimator="window")
+
+# EWMA (lambda = (N-1)/(N+1), here N=60 -> lambda~0.967)
+mu, cov = get_mean_cov(log_ret, lookback_days=252, estimator="ewma", ewma_N=60)
+
+# Manual override
+mu, cov = manual_mean_cov(
+    manual_market_params={
+        "mu_daily": {"AAPL": 0.0003, "MSFT": 0.0004},
+        "cov_daily": {
+            "AAPL": {"AAPL": 4e-4, "MSFT": 2e-4},
+            "MSFT": {"AAPL": 2e-4, "MSFT": 3e-4},
+        },
+    },
+    underlyings=["AAPL", "MSFT"],
+)
+```
+
+---
+
+### 11 · Bloomberg CSV format
+
+The system accepts any wide-format CSV where the first column is the date and subsequent columns are ticker symbols.  This matches the Bloomberg terminal export with minor pre-processing:
+
+```
+Date,AAPL US Equity,CAT US Equity
+2023-01-03,125.07,228.47
+2023-01-04,126.36,231.29
+...
+```
+
+Rename the header row so tickers match what you pass to `download_adjusted_close` or specify in `StockPosition` / `OptionPosition`.  No other transformation is needed; the loader handles date parsing and sort order automatically.
 
 See `submission/demo.ipynb` for complete worked examples of every module.
