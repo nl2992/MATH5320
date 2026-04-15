@@ -11,10 +11,10 @@ Columbia University, Financial Risk Management, Spring 2026
 L4cmL9cm **Field** & **Value**\
 Deliverable & 5 of 5 (10 points)\
 Authors & Nigel Li, Michael Adegbite, Stella\
-Reference Commit & `5841589` (main branch, May 2026)\
-Run Timestamp & 2026-05-11 03:00:09 EDT\
+Reference Commit & `a4aa9e9` (main branch, May 2026)\
+Run Timestamp & 2026-05-13 00:00:00 EDT\
 Python Version & 3.12.2 OS: Darwin 24.5.0 arm64\
-No-network tests & **644 passed, 0 failed, 0 skipped**\
+No-network tests & **644 passed, 0 failed, 1 skipped**\
 Statement Coverage & **95%**\
 Integration scripts & **2 / 2 passed**\
 
@@ -32,7 +32,7 @@ Integration scripts & **2 / 2 passed**\
 
 The test results demonstrate strong validation coverage across the repository’s no-network unit suite and live integration scripts.
 
-**No-network suite:** 644 tests passed, 0 failed, 0 skipped.
+**No-network suite:** 644 tests passed, 0 failed, 1 intentionally skipped.
 
 **Coverage:** 95% statement coverage across `src/`; remaining untested lines are concentrated in UI branch paths, selected credit-service helpers, and defensive validation branches.
 
@@ -44,9 +44,9 @@ The test results demonstrate strong validation coverage across the repository’
 
 ## Run Metadata
 
-- Date/time: 2026-05-11 03:00:09 EDT
+- Date/time: 2026-05-13 00:00:00 EDT
 
-- Git commit: `5841589e3f3d2dbd3c1e38b08642eccce201a6a2`
+- Git commit: `a4aa9e9b0ef8ba069a0331fe22c3cbe6a8c5dc0d`
 
 - Python: 3.12.2 OS: Darwin 24.5.0 arm64
 
@@ -92,7 +92,8 @@ python -m pytest tests/ –cov=src –cov-report=term-missing  –cov-report=ht
 
 <div class="shellcode">
 
-python tests/integration_test.py python tests/integration_test_formula_sheet.py
+python tests/integration_test.py
+python tests/integration_test_formula_sheet.py
 
 </div>
 

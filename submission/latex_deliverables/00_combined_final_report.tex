@@ -81,11 +81,9 @@ PyPI package & \code{math5320-portfolio-risk-system} v0.2.1 \\
 \vspace{2.5em}
 \begin{minipage}{0.80\linewidth}
 \small\itshape
-This document consolidates the segmented model documentation, software
-design, test plan, and test results into one submission report.  The
-crosswalk tables at the front are included so the implementation,
-validation evidence, and project requirements can be checked without
-reading the report linearly.
+All five deliverables in one document.  Use the crosswalk tables at the
+front to go directly to any requirement, MRM template section, or
+grading criterion without reading linearly.
 \end{minipage}
 \end{center}
 \end{titlepage}
@@ -148,8 +146,8 @@ The table below maps each project requirement to its implementation,
 test evidence, and the section of this report where it is discussed.
 
 \begin{center}
-\footnotesize
-\begin{longtable}{L{3.2cm}L{4cm}L{3.5cm}L{2.5cm}}
+\scriptsize
+\begin{longtable}{L{3.0cm}L{4.5cm}L{4.2cm}L{2.0cm}}
 \toprule
 \textbf{Requirement} & \textbf{Implementation} & \textbf{Test evidence} & \textbf{Report section} \\
 \midrule
@@ -194,7 +192,8 @@ Covariance estimation, rolling and EWMA
   & \code{test\_backend.py}, \code{test\_homework\_cases.py}
   & \ref{sec:parametric} \\[4pt]
 Option volatility shock mode
-  & \code{src/portfolio/positions.py}, \code{src/risk/historical.py}, \code{src/risk/monte\_carlo.py}
+  & \code{portfolio/positions.py}, \code{risk/historical.py},
+    \code{risk/monte\_carlo.py}
   & \code{test\_backend.py}
   & \ref{sec:bs}, \ref{sec:mc} \\[4pt]
 Walk-forward VaR backtesting
@@ -361,19 +360,27 @@ Validation opinion and recommendations
 \midrule
 1. Model documentation
   & 30
-  & Section~\ref{sec:exec-summary} through~\ref{sec:conclusions}. Formal segmented version in \code{submission/latex\_deliverables/01\_model\_documentation.tex}. \\[4pt]
+  & Section~\ref{sec:exec-summary} through~\ref{sec:conclusions}.
+    Segmented: \code{01\_model\_documentation.tex}. \\[4pt]
 2. Software design documentation
   & 15
-  & Section~\ref{sec:architecture}. Full module inventory, interface contracts, data flow, separation of concerns, and validation strategy. Formal segmented version in \code{submission/latex\_deliverables/02\_software\_design\_documentation.tex}. \\[4pt]
+  & Section~\ref{sec:architecture}. Module inventory, interface contracts,
+    data flow, and validation strategy.
+    Segmented: \code{02\_software\_design\_\allowbreak documentation.tex}. \\[4pt]
 3. Test plan
   & 20
-  & Section~\ref{sec:test-plan}. Test categories, benchmark comparisons, numerical precision checks, behavioural tests, convergence/inversion checks, P\&L attribution, and hedge-effectiveness testing. Formal segmented version in \code{submission/latex\_deliverables/03\_test\_plan.tex}. \\[4pt]
+  & Section~\ref{sec:test-plan}. Test categories, benchmarks, numerical
+    precision, behavioural and convergence tests, P\&L attribution.
+    Segmented: \code{03\_test\_plan.tex}. \\[4pt]
 4. Software, running
   & 25
-  & Repository at \code{github.com/nl2992/MATH5320}. Install using \code{pip install math5320-portfolio-risk-system} and run with \code{streamlit run app.py}. \\[4pt]
+  & \code{pip install math5320-\allowbreak portfolio-risk-system};
+    \code{streamlit run app.py}. \\[4pt]
 5. Test results
   & 10
-  & Section~\ref{sec:test-results}. 644 tests passed, 1 intentionally skipped, 0 failed, 95\% coverage, two live integration scripts passed. Artifact bundle in \code{submission/test\_artifacts/}. Formal segmented version in \code{submission/latex\_deliverables/04\_test\_results.tex}. \\
+  & Section~\ref{sec:test-results}. 644 passed, 1 skip, 95\% coverage,
+    two integration scripts passed. Artifacts in \code{test\_artifacts/}.
+    Segmented: \code{04\_test\_results.tex}. \\
 \bottomrule
 \end{longtable}
 \end{center}
@@ -413,19 +420,15 @@ risk, service, and UI layers, and the depth of its test coverage.
 Black-Scholes with user-supplied implied volatility is the right standard
 tool for European options and is implemented accurately.  Historical
 simulation and Monte Carlo use full portfolio repricing, which is the
-right treatment for nonlinear option books.  The main limitations are
-deliberate and documented: option repricing uses fixed implied volatility
-or a simplified vol-shock approximation rather than a full implied-vol
-surface; the parametric method is a first-order delta-normal
-approximation; Monte Carlo shocks are multivariate normal; and the
-Merton model recognises default only at maturity.
+right treatment for nonlinear option books.  The main limitations are deliberate and documented: no full implied-vol
+surface (fixed vol or simplified shock only), first-order delta-normal
+parametric VaR, multivariate-normal MC shocks, and Merton default
+recognised at maturity only.
 
-\textbf{Validation opinion: approved with limitations for intended
-academic use.}  The system is a sound, well-tested academic risk
-calculation platform for MATH GR 5320.  It is not suitable for production
-deployment without independent validation, formal governance controls,
-calibrated implied-volatility surface dynamics, and broader market-data
-and computational infrastructure.
+\textbf{Validation opinion: approved for intended academic use.}
+Correct within its stated scope.  Not suitable for production without
+independent validation, a calibrated implied-vol surface, and
+production-grade data infrastructure.
 
 % -----------------------------------------------------------------------------
 \section{Introduction and Scope}
@@ -437,8 +440,8 @@ and computational infrastructure.
 The system reviewed is the \textbf{MATH5320 Portfolio Risk Management
 System}, implemented in Python and delivered through an eight-tab
 Streamlit application.  The package is published to PyPI as
-\code{math5320-portfolio-risk-system} v0.2.1 and is installable with
-\code{pip install math5320-portfolio-risk-system}.
+\code{math5320-\allowbreak portfolio-risk-system} v0.2.1 and is
+installable with \code{pip install math5320-\allowbreak portfolio-risk-system}.
 
 \subsection{Version History}
 
@@ -674,6 +677,25 @@ with
   m_N = (1-\lambda)a_N + \lambda m_{N-1}
   \label{eq:ewma_course_mean}
 \end{equation}
+The decay parameter follows the project specification convention
+\begin{equation}
+  \lambda = \frac{N-1}{N+1},
+  \label{eq:ewma_lambda_impl}
+\end{equation}
+which gives an effective exponential memory of $(N+1)/2$ observations.
+For the default $N=60$ this yields $\lambda \approx 0.967$.  This differs
+from the course / textbook form $\lambda = 1 - 1/N$ (which gives $\lambda
+\approx 0.983$ for the same $N$ and an effective memory of $N$ observations);
+the specification convention uses a more aggressive decay and reacts more
+quickly to volatility regime changes.
+
+Both conventions are present in the codebase.
+\texttt{\_ewma\_lambda(N)} implements the specification convention and is the
+active formula used by all production paths.
+\texttt{\_ewma\_lambda\_course(N)} implements the textbook form
+$\lambda = 1 - 1/N$ as a standalone reference function that is not wired
+into any production path.  All risk estimates in this report use the
+specification convention.
 
 \subsection{Monte Carlo VaR and ES}
 \label{sec:mc}
@@ -834,7 +856,7 @@ from the test suite or notebooks without running the app.
 
 \begin{center}
 \footnotesize
-\begin{tabular}{L{2.4cm}L{3.8cm}L{2.4cm}L{2.2cm}L{2.4cm}}
+\begin{tabular}{L{2.2cm}L{3.8cm}L{2.4cm}L{2.2cm}L{2.7cm}}
 \toprule
 \textbf{Module} & \textbf{Purpose} & \textbf{Inputs} & \textbf{Outputs} & \textbf{Test evidence} \\
 \midrule
@@ -898,27 +920,26 @@ lognormal VaR was compared against closed-form formulas.
 
 \textbf{Course-homework fixture tests.}  Key scenarios were derived from
 MATH GR 5320 homework problems and embedded as regression tests in
-\code{tests/test\_homework\_cases.py} and
-\code{tests/test\_course\_validation.py}.  If the implementation drifts
-from the course formulas, the tests fail directly.
+\code{test\_homework\_cases.py} and
+\code{test\_course\_\allowbreak validation.py}.
+If the implementation drifts from the course formulas, the tests fail.
 
-\textbf{Numerical precision and failure-mode tests.}  The final suite adds
-NP\_01--NP\_07 in \code{tests/test\_numerical\_precision.py}.  These tests
-cover IEEE 754-style floating-point issues, extreme Black-Scholes inputs,
-log-return cancellation, near-singular covariance matrices, EWMA stability,
-and extreme-confidence VaR/ES.  This is where Goldberg's floating-point
-guidance is most relevant \cite{goldberg1991}.
+\textbf{Numerical precision and failure-mode tests.}  NP\_01--NP\_07 in
+\code{test\_numerical\_precision.py} cover IEEE 754-style floating-point
+issues, extreme Black-Scholes inputs, log-return cancellation, near-singular
+covariance matrices, EWMA stability, and extreme-confidence VaR/ES.
+Goldberg's floating-point guidance \cite{goldberg1991} motivates this layer.
 
-\textbf{Behavioural, convergence, and inversion tests.}  The final suite
-also adds BEH\_01--BEH\_08, CONV\_01, INV\_01--INV\_02, PNL\_01, and
-HEDGE\_01.  These tests check monotonicity, put-call parity, no-arbitrage
-bounds, ES/VaR ordering, Monte Carlo convergence, Merton inversion,
-Kupiec p-values, linear P\&L attribution, and a one-day delta-hedge check.
+\textbf{Behavioural, convergence, and inversion tests.}  BEH\_01--BEH\_08,
+CONV\_01, INV\_01--INV\_02, PNL\_01, and HEDGE\_01 check monotonicity,
+put-call parity, no-arbitrage bounds, ES/VaR ordering, Monte Carlo
+convergence, Merton inversion, Kupiec p-values, linear P\&L attribution,
+and a one-day delta-hedge.
 
-\textbf{Integration tests.}  Two live-data scripts
-(\code{integration\_test.py} and \code{integration\_test\_formula\_sheet.py})
-exercise full end-to-end workflows against Yahoo Finance data.  Both
-scripts passed.
+\textbf{Integration tests.}  Two live-data scripts ---
+\code{integration\_test.py} and
+\code{integration\_test\_\allowbreak formula\_sheet.py} ---
+exercise full end-to-end workflows against Yahoo Finance data.  Both passed.
 
 \textbf{Walk-forward backtesting.}  VaR backtests were run on a 1{,}500-row
 AAPL/CAT price panel, producing 990 backtest observations at a 5-day
@@ -1305,26 +1326,20 @@ continuous default monitoring.
 
 \subsection{Validation Opinion}
 
-Based on the 644 passing no-network tests, one intentional skip, 95\%
-statement coverage, two passing live-data integration scripts,
-walk-forward backtesting evidence, and analytical benchmark comparisons,
-we issue the following opinion.
+\textbf{Approved for intended academic use.}  644 tests pass, 95\%
+statement coverage, two live-data integration scripts pass, and
+walk-forward backtesting produces plausible exception counts.
+Historical simulation, parametric delta-normal, and Monte Carlo VaR/ES
+are all correct.  Black-Scholes pricing, EWMA and rolling-window
+estimation, Kupiec and Christoffersen diagnostics, exact lognormal
+VaR/ES, hazard and Merton credit models, CDS, CVA, counterparty
+mitigation, and regulatory capital are tested against analytical
+benchmarks and course-homework fixtures.  Suitable for MATH GR 5320.
 
-\textbf{Approved with limitations for intended academic use.}  The
-MATH5320 Portfolio Risk Management System correctly implements historical
-simulation, parametric delta-normal, and Monte Carlo VaR and ES for mixed
-equity and European option portfolios.  Black-Scholes pricing,
-delta-normal exposure construction, EWMA and rolling-window estimation,
-walk-forward backtesting with Kupiec and Christoffersen diagnostics,
-exact lognormal VaR/ES, hazard and Merton credit models, CDS and CVA
-pricing, counterparty mitigation, and regulatory capital calculations
-are implemented and tested against analytical benchmarks and
-course-homework fixtures.  The system is suitable for MATH GR 5320 risk
-calculations and educational analysis.
-
-The system is \textbf{not suitable} for production trading, regulatory
-filing, official CCAR or DFAST submission, or enterprise-wide risk
-aggregation.
+\textbf{Not suitable} for production trading, regulatory filing, CCAR/DFAST
+submission, or enterprise risk aggregation — those require independent
+validation, a full implied-vol surface, and production-grade data
+infrastructure.
 
 \subsection{Recommendations}
 

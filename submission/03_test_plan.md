@@ -11,8 +11,8 @@ Columbia University, Financial Risk Management, Spring 2026
 L4cmL9cm **Field** & **Value**\
 Deliverable & 3 of 5 (20 points)\
 Authors & Nigel Li, Michael Adegbite, Stella\
-Reference Commit & `5841589` (main branch, May 2026)\
-Submission Date & May 12, 2026\
+Reference Commit & `a4aa9e9` (main branch, May 2026)\
+Submission Date & May 13, 2026\
 Python Version & 3.12.2\
 Test Suite & 644 tests, 1 skipped, 0 failures (see Deliverable 5)\
 Statement Coverage & 95%\
@@ -83,7 +83,9 @@ Environment snapshot commands:
 
 <div class="shellcode">
 
-git rev-parse HEAD python –version pip freeze \> test_artifacts/requirements_freeze.txt
+git rev-parse HEAD
+python --version
+pip freeze > test_artifacts/requirements_freeze.txt
 
 </div>
 

@@ -360,15 +360,18 @@ Under the normality assumption:
   \label{eq:parametric_es}
 \end{align}
 ```
-The system supports separate confidence levels for VaR and ES. Two estimators are available: a rolling-window estimator and an EWMA estimator with
+The system supports separate confidence levels for VaR and ES. Two estimators are available: a rolling-window estimator and an EWMA estimator. The EWMA mean and its recursive update are:
 ``` math
 \begin{equation}
   m_N = (1-\lambda)\sum_{i=0}^{\infty}\lambda^i a_{N-i},
   \qquad
-  m_N = (1-\lambda)a_N + \lambda m_{N-1}
+  m_N = (1-\lambda)a_N + \lambda m_{N-1}.
   \label{eq:ewma_course_mean}
 \end{equation}
 ```
+The decay parameter follows the project specification convention $`\lambda = (N-1)/(N+1)`$, which gives an effective exponential memory of $(N+1)/2$ observations. For the default $`N=60`$ this yields $`\lambda \approx 0.967`$. This differs from the course / textbook form $`\lambda = 1 - 1/N`$ (which gives $`\lambda \approx 0.983`$ for the same $`N`$ and an effective memory of $`N`$ observations); the specification convention uses a more aggressive decay and reacts more quickly to volatility regime changes.
+
+Both conventions are present in the codebase: `_ewma_lambda(N)` in `src/risk/estimators.py` implements the specification convention and is the active formula used by all production paths. `_ewma_lambda_course(N)` implements the textbook form $`\lambda = 1 - 1/N`$ as a standalone reference function that is not wired into any production path. All risk estimates in this report use the specification convention.
 
 ## Monte Carlo VaR and ES
 

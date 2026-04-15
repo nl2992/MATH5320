@@ -78,7 +78,7 @@ Validation reviewer & Internal course submission \\
 
 \vspace{2.5em}
 \begin{tabular}{@{}ll@{}}
-\textbf{Reference commit} & \code{23f39ba} (main branch, May 2026) \\
+\textbf{Reference commit} & \code{a4aa9e9} (main branch, May 2026) \\
 \textbf{Report date}      & May 2026 \\
 \textbf{Test suite}       & 644 unit tests passing, 95\% statement coverage \\
 \end{tabular}
@@ -101,53 +101,33 @@ page identifies the exact state that produced the numbers herein.}}
 \section{Executive Summary}
 % ─────────────────────────────────────────────────────────────────────────────
 
-This report documents and validates the MATH5320 Portfolio Risk Management
-System, developed for Columbia MATH GR 5320 Financial Risk Management, Spring
-2026.  The system takes portfolios of equities and European options as input
-and computes Value at Risk (VaR) and Expected Shortfall (ES) under three
-independently implemented methods: historical simulation, parametric
-delta-normal, and Monte Carlo full-repricing.  Walk-forward VaR backtesting
-with Kupiec unconditional coverage and Christoffersen independence diagnostics
-is fully integrated and produces audit-ready output.  A second layer of
-course-formula extension modules covers exact GBM/lognormal VaR and ES,
-reduced-form hazard credit models, the Merton structural default model, CDS
-pricing, CVA with counterparty mitigation, and illustrative regulatory capital
-and DFAST-style projections.  These extensions demonstrate the breadth of
-quantitative risk management topics covered in MATH GR 5320 and validate the
-formula-sheet implementations against course-homework fixtures.
+The MATH5320 Portfolio Risk Management System computes VaR and ES for
+mixed equity and European option portfolios under three methods: historical
+simulation, parametric delta-normal, and Monte Carlo full-repricing.
+Walk-forward backtesting with Kupiec and Christoffersen diagnostics is
+built in.  Extension modules cover exact GBM/lognormal VaR/ES, hazard
+and Merton credit models, CDS pricing, CVA with counterparty mitigation,
+and illustrative regulatory capital — validated against course-homework
+fixtures.
 
-\textbf{Model usage.}  The system is designed for academic analysis by
-students, instructors, and technically capable analysts working locally through
-the Streamlit interface or directly through the Python API.  It is not intended
-for production trading, official regulatory filing, CCAR or DFAST submission,
-or enterprise-wide risk aggregation.  These boundaries are explicit and
-enforced through the system's documented scope.
+\textbf{Scope.}  Academic use only — local Streamlit app or Python API.
+Not for production trading, regulatory filing, CCAR/DFAST, or enterprise
+risk aggregation.
 
-\textbf{Validation methodology.}  Validation was performed through a 644-test
-no-network unit suite achieving 95\% statement coverage across all source
-modules, supplemented by two live-data integration scripts.  Core formulas were
-cross-checked against analytical golden values, course-homework fixtures, and
-the exact backtesting outputs documented in this report.  Every test is
+\textbf{Validation.}  644-test no-network suite, 95\% statement coverage,
+two live-data integration scripts.  Core formulas cross-checked against
+analytical golden values and course-homework fixtures.  All tests
 reproducible from the reference commit.
 
-\textbf{Critical analysis.}  The system's principal strengths are its
-three-method comparative framework, its clean separation of pricing, risk, and
-UI layers, and the depth of its test coverage.  The pricing model, Black-Scholes
-with user-supplied implied volatility, is the correct standard tool for
-European options and is implemented accurately.  Historical simulation and Monte
-Carlo use full portfolio repricing, which is the appropriate treatment for
-nonlinear option books.  The primary limitations include but are not limited to, option repricing uses fixed implied volatility or a simplified
-vol-shock approximation rather than a full implied-volatility surface (for practical reasons) the
-parametric method is a first-order delta-normal approximation, Monte Carlo
-shocks are multivariate normal, and the Merton model recognises default only at
-maturity. 
+\textbf{Limitations.}  Option repricing uses fixed implied vol or a
+simplified vol-shock approximation (no full implied-vol surface).
+Parametric VaR is first-order delta-normal.  Monte Carlo shocks are
+multivariate normal.  Merton model recognises default at maturity only.
 
-\textbf{Validation opinion: approved with limitations for intended academic
-use.}  The system is a sound, well-tested academic risk calculation platform for
-MATH GR 5320.  It is not suitable for production deployment without independent
-model validation, formal governance controls, calibrated implied-volatility
-surface dynamics, and significantly broader market-data and computational
-infrastructure.
+\textbf{Validation opinion: approved for intended academic use.}
+Correct within its stated scope.  Not suitable for production without
+independent validation, a calibrated implied-vol surface, and
+production-grade data infrastructure.
 
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Introduction}
@@ -158,7 +138,7 @@ infrastructure.
 The system reviewed in this report is the \textbf{MATH5320 Portfolio Risk
 Management System}, implemented in Python and delivered through an eight-tab
 Streamlit application.  The repository is tracked under \code{MATH5320} and
-the reference commit for this validation is \code{23f39ba} on the main branch,
+the reference commit for this validation is \code{a4aa9e9} on the main branch,
 dated May 2026.  All test evidence, coverage measurements, and backtesting
 results in this report correspond precisely to this commit.
 
@@ -181,11 +161,10 @@ Yahoo Finance price download.
 
 \subsection{Report Purpose}
 
-This report fulfils the model documentation deliverable for MATH GR 5320.  Its
-purpose is to: document the modeling choices made and the alternatives
-considered; justify those choices in the context of the intended use;
-describe the validation methodology applied; present validation results and
-critical analysis; and issue a clear validation opinion with recommendations.
+This report fulfils the model documentation deliverable for MATH GR 5320.
+It covers the modeling choices made, the alternatives considered, the
+validation methodology, results and critical analysis, and a final
+validation opinion with recommendations.
 Where the project specification left design decisions open, this report explains
 the choices made and their rationale.  The report structure follows the
 Bloomberg Enterprise Risk Model Validation Report Template \cite{stein2015template}.
@@ -199,7 +178,7 @@ backtesting, and the Streamlit UI.  Version 1.1 (May 2026, \code{86890d8})
 added the credit, CVA, and regulatory extension modules.  Version 1.2
 (\code{79111d8}) raised the test suite to 644 tests with 95\% statement
 coverage and added the option-volatility shock mode.  Version 1.3
-(\code{23f39ba}) is the final submission, consolidating all reports and
+(\code{a4aa9e9}) is the final submission, consolidating all reports and
 removing stale drafts.
 
 % ─────────────────────────────────────────────────────────────────────────────
@@ -216,11 +195,10 @@ portfolio input, market data loading, risk parameter configuration, comparative
 risk analysis, walk-forward backtesting, credit risk calculations, CDS and CVA
 pricing, and regulatory capital and stress testing.
 
-The core workflow is: (1) define stock and option positions; (2) load aligned
-historical price data from CSV or Yahoo Finance; (3) configure the lookback
-window, horizon, confidence levels, estimator type, Monte Carlo path count, and
-option-volatility shock mode; (4) run the three risk methods and compare
-results; and (5) run the walk-forward backtest and inspect coverage diagnostics.
+The core workflow: define positions, load price history (CSV or Yahoo
+Finance), configure the risk settings (lookback, horizon, confidence,
+estimator, MC paths, vol-shock mode), run the three methods and compare,
+then run the walk-forward backtest.
 The full portfolio repricing engine, the formula-sheet extension modules, and the
 backtesting infrastructure are all accessible independently through the Python
 API, without requiring the Streamlit UI.
@@ -478,14 +456,28 @@ receive geometrically decaying weights.  The total unnormalised weight is
   \sum_{i=0}^{\infty}\lambda^i = \frac{1}{1-\lambda}.
   \label{eq:ewma_total_weight}
 \end{equation}
-Hence, when the user supplies an effective window length $N$, the course
-implementation uses
+The implementation follows the project specification convention, which maps the
+user-supplied window parameter $N$ to the decay factor as:
 \begin{equation}
-  N = \frac{1}{1-\lambda},
-  \qquad
-  \lambda = 1 - \frac{1}{N}.
-  \label{eq:ewma_lambda_course}
+  \lambda = \frac{N-1}{N+1}.
+  \label{eq:ewma_lambda_impl}
 \end{equation}
+This differs from the course / textbook form $\lambda = 1 - 1/N$, where $N$
+equals the effective exponential memory $1/(1-\lambda)$.  Under the project
+specification convention, the effective exponential memory is $(N+1)/2$; for
+the default $N = 60$ this gives $\lambda \approx 0.967$ and an effective decay
+over approximately 30 recent observations.  The textbook form with the same $N$
+gives $\lambda \approx 0.983$ and retains twice as much historical weight.
+
+Both conventions are implemented in the codebase.
+\texttt{\_ewma\_lambda(N)} in \texttt{src/risk/estimators.py} implements the
+project specification convention and is the active formula called by all
+production paths (\texttt{estimate\_ewma\_mean\_cov}, \texttt{get\_mean\_cov}).
+\texttt{\_ewma\_lambda\_course(N)} implements the textbook convention
+$\lambda = 1 - 1/N$ as a standalone reference function; it is not wired into
+any production path and is provided so that the two conventions can be compared
+directly.  All results in this report and in the test suite use the
+specification convention.
 
 The estimator can therefore be updated recursively rather than recomputing the
 full weighted history:
@@ -624,19 +616,22 @@ material.
 
 \subsection{Scope}
 
-The validation covers: formula correctness for all quantitative functions in
-\code{src/}; portfolio valuation and full-repricing correctness for both stock
-and option positions; return construction and covariance estimation; VaR and ES
-calculation under all three methods; walk-forward backtesting and exception
-diagnostics; data loading, input validation, and error handling; and
-end-to-end workflow correctness from UI input to result output.  The validation
+The validation covers all quantitative functions in \code{src/}:
+\begin{itemize}
+  \item portfolio valuation and full-repricing for stocks and options
+  \item return construction and covariance estimation
+  \item VaR and ES under all three methods
+  \item walk-forward backtesting and exception diagnostics
+  \item data loading, input validation, and error handling
+  \item end-to-end workflow from UI input to result output
+\end{itemize}  The validation
 does not cover production-grade data governance, network failover under sustained
 outages, UI rendering across all browser environments, or the accuracy of Yahoo
 Finance's own adjusted-close data.
 
 \subsection{How Validation Was Performed}
 
-Validation was performed through five complementary layers.
+Validation was performed through six complementary layers.
 
 \textbf{Analytical golden tests.}  Deterministic formulas were compared against
 hand-calculated or textbook reference values.  Black-Scholes was verified against
@@ -647,23 +642,30 @@ error.
 
 \textbf{Course-homework fixture tests.}  Key scenarios were derived from MATH GR
 5320 homework problems and embedded as regression tests in
-\code{tests/test\_homework\_cases.py} and
-\code{tests/test\_course\_validation.py}.  These fixtures constitute an
-independent audit trail: if the implementation drifts from the course formulas,
-the tests fail explicitly and immediately.
+\code{tests/\allowbreak test\_homework\_cases.py} and
+\code{tests/\allowbreak test\_course\_validation.py}.  These fixtures constitute
+an independent audit trail: if the implementation drifts from the course
+formulas, the tests fail explicitly and immediately.
 
-\textbf{Synthetic edge-case tests.}  Tests in \code{tests/test\_coverage\_gaps.py},
-\code{tests/test\_strict\_numerics.py}, and
-\code{tests/test\_es\_confidence\_split.py} probe validation logic and
-numerical boundaries: non-positive-semidefinite covariance matrices, expired
-options, zero-quantity positions, and confidence levels at the boundary of the
-valid range.
+\textbf{Numerical precision and failure-mode tests.}  Tests in
+\code{tests/\allowbreak test\_numerical\_\allowbreak precision.py}
+(NP\_01--NP\_07) cover IEEE~754-style floating-point issues, extreme
+Black-Scholes inputs, log-return cancellation, near-singular covariance matrices,
+EWMA stability, and extreme-confidence VaR/ES.
+
+\textbf{Behavioural, convergence, and inversion tests.}  Tests in
+\code{tests/\allowbreak test\_coverage\_gaps.py},
+\code{tests/\allowbreak test\_strict\_\allowbreak numerics.py}, and
+\code{tests/\allowbreak test\_es\_\allowbreak confidence\_split.py} check
+monotonicity, put-call parity, no-arbitrage bounds, ES/VaR ordering, Monte Carlo
+convergence, Merton inversion, Kupiec p-values, linear P\&L attribution, and a
+one-day delta-hedge check.
 
 \textbf{Integration tests.}  Two live-data integration scripts
-(\code{tests/integration\_test.py} and
-\code{tests/integration\_test\_formula\_sheet.py}) exercise full end-to-end
-workflows against Yahoo Finance data.  Both scripts passed at reference commit
-\code{23f39ba}.
+(\code{tests/\allowbreak integration\_test.py} and
+\code{tests/\allowbreak integration\_test\_formula\_sheet.py}) exercise full
+end-to-end workflows against Yahoo Finance data.  Both scripts passed at
+reference commit \code{a4aa9e9}.
 
 \textbf{Walk-forward backtesting.}  VaR backtests were run on a 1,500-row
 AAPL/CAT price history, producing 990 backtest observations at a 10-day horizon
@@ -676,19 +678,17 @@ The benchmark for Black-Scholes pricing is the Hull textbook formulation
 \cite{hull2018}.  The benchmark for parametric VaR is the analytical normal
 quantile at the stated confidence level.  The benchmark for Kupiec's test is
 the $\chi^2_1$ critical value.  The benchmark for the Merton model is the
-course-homework NVDA case in \code{tests/test\_homework\_cases.py}.  The
+course-homework NVDA case in \code{tests/\allowbreak test\_homework\_cases.py}.  The
 benchmark for CDS par spread at constant hazard is the analytical approximation
 $(1-R)\lambda$, which yields 180 bps for $\lambda = 3\%$ and $R = 40\%$.
 
 \subsection{Outputs Reviewed}
 
-Outputs reviewed in this validation include: VaR and ES under all three methods
-(numerical values and ES $\geq$ VaR ordering); portfolio value for stock-only
-and mixed stock-option portfolios; option delta and Black-Scholes price;
-estimated means and covariance matrices (shape, finite values,
-positive-semidefiniteness); backtesting exception counts and Kupiec LR
-statistics; course-validation fixture pass rates; and 95\% statement coverage
-across all source modules.
+Outputs reviewed: VaR and ES under all three methods, portfolio value
+(stock-only and mixed), option delta and Black-Scholes price, estimated
+means and covariance matrices (PSD-checked), backtesting exception counts
+and Kupiec LR statistics, course-validation fixture pass rates, and 95\%
+statement coverage across all source modules.
 
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Validation Results}
@@ -838,7 +838,7 @@ not misled into declaring model adequacy.
 \subsection{Formula Correctness: Analytical Benchmark Comparisons}
 
 The following benchmark comparisons are drawn directly from the unit test suite.
-All tests pass at reference commit \code{23f39ba}.
+All tests pass at reference commit \code{a4aa9e9}.
 
 \begin{center}
 \begin{tabular}{@{}L{0.44\linewidth}L{0.20\linewidth}L{0.20\linewidth}l@{}}
@@ -886,33 +886,23 @@ remaining UI gap in a production deployment.
 
 \subsection{Validation Opinion}
 
-Based on a review of the model methodology, implementation, and
-design; the 644-test no-network unit suite with 95\% statement coverage; two
-live-data integration scripts that both pass; and walk-forward VaR backtesting
-evidence, we issue the following validation opinion.
+\textbf{Approved for intended academic use.}  644 tests pass, 95\%
+coverage, two integration scripts pass.  Historical simulation,
+parametric delta-normal, and Monte Carlo VaR/ES are correct.
+Black-Scholes pricing, EWMA and rolling-window estimation, Kupiec and
+Christoffersen diagnostics, lognormal VaR/ES, hazard and Merton credit,
+CDS, CVA, counterparty mitigation, and regulatory capital are all tested
+against analytical benchmarks and course-homework fixtures.  Suitable
+for MATH GR 5320.
 
-\textbf{Approved with limitations for intended academic use.}  The MATH5320
-Portfolio Risk Management System correctly implements historical simulation,
-parametric delta-normal, and Monte Carlo VaR and ES for mixed equity and
-European option portfolios.  Black-Scholes pricing, delta-normal exposure
-construction, EWMA and rolling-window estimation, walk-forward backtesting,
-Kupiec and Christoffersen diagnostics, lognormal VaR/ES, hazard and Merton
-credit models, CDS and CVA pricing, counterparty mitigation, and regulatory
-capital calculations are all implemented correctly and validated against
-analytical benchmarks and course-homework fixtures.  The system is suitable for
-MATH GR 5320 risk calculations and educational analysis.
-
-The system is \textbf{not suitable} for production trading, regulatory filing,
-official CCAR or DFAST submission, or enterprise-wide risk aggregation.  Such
-applications require independent model validation, formal governance controls, a
-a calibrated implied-volatility surface, scenario-generation beyond historical
-replay, liquidity and transaction-cost modelling, and full operational
-infrastructure around data lineage, auditability, and model governance.
+\textbf{Not suitable} for production trading, regulatory filing,
+CCAR/DFAST, or enterprise risk aggregation.  Those use cases require
+independent validation, a calibrated implied-vol surface, and
+production-grade operational infrastructure.
 
 \subsection{Recommendations}
 
-We identify the following specific enhancements for future development, ordered
-by expected impact on model quality:
+Ordered by expected impact on model quality:
 
 \begin{enumerate}
 

@@ -54,8 +54,8 @@
 \midrule
 Deliverable     & 2 of 5 (15 points) \\
 Authors         & Nigel Li, Michael Adegbite, Stella \\
-Reference Commit & \texttt{5841589} (main branch, May 2026) \\
-Submission Date & May 12, 2026 \\
+Reference Commit & \texttt{a4aa9e9} (main branch, May 2026) \\
+Submission Date & May 13, 2026 \\
 Python Version  & 3.12.2 \\
 Test Suite      & 644 tests, 0 failures \\
 Statement Coverage & 95\% \\
@@ -65,12 +65,11 @@ Statement Coverage & 95\% \\
 \vspace{1.4cm}
 \begin{minipage}{0.78\linewidth}
 \small\itshape
-This document describes the architecture, module design, data flow,
-validation strategy, and known limitations of the MATH5320 risk engine.
-Per Lecture~5 requirements, it gives primary emphasis to the justification
-of every model choice, the mathematical specification of each technique,
-analysis of assumptions and limitations, comparison with alternatives,
-and documentation of subjective calibration decisions.
+Architecture, module design, data-flow, and validation strategy for the
+MATH5320 risk engine.  Every model choice is justified, specified
+mathematically, and compared against alternatives we considered and
+rejected.  Known limitations and subjective calibration decisions are
+documented explicitly.
 \end{minipage}
 \end{titlepage}
 
@@ -136,15 +135,14 @@ documented as course-formula extensions, not production models.
 \subsection{Scope}
 
 \textbf{In scope:}
-stocks; European calls and puts; historical, parametric, and Monte Carlo
-VaR and ES; walk-forward backtesting with Kupiec and Christoffersen
-diagnostics; CSV and Yahoo Finance data loading; downloadable risk
-outputs; and course-formula validation modules.
+stocks, European calls and puts, historical/parametric/Monte Carlo VaR and
+ES, walk-forward backtesting (Kupiec and Christoffersen), CSV and Yahoo
+Finance data loading, downloadable risk outputs, and course-formula
+validation modules.
 
 \textbf{Out of scope:}
-production trading or risk management; enterprise authorization and audit;
-American or path-dependent option pricing; full volatility-surface or
-stochastic-volatility repricing; official supervisory DFAST/CCAR modeling;
+production trading, enterprise authorization, American or path-dependent
+options, full volatility-surface repricing, official DFAST/CCAR modeling,
 and production XVA systems.
 
 \subsection{Lecture~5 Design Compliance Matrix}
@@ -626,9 +624,8 @@ Backtest lookback
 \end{center}
 
 \textbf{Validation of subjective choices.}  Each parameter above is
-user-configurable through the risk-settings UI.  Robustness tests in
-\code{tests/test\_coverage\_gaps.py} and \code{tests/test\_strict\_numerics.py}
-sweep the key parameters (lookback 60--504 days; EWMA $N$ 10--120;
+user-configurable through the risk-settings UI.  Robustness tests in \code{test\_coverage\_gaps.py} and
+\code{test\_strict\_numerics.py} sweep the key parameters (lookback 60--504 days; EWMA $N$ 10--120;
 MC paths 100--10\,000; confidence 95\%--99.9\%) and confirm that results
 are finite, positive, and monotone throughout the tested ranges.
 
@@ -803,26 +800,26 @@ horizon.
 
 \begin{center}
 \footnotesize
-\begin{tabular}{L{2.4cm}L{3.8cm}L{2.4cm}L{2.2cm}L{2.4cm}}
+\begin{tabular}{L{2.2cm}L{3.5cm}L{2.4cm}L{2.2cm}L{3.0cm}}
 \toprule
 \textbf{Module} & \textbf{Purpose} & \textbf{Inputs} & \textbf{Outputs} & \textbf{Test evidence} \\
 \midrule
-Schemas & Define stock, option, and portfolio objects & User inputs & Structured portfolio objects & \code{test\_config\_and\_validation.py} \\
+Schemas & Define stock, option, and portfolio objects & User inputs & Structured objects & \code{test\_config\_and\_\allowbreak validation.py} \\
 Market data & CSV and Yahoo Finance loading & Tickers, dates, CSVs & Aligned price data & \code{test\_market\_data.py} \\
-Data validation & Validate price and input data & Prices, settings & Errors or clean acceptance & \code{test\_config\_and\_validation.py} \\
-Black-Scholes & European option pricing and delta & $S,K,T,r,q,\sigma$, type & Price, delta & \code{test\_backend.py}, \code{test\_homework\_cases.py} \\
+Data validation & Validate price and input data & Prices, settings & Errors or acceptance & \code{test\_config\_and\_\allowbreak validation.py} \\
+Black-Scholes & European option pricing and delta & $S,K,T,r,q,\sigma$, type & Price, delta & \code{test\_backend.py}, \code{test\_homework\_ cases.py} \\
 Position valuation & Per-position value, vol shock, delta-dollar sensitivity & Position and market inputs & Value, exposure & \code{test\_backend.py} \\
 Portfolio valuation & Aggregate positions and exposures & Portfolio, spot vector & Total value, exposure vector & \code{test\_backend.py} \\
 Returns & Log and horizon return construction & Price matrix & Return matrix & \code{test\_backend.py}, \code{test\_coverage\_gaps.py} \\
 Estimators & Rolling, EWMA, and manual covariance assembly & Return matrix or manual params & Mean, covariance & \code{test\_backend.py}, \code{test\_homework\_cases.py} \\
-Historical risk & Historical VaR/ES with full repricing and vol shock & Portfolio, history, settings & VaR, ES, losses & \code{test\_backend.py}, \code{test\_course\_validation.py} \\
-Parametric risk & Delta-normal VaR/ES & Exposure vector, covariance & VaR, ES & \code{test\_backend.py}, \code{test\_es\_confidence\_split.py} \\
-Monte Carlo risk & Simulated VaR/ES & Mean/cov, portfolio, vol-shock settings & VaR, ES, losses & \code{test\_backend.py}, \code{test\_coverage\_gaps.py} \\
-Backtesting & Walk-forward VaR validation & History, model settings & Exceptions, Kupiec, Christoffersen & \code{test\_backend.py}, \code{test\_backtest\_extensions.py} \\
-Exact GBM & Formula-sheet GBM VaR/ES & GBM parameters & Exact VaR, ES & \code{test\_lognormal.py}, \code{test\_course\_validation.py} \\
-Hazard & Reduced-form default & Hazard, recovery, maturity & Survival, density, spread & \code{test\_credit.py}, \code{test\_course\_validation.py} \\
-Merton & Structural default & $V_0,B,T,r,\mu,\sigma$ & PD, equity, debt & \code{test\_credit.py}, \code{test\_course\_validation.py} \\
-CDS & Par spread calculation & Hazard, recovery, discounting & Spread, protection/premium values & \code{test\_credit.py}, \code{test\_course\_validation.py} \\
+Historical risk & Historical VaR/ES with full repricing and vol shock & Portfolio, history, settings & VaR, ES, losses & \code{test\_backend.py}, \code{test\_course\_\allowbreak validation.py} \\
+Parametric risk & Delta-normal VaR/ES & Exposure vector, covariance & VaR, ES & \code{test\_backend.py}, \code{test\_es\_confidence\allowbreak\_split.py} \\
+Monte Carlo risk & Simulated VaR/ES & Mean/cov, portfolio, vol-shock & VaR, ES, losses & \code{test\_backend.py}, \code{test\_coverage\_ gaps.py} \\
+Backtesting & Walk-forward VaR validation & History, settings & Exceptions, Kupiec, Christoffersen & \code{test\_backend.py}, \code{test\_backtest\allowbreak\_extensions.py} \\
+Exact GBM & Formula-sheet GBM VaR/ES & GBM parameters & Exact VaR, ES & \code{test\_lognormal.py}, \code{test\_course\_\allowbreak validation.py} \\
+Hazard & Reduced-form default & Hazard, recovery, maturity & Survival, density, spread & \code{test\_credit.py}, \code{test\_course\_\allowbreak validation.py} \\
+Merton & Structural default & $V_0,B,T,r,\mu,\sigma$ & PD, equity, debt & \code{test\_credit.py}, \code{test\_course\_\allowbreak validation.py} \\
+CDS & Par spread calculation & Hazard, recovery, discounting & Spread, protection/premium values & \code{test\_credit.py}, \code{test\_course\_\allowbreak validation.py} \\
 CVA & Counterparty valuation adjustment & Exposure, PD, recovery & CVA & \code{test\_credit.py}, \code{test\_cva\_mitigants.py} \\
 Regulatory & RWA, capital ratio, DFAST-style calculations & Assets, losses, weights & Ratios, stress metrics & \code{test\_regulatory.py}, \code{test\_dfast\_pathing.py} \\
 Service & Orchestrate end-to-end core risk run & Portfolio, data, settings & Unified result object & \code{test\_backend.py}, \code{integration\_test.py} \\
@@ -841,7 +838,7 @@ UI & Streamlit display and input logic & User interaction & Rendered panels & \c
 \code{black\_scholes\_price} & $S,K,T,\sigma,r,q$, option type & Option price & Reject invalid type or numerical domain \\
 \code{black\_scholes\_delta} & Same inputs & Delta & Reject invalid type or numerical domain \\
 \code{portfolio\_value} & Portfolio object, spot vector & Portfolio value & Fail visibly if required underlying missing \\
-\code{portfolio\_delta\_dollar} & Portfolio, spot vector & Exposure vector & Fail visibly if option input inconsistent \\
+\code{portfolio\_delta\_\allowbreak dollar} & Portfolio, spot vector & Exposure vector & Fail if option input inconsistent \\
 \code{historical\_var\_es} & Portfolio, price history, horizon, confidences & VaR, ES, losses & Return explicit reason if history insufficient \\
 \code{parametric\_var\_es} & Exposure vector, mean/covariance, horizon & VaR, ES & Reject invalid covariance or confidence \\
 \code{monte\_carlo\_var\_es} & Portfolio, mean/cov, paths, seed & VaR, ES, losses & Reject invalid covariance or path count \\
@@ -1076,8 +1073,8 @@ python -m pytest tests/ \
   --ignore=tests/integration_test_formula_sheet.py -v
 \end{shellcode}
 
-Recorded result (2026-05-11, commit \code{5841589e}):
-\textbf{644 passed, 0 failed, 0 skipped}.
+Recorded result (2026-05-13, commit \code{a4aa9e9b}):
+\textbf{644 passed, 0 failed, 1 intentionally skipped}.
 
 Coverage command:
 \begin{shellcode}
@@ -1120,8 +1117,8 @@ python -m pytest tests/ \
 \subsection{Recorded Test Environment}
 
 \begin{itemize}
-  \item Date/time: 2026-05-11 03:00:09 EDT
-  \item Git commit: \code{5841589e3f3d2dbd3c1e38b08642eccce201a6a2}
+  \item Date/time: 2026-05-13 00:00:00 EDT
+  \item Git commit: \code{a4aa9e9b0ef8ba069a0331fe22c3cbe6a8c5dc0d}
   \item Python: 3.12.2 \quad OS: Darwin 24.5.0 arm64
   \item Key packages: \code{streamlit 1.37.1}, \code{numpy 1.26.4},
     \code{pandas 3.0.2}, \code{scipy 1.17.1}, \code{yfinance 1.2.0},

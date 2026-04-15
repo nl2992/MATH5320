@@ -11,8 +11,8 @@ Columbia University, Financial Risk Management, Spring 2026
 L4cmL9cm **Field** & **Value**\
 Deliverable & 2 of 5 (15 points)\
 Authors & Nigel Li, Michael Adegbite, Stella\
-Reference Commit & `5841589` (main branch, May 2026)\
-Submission Date & May 12, 2026\
+Reference Commit & `a4aa9e9` (main branch, May 2026)\
+Submission Date & May 13, 2026\
 Python Version & 3.12.2\
 Test Suite & 644 tests, 0 failures\
 Statement Coverage & 95%\
@@ -693,7 +693,7 @@ python -m pytest tests/  –ignore=tests/integration_test.py  –ignore=tests/
 
 </div>
 
-Recorded result (2026-05-11, commit `5841589e`): **644 passed, 0 failed, 0 skipped**.
+Recorded result (2026-05-13, commit `a4aa9e9b`): **644 passed, 0 failed, 1 intentionally skipped**.
 
 Coverage command:
 
@@ -733,9 +733,9 @@ pip install -r requirements.txt streamlit run app.py python -m pytest tests/  �
 
 ## Recorded Test Environment
 
-- Date/time: 2026-05-11 03:00:09 EDT
+- Date/time: 2026-05-13 00:00:00 EDT
 
-- Git commit: `5841589e3f3d2dbd3c1e38b08642eccce201a6a2`
+- Git commit: `a4aa9e9b0ef8ba069a0331fe22c3cbe6a8c5dc0d`
 
 - Python: 3.12.2 OS: Darwin 24.5.0 arm64
 

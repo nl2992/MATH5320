@@ -2,8 +2,21 @@
 estimators.py
 Mean and covariance estimators: rolling window and EWMA.
 
-EWMA lambda formula (from spec):
-    λ = (N - 1) / (N + 1)
+Two EWMA lambda conventions are implemented:
+
+  Spec convention (active, used throughout):
+    λ = (N - 1) / (N + 1)          → _ewma_lambda(N)
+    Effective exponential memory: (N+1)/2 observations.
+    For default N=60: λ ≈ 0.9672.
+
+  Course / textbook convention (reference, not used in production):
+    λ = 1 - 1/N                     → _ewma_lambda_course(N)
+    Effective exponential memory: N observations.
+    For default N=60: λ ≈ 0.9833.
+
+All production paths call _ewma_lambda (spec convention).
+_ewma_lambda_course is provided as a standalone reference and is not
+wired into get_mean_cov or estimate_ewma_mean_cov.
 
 EWMA weights:
     w_i = (1 - λ) λ^(n-i)   for i = 1 ... n   (oldest to newest)
@@ -107,8 +120,36 @@ def estimate_window_mean_cov(
 
 
 def _ewma_lambda(N: int) -> float:
-    """Compute EWMA decay parameter from half-life parameter N."""
+    """Compute EWMA decay parameter using the project specification convention.
+
+    Formula (from spec): λ = (N - 1) / (N + 1)
+
+    Effective exponential memory is (N+1)/2 observations.
+    For N=60: λ ≈ 0.9672.
+
+    This is the convention used throughout the production codebase.
+    See also _ewma_lambda_course for the textbook alternative.
+    """
     return (N - 1) / (N + 1)
+
+
+def _ewma_lambda_course(N: int) -> float:
+    """Compute EWMA decay parameter using the course / textbook convention.
+
+    Formula: λ = 1 - 1/N
+
+    Under this convention, N equals the effective exponential memory
+    1/(1−λ), i.e. the approximate number of observations with material
+    weight.  For N=60: λ ≈ 0.9833.
+
+    This function is provided as a reference implementation of the textbook
+    form discussed in the course notes.  It is NOT wired into
+    estimate_ewma_mean_cov or get_mean_cov; all production paths use
+    _ewma_lambda (the spec convention).  Call this function directly when
+    you need the course-convention decay factor for comparison or
+    stand-alone calculations.
+    """
+    return 1.0 - 1.0 / N
 
 
 def estimate_ewma_mean_cov(

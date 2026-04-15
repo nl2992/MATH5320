@@ -100,6 +100,29 @@ jupyter notebook submission/advanced_demo.ipynb
 
 Step-by-step Streamlit screenshots showing the full UI workflow for the same portfolios.
 
+### `notebooks/ta_grader_demo.ipynb` — TA / grader notebook
+
+> **For the TA / grader:** This notebook is designed so you can test the system with your own price data without touching any other file.
+
+1. Drop your Bloomberg or Yahoo-format CSV files into `data/`.
+2. Open `notebooks/ta_grader_demo.ipynb` and edit **only the configuration cell at the top** (§ 1) — tickers, filenames, portfolio weights, horizon, confidence level.
+3. Run all cells top-to-bottom. No other changes are needed.
+
+The notebook covers the full pipeline: data loading → covariance estimation (rolling and EWMA) → historical / parametric / Monte Carlo VaR and ES → walk-forward backtesting with Kupiec and Christoffersen diagnostics → credit and CVA extension formulas. Each section is self-contained and labelled.
+
+Supported data formats:
+
+| Format | Example filename | Required columns |
+|---|---|---|
+| Bloomberg single-ticker | `AAPL-bloomberg.csv` | `Dates`, `PX_LAST` |
+| Bloomberg multi-ticker | `prices.csv` | `Dates`, one column per ticker |
+| Yahoo Finance (via `yfinance`) | *(downloaded automatically)* | n/a |
+
+```bash
+pip install -r requirements.txt
+jupyter notebook notebooks/ta_grader_demo.ipynb
+```
+
 ---
 
 ## Running Tests

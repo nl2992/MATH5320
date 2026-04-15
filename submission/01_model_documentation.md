@@ -17,7 +17,7 @@ Spring 2026\
 
 |                      |                                                |
 |:---------------------|:-----------------------------------------------|
-| **Reference commit** | `23f39ba` (main branch, May 2026)              |
+| **Reference commit** | `a4aa9e9` (main branch, May 2026)              |
 | **Report date**      | May 2026                                       |
 | **Test suite**       | 644 unit tests passing, 95% statement coverage |
 
@@ -41,7 +41,7 @@ This report documents and validates the MATH5320 Portfolio Risk Management Syste
 
 ## System and Version Reviewed
 
-The system reviewed in this report is the **MATH5320 Portfolio Risk Management System**, implemented in Python and delivered through an eight-tab Streamlit application. The repository is tracked under `MATH5320` and the reference commit for this validation is `23f39ba` on the main branch, dated May 2026. All test evidence, coverage measurements, and backtesting results in this report correspond precisely to this commit.
+The system reviewed in this report is the **MATH5320 Portfolio Risk Management System**, implemented in Python and delivered through an eight-tab Streamlit application. The repository is tracked under `MATH5320` and the reference commit for this validation is `a4aa9e9` on the main branch, dated May 2026. All test evidence, coverage measurements, and backtesting results in this report correspond precisely to this commit.
 
 ## Business Context and User Base
 
@@ -55,7 +55,7 @@ This report fulfils the model documentation deliverable for MATH GR 5320. Its pu
 
 ## Version History
 
-The system was developed in two phases. Version 1.0 (April 2026, `5841589`) delivered the required market-risk engine: historical simulation, parametric delta-normal, Monte Carlo VaR and ES, walk-forward backtesting, and the Streamlit UI. Version 1.1 (May 2026, `86890d8`) added the credit, CVA, and regulatory extension modules. Version 1.2 (`79111d8`) raised the test suite to 644 tests with 95% statement coverage and added the option-volatility shock mode. Version 1.3 (`23f39ba`) is the final submission, consolidating all reports and removing stale drafts.
+The system was developed in two phases. Version 1.0 (April 2026, `5841589`) delivered the required market-risk engine: historical simulation, parametric delta-normal, Monte Carlo VaR and ES, walk-forward backtesting, and the Streamlit UI. Version 1.1 (May 2026, `86890d8`) added the credit, CVA, and regulatory extension modules. Version 1.2 (`79111d8`) raised the test suite to 644 tests with 95% statement coverage and added the option-volatility shock mode. Version 1.3 (`a4aa9e9`) is the final submission, consolidating all reports and removing stale drafts.
 
 # Product Description
 
@@ -282,15 +282,16 @@ where recent observations receive the largest weight and older observations rece
   \label{eq:ewma_total_weight}
 \end{equation}
 ```
-Hence, when the user supplies an effective window length $`N`$, the course implementation uses
+The implementation follows the project specification convention, which maps the user-supplied window parameter $`N`$ to the decay factor as:
 ``` math
 \begin{equation}
-  N = \frac{1}{1-\lambda},
-  \qquad
-  \lambda = 1 - \frac{1}{N}.
-  \label{eq:ewma_lambda_course}
+  \lambda = \frac{N-1}{N+1}.
+  \label{eq:ewma_lambda_impl}
 \end{equation}
 ```
+This differs from the course / textbook form $`\lambda = 1 - 1/N`$, where $`N`$ equals the effective exponential memory $`1/(1-\lambda)`$. Under the project specification convention, the effective exponential memory is $(N+1)/2$; for the default $`N = 60`$, this gives $`\lambda \approx 0.967`$ and an effective decay over approximately 30 recent observations. The textbook form with the same $`N`$ gives $`\lambda \approx 0.983`$ and retains twice as much historical weight.
+
+Both conventions are implemented in the codebase. `_ewma_lambda(N)` in `src/risk/estimators.py` implements the project specification convention and is the active formula called by all production paths (`estimate_ewma_mean_cov`, `get_mean_cov`). `_ewma_lambda_course(N)` implements the textbook convention $`\lambda = 1 - 1/N`$ as a standalone reference function; it is not wired into any production path and is provided so that the two conventions can be compared directly. All results in this report and in the test suite use the specification convention.
 
 The estimator can therefore be updated recursively rather than recomputing the full weighted history:
 ``` math
@@ -426,15 +427,17 @@ The validation covers: formula correctness for all quantitative functions in `sr
 
 ## How Validation Was Performed
 
-Validation was performed through five complementary layers.
+Validation was performed through six complementary layers.
 
 **Analytical golden tests.** Deterministic formulas were compared against hand-calculated or textbook reference values. Black-Scholes was verified against the Hull reference case. Kupiec LR statistics were compared against chi-square critical values. Exact lognormal VaR was compared against the closed-form solution. All analytical comparisons use a tolerance of at most 0.1% relative error.
 
 **Course-homework fixture tests.** Key scenarios were derived from MATH GR 5320 homework problems and embedded as regression tests in `tests/test_homework_cases.py` and `tests/test_course_validation.py`. These fixtures constitute an independent audit trail: if the implementation drifts from the course formulas, the tests fail explicitly and immediately.
 
-**Synthetic edge-case tests.** Tests in `tests/test_coverage_gaps.py`, `tests/test_strict_numerics.py`, and `tests/test_es_confidence_split.py` probe validation logic and numerical boundaries: non-positive-semidefinite covariance matrices, expired options, zero-quantity positions, and confidence levels at the boundary of the valid range.
+**Numerical precision and failure-mode tests.** Tests in `tests/test_numerical_precision.py` (NP_01--NP_07) cover IEEE 754-style floating-point issues, extreme Black-Scholes inputs, log-return cancellation, near-singular covariance matrices, EWMA stability, and extreme-confidence VaR/ES.
 
-**Integration tests.** Two live-data integration scripts (`tests/integration_test.py` and `tests/integration_test_formula_sheet.py`) exercise full end-to-end workflows against Yahoo Finance data. Both scripts passed at reference commit `23f39ba`.
+**Behavioural, convergence, and inversion tests.** Tests in `tests/test_coverage_gaps.py`, `tests/test_strict_numerics.py`, and `tests/test_es_confidence_split.py` check monotonicity, put-call parity, no-arbitrage bounds, ES/VaR ordering, Monte Carlo convergence, Merton inversion, Kupiec p-values, linear P&L attribution, and a one-day delta-hedge check.
+
+**Integration tests.** Two live-data integration scripts (`tests/integration_test.py` and `tests/integration_test_formula_sheet.py`) exercise full end-to-end workflows against Yahoo Finance data. Both scripts passed at reference commit `a4aa9e9`.
 
 **Walk-forward backtesting.** VaR backtests were run on a 1,500-row AAPL/CAT price history, producing 990 backtest observations at a 10-day horizon with 99% VaR confidence. The detailed results and interpretation are in Section <a href="#sec:backtest_results" data-reference-type="ref" data-reference="sec:backtest_results">6.6</a>.
 
@@ -517,7 +520,7 @@ This is not an implementation error; it is an honest and expected property of ro
 
 ## Formula Correctness: Analytical Benchmark Comparisons
 
-The following benchmark comparisons are drawn directly from the unit test suite. All tests pass at reference commit `23f39ba`.
+The following benchmark comparisons are drawn directly from the unit test suite. All tests pass at reference commit `a4aa9e9`.
 
 <div class="center">
 

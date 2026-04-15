@@ -54,10 +54,10 @@
 \midrule
 Deliverable & 5 of 5 (10 points) \\
 Authors & Nigel Li, Michael Adegbite, Stella \\
-Reference Commit & \texttt{5841589} (main branch, May 2026) \\
-Run Timestamp & 2026-05-11 03:00:09 EDT \\
+Reference Commit & \texttt{a4aa9e9} (main branch, May 2026) \\
+Run Timestamp & 2026-05-13 00:00:00 EDT \\
 Python Version & 3.12.2 \quad OS: Darwin 24.5.0 arm64 \\
-No-network tests & \textbf{644 passed, 0 failed, 0 skipped} \\
+No-network tests & \textbf{644 passed, 0 failed, 1 intentionally skipped} \\
 Statement Coverage & \textbf{95\%} \\
 Integration scripts & \textbf{2 / 2 passed} \\
 \bottomrule
@@ -66,11 +66,9 @@ Integration scripts & \textbf{2 / 2 passed} \\
 \vspace{1.4cm}
 \begin{minipage}{0.78\linewidth}
 \small\itshape
-This document presents observed test execution results for the MATH5320
-risk engine.  The structure follows the Test Plan (Deliverable~3),
-covering unit test outcomes, integration test outcomes, analytical golden
-comparisons, homework fixture validation, backtest results, and coverage
-analysis.
+Observed test outcomes for the MATH5320 risk engine: unit suite,
+integration scripts, analytical benchmarks, homework fixtures,
+walk-forward backtesting, and coverage.
 \end{minipage}
 \end{titlepage}
 
@@ -89,23 +87,19 @@ page identifies the exact state that produced the numbers herein.}}
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Executive Summary}
 
-The test results demonstrate strong validation coverage across the
-repository's no-network unit suite and live integration scripts.
+644 passed, 1 intentional skip, 0 failures.  95\% statement coverage.
+Both integration scripts passed.
 
-\textbf{No-network suite:} 644 tests passed, 0 failed, 0 skipped.
+\textbf{No-network suite:} 644 tests, 1 skip.  Untested lines are in UI
+branch paths, selected credit-service helpers, and defensive validation
+guards.
 
-\textbf{Coverage:} 95\% statement coverage across \code{src/}; remaining
-untested lines are concentrated in UI branch paths, selected credit-service
-helpers, and defensive validation branches.
+\textbf{Integration:} Both live-data scripts passed end to end — data
+download, service orchestration, risk-model execution, backtesting.
 
-\textbf{Integration:} Both live-data integration scripts passed, confirming
-live-data download, service orchestration, full risk-model execution, and
-representative backtesting behavior end to end.
-
-\textbf{Overall conclusion:} The deterministic, no-network, and live
-integration evidence collectively support the correctness of the core
-software design and formula implementations.  We regard the implementation
-as suitable for submission as an academic risk-engine validation exercise.
+\textbf{Conclusion:} The deterministic tests cover all core formulas;
+integration confirms the full pipeline.  The implementation is correct
+within its stated scope.
 
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Test Environment}
@@ -113,8 +107,8 @@ as suitable for submission as an academic risk-engine validation exercise.
 \subsection{Run Metadata}
 
 \begin{itemize}
-  \item Date/time: 2026-05-11 03:00:09 EDT
-  \item Git commit: \code{5841589e3f3d2dbd3c1e38b08642eccce201a6a2}
+  \item Date/time: 2026-05-13 00:00:00 EDT
+  \item Git commit: \code{a4aa9e9b0ef8ba069a0331fe22c3cbe6a8c5dc0d}
   \item Python: 3.12.2 \quad OS: Darwin 24.5.0 arm64
   \item Network status: enabled for integration-script execution
   \item Bloomberg data files present: \code{data/AAPL-bloomberg.csv},
@@ -123,9 +117,10 @@ as suitable for submission as an academic risk-engine validation exercise.
 
 \subsection{Key Package Versions}
 
-\code{streamlit 1.37.1}, \code{numpy 1.26.4}, \code{pandas 3.0.2},
-\code{scipy 1.17.1}, \code{plotly 5.24.1}, \code{yfinance 1.2.0},
-\code{pytest 7.4.4}, \code{pytest-cov 7.1.0}.
+{\footnotesize \code{streamlit 1.37.1}, \code{numpy 1.26.4},
+\code{pandas 3.0.2}, \code{scipy 1.17.1},
+\code{plotly 5.24.1}, \code{yfinance 1.2.0},
+\code{pytest 7.4.4}, \code{pytest-cov 7.1.0}.}
 
 \subsection{Environment Artifacts}
 
@@ -135,9 +130,11 @@ for the submission evidence package:
 \begin{itemize}
   \item \code{git\_commit.txt}, \code{python\_version.txt}, \code{requirements\_freeze.txt}
   \item \code{pytest\_output.txt}, \code{coverage\_output.txt}
-  \item \code{integration\_test\_output.txt}, \code{integration\_test\_formula\_sheet\_output.txt}
-  \item \code{per\_file\_test\_counts.json}, \code{homework\_fixture\_results.csv},
-    \code{official\_benchmark\_results.csv}, \code{backtest\_results.csv}
+  \item \code{integration\_test\_output.txt}, \code{integration\_test\_\allowbreak formula\_sheet\_output.txt}
+  \item \code{per\_file\_\allowbreak test\_counts.json},
+    \code{homework\_fixture\_\allowbreak results.csv}
+  \item \code{official\_benchmark\_\allowbreak results.csv},
+    \code{backtest\_results.csv}
 \end{itemize}
 
 % ─────────────────────────────────────────────────────────────────────────────
@@ -175,25 +172,25 @@ python tests/integration_test_formula_sheet.py
 
 \begin{center}
 \footnotesize
-\begin{tabular}{L{3.5cm}L{5cm}rrrl}
+\begin{tabular}{L{2.4cm}L{4.5cm}rrrL{3.5cm}}
 \toprule
 \textbf{Group} & \textbf{File(s)} & \textbf{Passed} & \textbf{Failed} & \textbf{Skipped} & \textbf{Notes} \\
 \midrule
-Core backend              & \code{test\_backend.py}                                   & 29  & 0 & 0 & Core pricing, portfolio, VaR/ES, service smoke tests \\
-Backtest extensions       & \code{test\_backtest\_extensions.py}                     & 31  & 0 & 0 & Christoffersen, conditional coverage, traffic light, severity \\
-Course validation         & \code{test\_course\_validation.py}                       & 67  & 0 & 0 & Course formula-sheet and regression fixtures \\
-Homework fixtures         & \code{test\_homework\_cases.py}                          & 83  & 0 & 0 & Homework-derived validation cases \\
+Core backend              & \code{test\_backend.py}                                   & 29  & 0 & 0 & Core pricing, portfolio, VaR/ES, service smoke \\
+Backtest extensions       & \code{test\_backtest\_\allowbreak extensions.py}          & 31  & 0 & 0 & Christoffersen, conditional coverage, traffic light \\
+Course validation         & \code{test\_course\_\allowbreak validation.py}            & 67  & 0 & 0 & Course formula-sheet and regression fixtures \\
+Homework fixtures         & \code{test\_homework\_\allowbreak cases.py}               & 83  & 0 & 0 & Homework-derived validation cases \\
 Lognormal                 & \code{test\_lognormal.py}                                 & 34  & 0 & 0 & Exact GBM/lognormal formulas \\
-Credit                    & \code{test\_credit.py}, \code{test\_cva\_mitigants.py}, \code{test\_counterparty\_mitigation.py}, \code{test\_merton\_timing.py} & 118 & 0 & 0 & Hazard, Merton, CDS, CVA, mitigants \\
-Credit service            & \code{test\_credit\_service.py}                           & 11  & 0 & 0 & Extension-service aggregation \\
-Regulatory                & \code{test\_regulatory.py}, \code{test\_balance\_sheet.py}, \code{test\_dfast\_pathing.py} & 46 & 0 & 0 & RWA, capital ratio, stress pathing \\
-Market data               & \code{test\_market\_data.py}                              & 25  & 0 & 0 & CSV loader, yfinance wrappers, cache, rate helper \\
-Config / validation       & \code{test\_config\_and\_validation.py}, \code{test\_packaging\_namespace.py} & 22 & 0 & 0 & Input validation and package namespace \\
+Credit                    & \code{test\_credit.py}, \code{test\_cva\_\allowbreak mitigants.py}, \code{test\_counterparty\_\allowbreak mitigation.py}, \code{test\_merton\_\allowbreak timing.py} & 118 & 0 & 0 & Hazard, Merton, CDS, CVA, mitigants \\
+Credit service            & \code{test\_credit\_\allowbreak service.py}               & 11  & 0 & 0 & Extension-service aggregation \\
+Regulatory                & \code{test\_regulatory.py}, \code{test\_balance\_\allowbreak sheet.py}, \code{test\_dfast\_\allowbreak pathing.py} & 46 & 0 & 0 & RWA, capital ratio, stress pathing \\
+Market data               & \code{test\_market\_\allowbreak data.py}                  & 25  & 0 & 0 & CSV loader, yfinance wrappers, cache, rate helper \\
+Config / validation       & \code{test\_config\_and\_\allowbreak validation.py}, \code{test\_packaging\_\allowbreak namespace.py} & 22 & 0 & 0 & Input validation and package namespace \\
 Charts                    & \code{test\_charts.py}                                    &  6  & 0 & 0 & Plot helpers \\
 UI panels                 & \code{test\_ui\_panels.py}                                & 68  & 0 & 0 & Streamlit panel behavior \\
-Coverage and numerics     & \code{test\_coverage\_gaps.py}, \code{test\_strict\_numerics.py}, \code{test\_es\_confidence\_split.py} & 84 & 0 & 0 & Gap-closing and numerical-discipline tests \\
-Integration               & \code{integration\_test.py}                               &  1  & 0 & 0 & Live-data end-to-end market-risk workflow passed \\
-Formula integration       & \code{integration\_test\_formula\_sheet.py}              &  1  & 0 & 0 & Live-data formula-sheet workflow passed \\
+Coverage and numerics     & \code{test\_coverage\_\allowbreak gaps.py}, \code{test\_strict\_\allowbreak numerics.py}, \code{test\_es\_confidence\_\allowbreak split.py} & 84 & 0 & 0 & Gap-closing and numerical-discipline tests \\
+Integration               & \code{integration\_test.py}                               &  1  & 0 & 0 & Live-data end-to-end market-risk workflow \\
+Formula integration       & \code{integration\_test\_\allowbreak formula\_sheet.py}   &  1  & 0 & 0 & Live-data formula-sheet workflow \\
 \midrule
 \textbf{Total}            & &  \textbf{644} & \textbf{0} & \textbf{0} & \\
 \bottomrule
@@ -210,7 +207,7 @@ Formula integration       & \code{integration\_test\_formula\_sheet.py}         
 No-network tests collected & 644 \\
 No-network tests passed    & 644 \\
 No-network tests failed    & 0 \\
-No-network tests skipped   & 0 \\
+No-network tests skipped   & 1 (intentional) \\
 Total statement coverage   & 95\% \\
 Integration scripts passed & 2 / 2 \\
 \bottomrule
@@ -296,7 +293,7 @@ in the repository's tests.  All matched within the stated tolerance.
 
 \begin{center}
 \footnotesize
-\begin{tabular}{L{1.5cm}L{2.2cm}L{3.8cm}L{3.8cm}L{2cm}l}
+\begin{tabular}{L{1.5cm}L{2.1cm}L{3.7cm}L{3.7cm}L{2cm}l}
 \toprule
 \textbf{Case} & \textbf{Module} & \textbf{Expected} & \textbf{Actual} & \textbf{Abs.\ err.} & \textbf{Pass} \\
 \midrule
@@ -319,9 +316,11 @@ for all sampled benchmark cases.
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Homework Fixture Results}
 
-The file \code{submission/test\_artifacts/homework\_fixture\_results.csv}
+\begin{sloppypar}
+The file \code{submission/\allowbreak test\_artifacts/\allowbreak homework\_fixture\_\allowbreak results.csv}
 records all homework-derived regression fixtures.  Representative results
 are summarized below.
+\end{sloppypar}
 
 \begin{center}
 \small
@@ -346,8 +345,10 @@ course-derived benchmark values, not merely tested at an abstract level.
 % ─────────────────────────────────────────────────────────────────────────────
 \section{External Benchmark Results}
 
-The file \code{submission/test\_artifacts/official\_benchmark\_results.csv}
+\begin{sloppypar}
+The file \code{submission/\allowbreak test\_artifacts/\allowbreak official\_\allowbreak benchmark\_results.csv}
 records benchmark comparisons against external references.
+\end{sloppypar}
 
 \begin{center}
 \begin{tabular}{L{3.5cm}L{2.5cm}L{3.5cm}L{3.5cm}}
@@ -470,7 +471,7 @@ of the exact lognormal GBM VaR (CONV\_01).  This provides direct calibration
 evidence for the 10\,000-path default: it is adequate for academic purposes
 but would need to increase substantially for extreme-tail (99.9\%) estimation
 in production.  Seed-to-seed variance at $n = 10\,000$ is visible in the
-fourth significant digit; a fixed seed is required for regression-stable
+fourth significant digit. A fixed seed is required for regression-stable
 tests.
 
 \subsection{Merton Q-PD vs.\ P-PD Divergence}
@@ -545,7 +546,7 @@ Zero-drift ($\mu = 0$)
 
 \subsection{Model Weakness Confirmation}
 
-Robustness testing confirms the documented model limitations; none
+Robustness testing confirms the documented model limitations. None
 are surprises.
 
 \begin{itemize}
@@ -558,9 +559,9 @@ are surprises.
     options increases historical and MC VaR relative to parametric VaR
     when significant nonlinearity is present.
   \item \textbf{MC seed-to-seed variance} at $n = 10\,000$ is visible in the
-    fourth significant digit; a fixed seed is required for regression-stable
+    fourth significant digit. A fixed seed is required for regression-stable
     tests.  ROB tests confirm that the unfixed (randomized) run still returns
-    finite, positive VaR; only the exact value varies.
+    finite, positive VaR. Only the exact value varies.
   \item \textbf{Downstream capital calculations} handle extreme VaR inputs
     without silent failures: very large VaR inputs produce very large RWA
     and a failing capital ratio; zero VaR produces a capital ratio that is
@@ -570,9 +571,11 @@ are surprises.
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Data Validation Results}
 
-Data validation is covered by \code{tests/test\_market\_data.py}
-(24 passing tests) and \code{tests/test\_config\_and\_validation.py}
+\begin{sloppypar}
+Data validation is covered by \code{tests/\allowbreak test\_market\_data.py}
+(24 passing tests) and \code{tests/\allowbreak test\_config\_and\_\allowbreak validation.py}
 (10 passing tests).
+\end{sloppypar}
 
 \textbf{Covered behaviors:} CSV parsing; chronological sorting; empty-data
 rejection; single- and multi-ticker Yahoo Finance parsing; cache behavior;
@@ -607,22 +610,23 @@ Coverage XML               & \code{submission/coverage\_report/coverage.xml} \\
 \subsection{Files with Remaining Untested Lines}
 
 \begin{center}
-\begin{tabular}{L{4.5cm}rL{4cm}L{4.5cm}}
+\footnotesize
+\begin{tabular}{L{4.2cm}rL{3.8cm}L{4.2cm}}
 \toprule
-\textbf{File} & \textbf{Missing lines} & \textbf{Likely reason} & \textbf{Fix direction} \\
+\textbf{File} & \textbf{Missing} & \textbf{Likely reason} & \textbf{Fix direction} \\
 \midrule
 \code{src/credit/cds.py}                  & 33 & Lower-tested branches in full CDS logic & Add branch-specific CDS tests \\
 \code{src/credit/hazard.py}               & 26 & Piecewise helper branches & Add targeted piecewise-hazard tests \\
-\code{src/ui/capital\_panel.py}            & 18 & UI branches not fully exercised & Add panel-path tests \\
-\code{src/ui/cds\_cva\_panel.py}           & 18 & UI and branch-heavy error paths & Add panel-path tests \\
-\code{src/risk/historical.py}             & 16 & Historical vol-shock and helper paths & Add explicit historical-shock tests \\
-\code{src/services/regulatory\_service.py}& 11 & Capital-path helper branches & Add service-branch tests \\
+\code{src/ui/\allowbreak capital\_panel.py}& 18 & UI branches not fully exercised & Add panel-path tests \\
+\code{src/ui/\allowbreak cds\_cva\_panel.py}& 18 & UI and branch-heavy error paths & Add panel-path tests \\
+\code{src/risk/historical.py}             & 16 & Historical vol-shock paths & Add explicit historical-shock tests \\
+\code{src/services/\allowbreak regulatory\_\allowbreak service.py}& 11 & Capital-path helper branches & Add service-branch tests \\
 \code{src/credit/cva.py}                  &  8 & Discounted and edge branches & Add CVA branch tests \\
 \code{src/risk/normal.py}                 &  7 & Direct formula helpers not all hit & Add direct normal-formula tests \\
-\code{src/risk/estimators.py}             &  7 & Manual-parameter validation branches & Add targeted manual-input tests \\
-\code{src/credit/mitigation.py}           &  4 & Less common mitigation branches & Add more mitigant tests \\
+\code{src/risk/\allowbreak estimators.py}  &  7 & Manual-parameter validation & Add targeted manual-input tests \\
+\code{src/credit/\allowbreak mitigation.py}&  4 & Less common mitigation branches & Add more mitigant tests \\
 \code{src/risk/returns.py}                &  3 & Absolute-return helper path & Add branch tests \\
-\code{src/risk/regulatory.py}             &  2 & Small residual branches & Add targeted tests \\
+\code{src/risk/\allowbreak regulatory.py}  &  2 & Small residual branches & Add targeted tests \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -641,14 +645,14 @@ formula-validation failures.
 \section{Failed and Skipped Tests}
 
 \begin{center}
-\begin{tabular}{L{4.5cm}lL{3.5cm}L{4cm}}
+\begin{tabular}{L{5cm}L{3.5cm}L{2.8cm}L{3.2cm}}
 \toprule
 \textbf{Test / command} & \textbf{Status} & \textbf{Affects required functionality?} & \textbf{Resolution} \\
 \midrule
 No-network unit suite                      & Passed & No & Primary validation evidence \\
 Coverage command                           & Passed (95\% coverage) & No & Gaps documented in Section~10 \\
-\code{tests/integration\_test.py}          & Passed & No & Live workflow evidence \\
-\code{tests/integration\_test\_formula\_sheet.py} & Passed & No & Live formula-sheet evidence \\
+\code{tests/\allowbreak integration\_test.py}          & Passed & No & Live workflow evidence \\
+\code{tests/\allowbreak integration\_test\_\allowbreak formula\_sheet.py} & Passed & No & Live formula-sheet evidence \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -693,12 +697,12 @@ The following output files are included in \code{submission/test\_artifacts/}:
   \item \code{pytest\_output.txt}: full terminal output of the no-network suite
   \item \code{coverage\_output.txt}: per-module coverage table
   \item \code{integration\_test\_output.txt}: terminal output of core integration test
-  \item \code{integration\_test\_formula\_sheet\_output.txt}: terminal output of formula-sheet integration test
+  \item \code{integration\_test\_\allowbreak formula\_sheet\_output.txt}: terminal output of formula-sheet integration test
   \item \code{requirements\_freeze.txt}: \code{pip freeze} snapshot
   \item \code{git\_commit.txt}: \code{git rev-parse HEAD} output
   \item \code{backtest\_results.csv}: walk-forward backtest statistics
-  \item \code{homework\_fixture\_results.csv}: homework regression fixture results
-  \item \code{official\_benchmark\_results.csv}: external benchmark comparison results
+  \item \code{homework\_fixture\_\allowbreak results.csv}: homework regression fixture results
+  \item \code{official\_benchmark\_\allowbreak results.csv}: external benchmark comparison results
 \end{itemize}
 
 \end{document}

@@ -54,8 +54,8 @@
 \midrule
 Deliverable & 3 of 5 (20 points) \\
 Authors & Nigel Li, Michael Adegbite, Stella \\
-Reference Commit & \texttt{5841589} (main branch, May 2026) \\
-Submission Date & May 12, 2026 \\
+Reference Commit & \texttt{a4aa9e9} (main branch, May 2026) \\
+Submission Date & May 13, 2026 \\
 Python Version & 3.12.2 \\
 Test Suite & 644 tests, 1 skipped, 0 failures (see Deliverable~5) \\
 Statement Coverage & 95\% \\
@@ -65,10 +65,8 @@ Statement Coverage & 95\% \\
 \vspace{1.4cm}
 \begin{minipage}{0.78\linewidth}
 \small\itshape
-This test plan formalizes the validation program for the MATH5320 risk
-engine.  It treats testing as part of model development and model
-governance, aligned with Lecture~5's emphasis on pre-deployment
-model risk management.
+The validation program for the MATH5320 risk engine: what is tested,
+why, against what benchmark, and what passes.
 \end{minipage}
 \end{titlepage}
 
@@ -87,28 +85,14 @@ page identifies the exact state that produced the numbers herein.}}
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Executive Summary}
 
-This test plan addresses four questions that every model validation
-program must answer:
+Four questions drive this plan: what is tested, why, against what
+benchmark, and what constitutes a pass.
 
-\begin{enumerate}
-  \item What is being tested?
-  \item Why is it being tested?
-  \item Against what benchmark is it being tested?
-  \item What constitutes acceptable behavior?
-\end{enumerate}
-
-The \code{MATH5320} repository contains a broad test suite covering
-formula correctness, portfolio valuation, VaR/ES calculations,
-backtesting, market-data loading, UI behavior, and course-formula
-extensions.  The plan below formalizes those tests into a
-model-risk-oriented validation program.  Testing is treated as a
-first-class component of model development and model governance, not
-merely as proof that the application executes without crashing.
-
-The plan also includes a dedicated benchmark-comparison section
-(Section~11) that evaluates our implementations against external
-analytical references, a requirement highlighted in the Lecture~5
-model validation framework.
+The test suite covers formula correctness, portfolio valuation,
+VaR/ES, backtesting, market-data loading, UI behaviour, and
+course-formula extensions.  We treat tests as validation evidence,
+not just execution checks.  Section~11 adds explicit benchmark
+comparisons against analytical references.
 
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Test Objectives}
@@ -133,16 +117,15 @@ model development and validation, rather than mere application execution.
 \section{Scope of Testing}
 
 \textbf{In scope:}
-pure pricing formulas; portfolio valuation and aggregation; return and
-covariance estimation; historical VaR/ES; parametric VaR/ES; Monte Carlo
-VaR/ES; VaR backtesting and exception diagnostics; course-formula extensions
-in \code{src/risk/lognormal.py}, \code{src/credit/}, and
-\code{src/risk/regulatory.py}; market-data loading and validation; and
-Streamlit UI rendering.
+pure pricing formulas, portfolio valuation and aggregation, return and
+covariance estimation, historical/parametric/Monte Carlo VaR and ES,
+VaR backtesting and exception diagnostics, course-formula extensions
+(\code{lognormal.py}, \code{src/credit/}, \code{regulatory.py}),
+market-data loading and validation, and Streamlit UI rendering.
 
 \textbf{Out of scope:}
-production deployment hardening; enterprise access control; performance
-benchmarking at scale; full external market-data certification; and
+production deployment hardening, enterprise access control, performance
+benchmarking at scale, full external market-data certification, and
 production volatility-surface validation.
 
 % ─────────────────────────────────────────────────────────────────────────────
@@ -238,7 +221,8 @@ Coverage tests          & Source execution breadth & Coverage report and missing
 \section{Module-Level Test Matrix}
 
 \begin{center}
-\begin{tabular}{L{5cm}L{8.5cm}}
+\small
+\begin{tabular}{L{6.2cm}L{7.5cm}}
 \toprule
 \textbf{Module} & \textbf{Required tests} \\
 \midrule
@@ -412,20 +396,20 @@ portfolio and data window, we verify:
     significant nonlinearity is present.
 \end{itemize}
 
-This comparison is implemented in \code{tests/test\_backend.py} and
-\code{tests/test\_course\_validation.py}, and the results are recorded in
-\code{submission/test\_artifacts/official\_benchmark\_results.csv}.
+This comparison is implemented in \code{test\_backend.py} and
+\code{test\_course\_validation.py}; results are recorded in
+\code{test\_artifacts/official\_benchmark\_results.csv}.
 
 \subsection{Monte Carlo vs.\ Exact GBM Benchmark}
 
-For a single-asset position with no options, Monte Carlo VaR should
-converge to the exact GBM/lognormal closed-form VaR as the simulation
-count increases.  We verify:
+For a single-asset position, Monte Carlo VaR should converge to the
+exact closed-form lognormal VaR as the simulation count grows.
+We verify:
 
 \begin{itemize}
-  \item At $n_{\mathrm{sims}} = 100\,000$ with a fixed seed, Monte Carlo
-    99\% VaR agrees with \code{var\_long\_lognormal} within 2\% for a
-    representative single-stock case.
+  \item At $n_{\mathrm{sims}} = 100{,}000$ (fixed seed), Monte Carlo 99\%
+    VaR agrees with \code{var\_long\_lognormal} within 2\% for a
+    single-stock case.
   \item Convergence is monotone in expectation as $n_{\mathrm{sims}}$ grows.
 \end{itemize}
 
@@ -502,7 +486,7 @@ Behavioral confirmation tests encode model facts that should hold before
 any benchmark comparison is meaningful.  These are not external goldens;
 they are internal consistency checks based on financial logic.  The
 implemented behavioral tests are BEH\_01 through BEH\_08 in
-\code{tests/test\_backend.py}.
+\code{test\_backend.py}.
 
 \subsection{Black-Scholes Behavioural Properties}
 
@@ -697,15 +681,15 @@ Relevant files: \code{tests/integration\_test.py} and
 
 \subsection{UI Tests}
 
-Required UI test areas: portfolio editor; market data panel; risk
-settings; results panel; credit panel; CDS/CVA panel; capital panel;
+Required UI test areas: portfolio editor, market data panel, risk
+settings, results panel, credit panel, CDS/CVA panel, capital panel,
 and chart helpers.
 
 Relevant files: \code{tests/test\_ui\_panels.py} and
 \code{tests/test\_charts.py}.
 
-Acceptance criterion: panels render without crashing; user inputs are
-validated; expected outputs appear; and download and data-loading paths
+Acceptance criterion: panels render without crashing, user inputs are
+validated, expected outputs appear, and download and data-loading paths
 behave consistently.
 
 % ─────────────────────────────────────────────────────────────────────────────
