@@ -160,4 +160,5 @@ class RiskEngineService:
             "backtest_df": bt_df,
             "kupiec": kupiec,
             "model": model,
+            "reason": bt_df.attrs.get("reason") if bt_df.empty else None,
         }

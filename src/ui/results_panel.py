@@ -56,32 +56,40 @@ def render_results_panel(
         f"${results['historical']['es']:,.2f}",
     )
 
+    pv_ok = portfolio_value is not None and portfolio_value > 0
+    if not pv_ok:
+        st.warning(
+            "Portfolio value is non-positive — likely all weights cancelled, "
+            "or market data missing. VaR/Portfolio ratios suppressed."
+        )
+
     # ── VaR comparison table ───────────────────────────────────────────────────
     st.subheader("VaR / ES Comparison")
-    comparison_df = pd.DataFrame(
-        {
-            "Model": ["Historical", "Parametric (Delta-Normal)", "Monte Carlo"],
-            "VaR ($)": [
-                results["historical"]["var"],
-                results["parametric"]["var"],
-                results["monte_carlo"]["var"],
-            ],
-            "ES ($)": [
-                results["historical"]["es"],
-                results["parametric"]["es"],
-                results["monte_carlo"]["es"],
-            ],
-            "VaR / Portfolio (%)": [
-                results["historical"]["var"] / portfolio_value * 100 if portfolio_value else 0,
-                results["parametric"]["var"] / portfolio_value * 100 if portfolio_value else 0,
-                results["monte_carlo"]["var"] / portfolio_value * 100 if portfolio_value else 0,
-            ],
-        }
-    )
+    comparison_cols = {
+        "Model": ["Historical", "Parametric (Delta-Normal)", "Monte Carlo"],
+        "VaR ($)": [
+            results["historical"]["var"],
+            results["parametric"]["var"],
+            results["monte_carlo"]["var"],
+        ],
+        "ES ($)": [
+            results["historical"]["es"],
+            results["parametric"]["es"],
+            results["monte_carlo"]["es"],
+        ],
+    }
+    if pv_ok:
+        comparison_cols["VaR / Portfolio (%)"] = [
+            results["historical"]["var"] / portfolio_value * 100,
+            results["parametric"]["var"] / portfolio_value * 100,
+            results["monte_carlo"]["var"] / portfolio_value * 100,
+        ]
+    comparison_df = pd.DataFrame(comparison_cols)
+    fmt = {"VaR ($)": "${:,.2f}", "ES ($)": "${:,.2f}"}
+    if pv_ok:
+        fmt["VaR / Portfolio (%)"] = "{:.2f}%"
     st.dataframe(
-        comparison_df.style.format(
-            {"VaR ($)": "${:,.2f}", "ES ($)": "${:,.2f}", "VaR / Portfolio (%)": "{:.2f}%"}
-        ),
+        comparison_df.style.format(fmt),
         use_container_width=True,
     )
 

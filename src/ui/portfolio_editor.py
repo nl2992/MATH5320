@@ -84,7 +84,7 @@ _DEFAULT_OPTIONS = pd.DataFrame(
 
 
 def _render_option_table() -> list[OptionPosition]:
-    """Editable option position table."""
+    """Editable option position table with per-row validation."""
     edited = st.data_editor(
         st.session_state.get("option_df", _DEFAULT_OPTIONS),
         num_rows="dynamic",
@@ -106,27 +106,101 @@ def _render_option_table() -> list[OptionPosition]:
     st.session_state["option_df"] = edited
 
     positions: list[OptionPosition] = []
-    for _, row in edited.iterrows():
-        try:
-            label = str(row["Label"]).strip()
-            underlying = str(row["Underlying"]).strip().upper()
-            if not label or not underlying:
-                continue
-            maturity = date.fromisoformat(str(row["Maturity"]).strip())
-            positions.append(
-                OptionPosition(
-                    ticker=label,
-                    underlying_ticker=underlying,
-                    option_type=str(row["Type"]).lower(),
-                    quantity=float(row["Quantity"]),
-                    strike=float(row["Strike"]),
-                    maturity_date=maturity,
-                    volatility=float(row["Volatility"]),
-                    risk_free_rate=float(row["Risk-Free Rate"]),
-                    dividend_yield=float(row["Dividend Yield"]),
-                    contract_multiplier=float(row["Multiplier"]),
-                )
-            )
-        except Exception:
+    row_errors: list[str] = []
+
+    for idx, row in edited.iterrows():
+        row_err = _validate_option_row(idx, row)
+        if row_err is None:
+            # Row is entirely blank — skip silently.
             continue
+        if row_err:
+            row_errors.append(row_err)
+            continue
+
+        # All fields validated individually in _validate_option_row.
+        positions.append(
+            OptionPosition(
+                ticker=str(row["Label"]).strip(),
+                underlying_ticker=str(row["Underlying"]).strip().upper(),
+                option_type=str(row["Type"]).lower(),
+                quantity=float(row["Quantity"]),
+                strike=float(row["Strike"]),
+                maturity_date=date.fromisoformat(str(row["Maturity"]).strip()),
+                volatility=float(row["Volatility"]),
+                risk_free_rate=float(row["Risk-Free Rate"]),
+                dividend_yield=float(row["Dividend Yield"]),
+                contract_multiplier=float(row["Multiplier"]),
+            )
+        )
+
+    for err in row_errors:
+        st.error(err)
+
     return positions
+
+
+def _validate_option_row(idx: int, row) -> str | None:
+    """
+    Validate one option row.
+
+    Returns
+    -------
+    None   -- row is entirely blank, caller should skip silently.
+    ""     -- row is valid.
+    <msg>  -- human-readable error describing the first failing field.
+    """
+    # A row is "entirely blank" if Label AND Underlying are both empty.
+    label_raw = row.get("Label")
+    underlying_raw = row.get("Underlying")
+    label_blank = pd.isna(label_raw) or not str(label_raw).strip()
+    under_blank = pd.isna(underlying_raw) or not str(underlying_raw).strip()
+    if label_blank and under_blank:
+        return None  # skip silently
+
+    prefix = f"Option row {idx + 1}:"
+
+    # Label + underlying presence.
+    if label_blank:
+        return f"{prefix} Label is required."
+    if under_blank:
+        return f"{prefix} Underlying is required."
+
+    # Option type.
+    opt_type = str(row.get("Type", "")).strip().lower()
+    if opt_type not in ("call", "put"):
+        return f"{prefix} Type must be 'call' or 'put' (got {row.get('Type')!r})."
+
+    # Numeric fields.
+    for field, positive in (
+        ("Quantity", False),
+        ("Strike", True),
+        ("Volatility", True),
+        ("Risk-Free Rate", False),
+        ("Dividend Yield", False),
+        ("Multiplier", True),
+    ):
+        val = row.get(field)
+        if pd.isna(val):
+            return f"{prefix} {field} is required."
+        try:
+            fval = float(val)
+        except (TypeError, ValueError):
+            return f"{prefix} {field} must be a number (got {val!r})."
+        if positive and fval <= 0:
+            return f"{prefix} {field} must be strictly positive (got {fval})."
+
+    # Maturity parse + future check.
+    maturity_raw = row.get("Maturity")
+    if pd.isna(maturity_raw) or not str(maturity_raw).strip():
+        return f"{prefix} Maturity is required (YYYY-MM-DD)."
+    try:
+        maturity = date.fromisoformat(str(maturity_raw).strip())
+    except ValueError:
+        return f"{prefix} Maturity must be YYYY-MM-DD (got {maturity_raw!r})."
+    if maturity <= date.today():
+        return (
+            f"{prefix} Maturity {maturity} must be in the future "
+            "(expired options have no time value)."
+        )
+
+    return ""  # valid
