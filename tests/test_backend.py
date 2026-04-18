@@ -252,5 +252,109 @@ def test_service_run_all(sample_prices, simple_portfolio):
         assert model["es"] > 0
 
 
+# ── Phase-0 workflow coverage: walk-forward backtest + edges ───────────────────
+
+def test_run_backtest_historical_with_sample_prices(sample_prices, simple_portfolio):
+    """Walk-forward historical backtest returns a non-empty frame with expected columns."""
+    bt_df = run_backtest(
+        portfolio=simple_portfolio,
+        prices=sample_prices,
+        pricing_date=date.today(),
+        lookback_days=60,
+        horizon_days=1,
+        var_confidence=0.99,
+        model="historical",
+    )
+    assert not bt_df.empty
+    for col in ("date", "var_forecast", "realized_loss", "exception"):
+        assert col in bt_df.columns
+    assert bt_df["exception"].isin([0, 1]).all()
+
+
+def test_run_backtest_parametric_with_sample_prices(sample_prices, simple_portfolio):
+    """Parametric-mode walk-forward also succeeds end-to-end."""
+    bt_df = run_backtest(
+        portfolio=simple_portfolio,
+        prices=sample_prices,
+        pricing_date=date.today(),
+        lookback_days=60,
+        horizon_days=1,
+        var_confidence=0.99,
+        model="parametric",
+        estimator="window",
+    )
+    assert not bt_df.empty
+    assert (bt_df["var_forecast"] > 0).all()
+
+
+def test_run_backtest_empty_when_lookback_too_large(sample_prices, simple_portfolio):
+    """When lookback+horizon >= data length, backtest returns an empty frame with a reason."""
+    bt_df = run_backtest(
+        portfolio=simple_portfolio,
+        prices=sample_prices,
+        pricing_date=date.today(),
+        lookback_days=10_000,  # deliberately too large
+        horizon_days=1,
+        var_confidence=0.99,
+        model="historical",
+    )
+    assert bt_df.empty
+    assert "reason" in bt_df.attrs
+    assert "trading days" in bt_df.attrs["reason"].lower()
+
+
+def test_service_run_all_with_options(sample_prices, option_portfolio):
+    """Service should run all three models on a stocks+options portfolio without blowing up."""
+    service = RiskEngineService(
+        portfolio=option_portfolio,
+        prices=sample_prices,
+        pricing_date=date.today(),
+        lookback_days=252,
+        horizon_days=1,
+        var_confidence=0.99,
+        es_confidence=0.975,
+        n_simulations=1000,
+    )
+    results = service.run_all()
+    for model_name, res in results.items():
+        assert np.isfinite(res["var"]), f"{model_name} VaR not finite"
+        assert np.isfinite(res["es"]), f"{model_name} ES not finite"
+        assert res["var"] > 0, f"{model_name} VaR non-positive"
+        assert res["es"] >= res["var"], f"{model_name} ES < VaR"
+
+
+def test_ewma_short_N_edge_case(sample_prices):
+    """Small EWMA N (high decay) should still produce a finite, PSD cov matrix."""
+    lr = compute_log_returns(sample_prices)
+    mu, cov = estimate_ewma_mean_cov(lr, lookback_days=252, N=5)
+    assert np.all(np.isfinite(mu.values))
+    assert np.all(np.isfinite(cov.values))
+    eig = np.linalg.eigvalsh(cov.values)
+    assert eig.min() > -1e-10, "EWMA cov not PSD"
+
+
+def test_expired_option_intrinsic_value():
+    """Expired options should valuate to intrinsic × quantity × multiplier."""
+    from src.portfolio.positions import option_value
+    expired = OptionPosition(
+        ticker="TEST",
+        underlying_ticker="AAPL",
+        option_type="call",
+        quantity=1,
+        strike=100.0,
+        maturity_date=date.today() - timedelta(days=30),  # expired
+        volatility=0.20,
+        risk_free_rate=0.05,
+        dividend_yield=0.0,
+        contract_multiplier=100.0,
+    )
+    # Spot above strike — intrinsic = 20
+    v_itm = option_value(expired, spot=120.0, pricing_date=date.today())
+    assert v_itm == 20.0 * 100.0
+    # Spot below strike — intrinsic = 0
+    v_otm = option_value(expired, spot=80.0, pricing_date=date.today())
+    assert v_otm == 0.0
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
