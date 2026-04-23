@@ -41,7 +41,7 @@ def render_market_data_panel(portfolio_tickers: list[str]) -> pd.DataFrame | Non
         st.caption(
             f"📦 Currently loaded: **{len(existing.columns)}** tickers, "
             f"**{len(existing)}** rows "
-            f"({existing.index[0].date()} → {existing.index[-1].date()}) — "
+            f"({existing.index[0].date()} → {existing.index[-1].date()}) - "
             f"{', '.join(existing.columns[:8])}"
             + (" …" if len(existing.columns) > 8 else "")
         )
@@ -118,14 +118,14 @@ def _render_yfinance_panel(portfolio_tickers: list[str]) -> pd.DataFrame | None:
             "Use local cache",
             value=True,
             key="yf_use_cache",
-            help="Parquet cache at .cache/prices/ — keeps reruns fast.",
+            help="Parquet cache at .cache/prices/ - keeps reruns fast.",
         )
     with col_opts2:
         include_benchmarks = st.checkbox(
             "Auto-append benchmarks (^GSPC, ^TNX)",
             value=False,
             key="yf_include_benchmarks",
-            help="Handy for credit/regulatory tabs — pulls S&P 500 and 10Y rate proxy.",
+            help="Handy for credit/regulatory tabs - pulls S&P 500 and 10Y rate proxy.",
         )
 
     if st.button("Download from Yahoo Finance", key="yf_download"):

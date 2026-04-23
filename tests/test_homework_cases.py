@@ -10,27 +10,27 @@ CVA01-05, REG01-02 are covered there).
 New cases added here
 --------------------
 READY_NOW
-  HW3_GBM_FORMULA_VAR   — GBM EV / SD / 98% VaR at 1d, 5d, 1y
-  HW4_SINGLE_STOCK      — sigma_annual, mu_annual, exponent, 5-day 99% VaR
-  HW9_DISCRETE_CVA      — one-period risk-neutral CVA (HW9 structure)
-  HW10_RWA_CAPITAL      — balance sheet: cash + mortgages + corporate bonds
-  LN_MONOTONICITY       — VaR monotone in alpha and sigma
-  HZ_EDGE_ZERO_HAZARD   — lambda=0 gives certain survival, zero spread
-  HZ_NEGATIVE_HAZARD    — lambda<0 raises ValueError
-  MR_ATM_SMOKE          — V0=B=100 Merton structural smoke test
-  MR_INVALID_SURVIVAL   — target_survival >= 1 raises ValueError
-  CVA_FULL_RECOVERY     — R=1 makes CVA zero
-  CVA_LINEARITY         — CVA scales linearly with deterministic exposure
+  HW3_GBM_FORMULA_VAR   - GBM EV / SD / 98% VaR at 1d, 5d, 1y
+  HW4_SINGLE_STOCK      - sigma_annual, mu_annual, exponent, 5-day 99% VaR
+  HW9_DISCRETE_CVA      - one-period risk-neutral CVA (HW9 structure)
+  HW10_RWA_CAPITAL      - balance sheet: cash + mortgages + corporate bonds
+  LN_MONOTONICITY       - VaR monotone in alpha and sigma
+  HZ_EDGE_ZERO_HAZARD   - lambda=0 gives certain survival, zero spread
+  HZ_NEGATIVE_HAZARD    - lambda<0 raises ValueError
+  MR_ATM_SMOKE          - V0=B=100 Merton structural smoke test
+  MR_INVALID_SURVIVAL   - target_survival >= 1 raises ValueError
+  CVA_FULL_RECOVERY     - R=1 makes CVA zero
+  CVA_LINEARITY         - CVA scales linearly with deterministic exposure
 
 TESTABLE_IF_HELPER_EXISTS (all helpers exist in this repo)
-  HW3_SCENARIO_VAR_ES   — 10-scenario empirical VaR / ES (pure arithmetic)
-  HW4_TWO_STOCK_VAR     — 2-stock sum-of-lognormal moments parametric VaR
-  HW5_LAMBDA_20PCT      — EWMA lambda: lambda^N = 0.20 (20% weight heuristic)
-  HW5_LAMBDA_L2         — EWMA lambda: half-life = N/2 (L2-optimal)
+  HW3_SCENARIO_VAR_ES   - 10-scenario empirical VaR / ES (pure arithmetic)
+  HW4_TWO_STOCK_VAR     - 2-stock sum-of-lognormal moments parametric VaR
+  HW5_LAMBDA_20PCT      - EWMA lambda: lambda^N = 0.20 (20% weight heuristic)
+  HW5_LAMBDA_L2         - EWMA lambda: half-life = N/2 (L2-optimal)
 
 OPTIONAL_EXTENSION (helpers exist in this repo)
-  HW5_BS_DELTA_FD       — Black-Scholes call price and delta at ATM
-  HW3_INTEL_BSM         — Intel delta-hedge call price, delta, shocked P&L
+  HW5_BS_DELTA_FD       - Black-Scholes call price and delta at ATM
+  HW3_INTEL_BSM         - Intel delta-hedge call price, delta, shocked P&L
 """
 import math
 import os
@@ -78,7 +78,7 @@ ABS_MONEY = 1.0   # monetary tolerance for source-rounded homework outputs
 
 class TestHW3_GBM_FormulaVaR:
     """
-    HW3_GBM_FORMULA_VAR — GBM expected value, std-dev, and 98% VaR.
+    HW3_GBM_FORMULA_VAR - GBM expected value, std-dev, and 98% VaR.
     Source: Homework 3. V0=29000, mu=0.04 (arithmetic drift), sigma=0.35.
     Horizons: 1d = 1/252, 5d = 5/252, 1y = 1.0.
     """
@@ -114,7 +114,7 @@ class TestHW3_GBM_FormulaVaR:
 
 class TestHW4_SingleStockParamVaR:
     """
-    HW4_SINGLE_STOCK_PARAM_VAR — calibration and 5-day 99% VaR.
+    HW4_SINGLE_STOCK_PARAM_VAR - calibration and 5-day 99% VaR.
     Source: Homework 4, Problem 1.
     1,400 shares at $82; daily m=0.00015, daily sigma=0.035; horizon 5 days.
     API converts: mu_arithmetic = m + 0.5*sigma^2.
@@ -158,7 +158,7 @@ class TestHW4_SingleStockParamVaR:
 
 class TestHW9_DiscreteCVA:
     """
-    HW9_DISCRETE_CVA — one-period risk-neutral CVA.
+    HW9_DISCRETE_CVA - one-period risk-neutral CVA.
     Source: Homework 9.  Short-forward setup (deliver stock, receive bond).
     Counterparty defaults with risk-neutral prob 0.25.
     """
@@ -218,7 +218,7 @@ class TestHW9_DiscreteCVA:
 
 class TestHW10_RWA_Capital:
     """
-    HW10_RWA_CAPITAL — bank balance sheet: cash + residential mortgages + corporate bonds.
+    HW10_RWA_CAPITAL - bank balance sheet: cash + residential mortgages + corporate bonds.
     Source: Homework 10. Cash=69k (w=0), mortgages=73k (w=0.45), corp=47k (w=1.0).
     Deposits=182k (liabilities). Capital = assets - liabilities.
     """
@@ -265,7 +265,7 @@ class TestHW10_RWA_Capital:
 
 class TestLN_Monotonicity:
     """
-    LN_MONOTONICITY_SMOKE — VaR increases with confidence level and volatility.
+    LN_MONOTONICITY_SMOKE - VaR increases with confidence level and volatility.
     Source: seminal edge-case from assessment doc.
     m=0 (log-return mean); mu = m + 0.5*sigma^2 (arithmetic drift for API).
     """
@@ -305,7 +305,7 @@ class TestLN_Monotonicity:
 
 class TestHZ_EdgeZeroHazard:
     """
-    HZ_EDGE_ZERO_HAZARD — zero hazard: certain survival, zero default, zero credit spread.
+    HZ_EDGE_ZERO_HAZARD - zero hazard: certain survival, zero default, zero credit spread.
     Source: assessment doc edge cases.
     """
     lam = 0.0
@@ -336,7 +336,7 @@ class TestHZ_EdgeZeroHazard:
 
 class TestHZ_NegativeHazardReject:
     """
-    HZ_INPUT_NEGATIVE_HAZARD_REJECT — negative lambda must raise ValueError.
+    HZ_INPUT_NEGATIVE_HAZARD_REJECT - negative lambda must raise ValueError.
     Source: assessment doc. Negative intensities imply invalid survival.
     """
     def test_survival_rejects_negative_lambda(self):
@@ -354,7 +354,7 @@ class TestHZ_NegativeHazardReject:
 
 class TestMR_AtTheMoney:
     """
-    MR_AT_THE_MONEY_STRUCTURAL_SMOKE — Merton model when V0 = B (at-the-money debt).
+    MR_AT_THE_MONEY_STRUCTURAL_SMOKE - Merton model when V0 = B (at-the-money debt).
     Source: assessment doc.  V0=B=100, r=0.05, sigma=0.2, T=1.
     d2 = (r - 0.5*sigma^2)*T / (sigma*sqrt(T)) = 0.15
     d1 = d2 + sigma*sqrt(T)    = 0.35
@@ -393,7 +393,7 @@ class TestMR_AtTheMoney:
 
 class TestMR_InvalidSurvivalReject:
     """
-    MR_TARGET_SURVIVAL_INVALID_REJECT — target_survival outside (0,1) raises ValueError.
+    MR_TARGET_SURVIVAL_INVALID_REJECT - target_survival outside (0,1) raises ValueError.
     Source: assessment doc.
     """
     def test_survival_above_one_raises(self):
@@ -411,7 +411,7 @@ class TestMR_InvalidSurvivalReject:
 
 class TestCVA_FullRecovery:
     """
-    CVA_EDGE_FULL_RECOVERY — R=1 makes CVA exactly zero even with exposure and default risk.
+    CVA_EDGE_FULL_RECOVERY - R=1 makes CVA exactly zero even with exposure and default risk.
     Source: assessment doc.  Tests LGD multiplier discipline.
     """
     def test_cva_zero_when_R_one(self):
@@ -427,7 +427,7 @@ class TestCVA_FullRecovery:
 
 class TestCVA_LinearityExposure:
     """
-    CVA_LINEARITY_EXPOSURE — CVA scales linearly with deterministic exposure.
+    CVA_LINEARITY_EXPOSURE - CVA scales linearly with deterministic exposure.
     Source: assessment doc.  Catches missing notional / exposure scaling.
     """
     R, lam = 0.4, 0.03
@@ -447,7 +447,7 @@ class TestCVA_LinearityExposure:
 
 class TestHW3_ScenarioVaR_ES:
     """
-    HW3_SCENARIO_VAR_ES — 10-scenario empirical VaR and ES.
+    HW3_SCENARIO_VAR_ES - 10-scenario empirical VaR and ES.
     Source: Homework 3. Apple + IBM portfolio.
     """
     initial = {"Apple": 228.15, "IBM": 205.23}
@@ -506,7 +506,7 @@ class TestHW3_ScenarioVaR_ES:
 
 class TestHW4_TwoStockNormalVaR:
     """
-    HW4_TWO_STOCK_NORMAL_VAR — two-stock sum-of-lognormal moments VaR.
+    HW4_TWO_STOCK_NORMAL_VAR - two-stock sum-of-lognormal moments VaR.
     Source: Homework 4.
     Stock 1: 400 shares × $102, mu=0.035, sigma=0.33
     Stock 2: 600 shares × $81,  mu=0.023, sigma=0.22
@@ -571,7 +571,7 @@ class TestHW4_TwoStockNormalVaR:
 
 class TestHW5_Lambda20PctHeuristic:
     """
-    HW5_LAMBDA_20PCT_HEURISTIC — EWMA lambda such that lambda^N = 0.2.
+    HW5_LAMBDA_20PCT_HEURISTIC - EWMA lambda such that lambda^N = 0.2.
     Source: Homework 5.  "The last observation gets 20% of total weight."
     """
     @pytest.mark.parametrize("years,expected_lam", [
@@ -593,7 +593,7 @@ class TestHW5_Lambda20PctHeuristic:
 
 class TestHW5_LambdaL2Equivalent:
     """
-    HW5_LAMBDA_L2_EQUIVALENT — EWMA lambda from half-life = N/2 (L2-optimal).
+    HW5_LAMBDA_L2_EQUIVALENT - EWMA lambda from half-life = N/2 (L2-optimal).
     Source: Homework 5.  lambda = 0.5^(1/half_life), half_life = N/2.
     """
     @pytest.mark.parametrize("years,expected_lam,expected_hl", [
@@ -622,7 +622,7 @@ class TestHW5_LambdaL2Equivalent:
 
 class TestHW5_BS_DeltaFiniteDiff:
     """
-    HW5_BS_DELTA_FINITE_DIFF — ATM Black-Scholes call price and delta.
+    HW5_BS_DELTA_FINITE_DIFF - ATM Black-Scholes call price and delta.
     Source: Homework 5.  S=K=85, r=0.045, sigma=0.3, T=2 (no dividend).
     d1 = (0.045 + 0.5*0.09)*2 / (0.3*sqrt(2)) = 0.42426...
     d2 = d1 - 0.3*sqrt(2) = 0.0
@@ -652,7 +652,7 @@ class TestHW5_BS_DeltaFiniteDiff:
 
 class TestHW3_IntelBSM_DeltaHedge:
     """
-    HW3_INTEL_BSM_DELTA_HEDGE — Intel BSM call price, delta hedge, shocked P&L.
+    HW3_INTEL_BSM_DELTA_HEDGE - Intel BSM call price, delta hedge, shocked P&L.
     Source: Homework 3.
     S0=24.65, K=25, r=0.047, sigma=0.40, T=1.5
     1,200 shares of stock. Hedge by writing calls.

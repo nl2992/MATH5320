@@ -86,9 +86,9 @@ Walk-forward VaR backtesting & `src/risk/backtest.py` & `test_backend.py`, `test
 Kupiec unconditional coverage test & `src/risk/backtest.py` (`kupiec_test`) & `test_backend.py`, `test_backtest_extensions.py` & <a href="#sec:backtest-method" data-reference-type="ref" data-reference="sec:backtest-method">9.6</a>\
 Christoffersen independence test & `src/risk/backtest.py` (`christoffersen_test`) & `test_backtest_extensions.py` & <a href="#sec:backtest-method" data-reference-type="ref" data-reference="sec:backtest-method">9.6</a>\
 Basel traffic-light classification & `src/risk/backtest.py` (`basel_traffic_light`) & `test_backtest_extensions.py` & <a href="#sec:backtest-method" data-reference-type="ref" data-reference="sec:backtest-method">9.6</a>\
-Numerical precision and failure modes & Black-Scholes limits, log-return cancellation, covariance stability, EWMA stability, extreme-tail VaR/ES & `test_numerical_precision.py` (NP_01–NP_07) & <a href="#sec:numerical-behavioural-results" data-reference-type="ref" data-reference="sec:numerical-behavioural-results">13</a>\
-Behavioural confirmation tests & Monotonicity, put-call parity, no-arbitrage lower bound, ES/VaR ordering & `test_backend.py` (BEH_01–BEH_08) & <a href="#sec:numerical-behavioural-results" data-reference-type="ref" data-reference="sec:numerical-behavioural-results">13</a>\
-Convergence and inversion tests & MC convergence, Merton implied barrier, Kupiec exact-count check & `test_backend.py` (CONV_01, INV_01–INV_02) & <a href="#sec:numerical-behavioural-results" data-reference-type="ref" data-reference="sec:numerical-behavioural-results">13</a>\
+Numerical precision and failure modes & Black-Scholes limits, log-return cancellation, covariance stability, EWMA stability, extreme-tail VaR/ES & `test_numerical_precision.py` (NP_01 - NP_07) & <a href="#sec:numerical-behavioural-results" data-reference-type="ref" data-reference="sec:numerical-behavioural-results">13</a>\
+Behavioural confirmation tests & Monotonicity, put-call parity, no-arbitrage lower bound, ES/VaR ordering & `test_backend.py` (BEH_01 - BEH_08) & <a href="#sec:numerical-behavioural-results" data-reference-type="ref" data-reference="sec:numerical-behavioural-results">13</a>\
+Convergence and inversion tests & MC convergence, Merton implied barrier, Kupiec exact-count check & `test_backend.py` (CONV_01, INV_01 - INV_02) & <a href="#sec:numerical-behavioural-results" data-reference-type="ref" data-reference="sec:numerical-behavioural-results">13</a>\
 P&L attribution and hedge effectiveness & Linear P&L residual and one-day delta hedge check & `test_backend.py` (PNL_01, HEDGE_01) & <a href="#sec:numerical-behavioural-results" data-reference-type="ref" data-reference="sec:numerical-behavioural-results">13</a>\
 Exact GBM/lognormal VaR and ES & `src/risk/lognormal.py` & `test_lognormal.py`, `test_course_validation.py` & <a href="#sec:extensions" data-reference-type="ref" data-reference="sec:extensions">9.7</a>\
 Reduced-form hazard credit model & `src/credit/hazard.py` & `test_credit.py`, `test_course_validation.py` & <a href="#sec:extensions" data-reference-type="ref" data-reference="sec:extensions">9.7</a>\
@@ -592,9 +592,9 @@ Validation was performed through six complementary layers.
 
 **Course-homework fixture tests.** Key scenarios were derived from MATH GR 5320 homework problems and embedded as regression tests in `tests/test_homework_cases.py` and `tests/test_course_validation.py`. If the implementation drifts from the course formulas, the tests fail directly.
 
-**Numerical precision and failure-mode tests.** The final suite adds NP_01–NP_07 in `tests/test_numerical_precision.py`. These tests cover IEEE 754-style floating-point issues, extreme Black-Scholes inputs, log-return cancellation, near-singular covariance matrices, EWMA stability, and extreme-confidence VaR/ES. This is where Goldberg’s floating-point guidance is most relevant .
+**Numerical precision and failure-mode tests.** The final suite adds NP_01 - NP_07 in `tests/test_numerical_precision.py`. These tests cover IEEE 754-style floating-point issues, extreme Black-Scholes inputs, log-return cancellation, near-singular covariance matrices, EWMA stability, and extreme-confidence VaR/ES. This is where Goldberg’s floating-point guidance is most relevant .
 
-**Behavioural, convergence, and inversion tests.** The final suite also adds BEH_01–BEH_08, CONV_01, INV_01–INV_02, PNL_01, and HEDGE_01. These tests check monotonicity, put-call parity, no-arbitrage bounds, ES/VaR ordering, Monte Carlo convergence, Merton inversion, Kupiec p-values, linear P&L attribution, and a one-day delta-hedge check.
+**Behavioural, convergence, and inversion tests.** The final suite also adds BEH_01 - BEH_08, CONV_01, INV_01 - INV_02, PNL_01, and HEDGE_01. These tests check monotonicity, put-call parity, no-arbitrage bounds, ES/VaR ordering, Monte Carlo convergence, Merton inversion, Kupiec p-values, linear P&L attribution, and a one-day delta-hedge check.
 
 **Integration tests.** Two live-data scripts (`integration_test.py` and `integration_test_formula_sheet.py`) exercise full end-to-end workflows against Yahoo Finance data. Both scripts passed.
 
@@ -724,7 +724,7 @@ The Basel RED classification reflects the exception count mechanically. This res
 
 # Numerical Precision, Behavioural, Convergence, and Attribution Results
 
-## Numerical Precision Results: NP_01–NP_07
+## Numerical Precision Results: NP_01 - NP_07
 
 <div class="center">
 
@@ -751,7 +751,7 @@ For the near-singular covariance case, the test logic includes an explicit regul
 ```
 In the observed run, the constructed covariance was already positive definite, so the jitter branch was not needed. The fallback still matters because it states how the engine should behave if a nearly singular matrix crosses the numerical boundary.
 
-## Behavioural Confirmation Results: BEH_01–BEH_08
+## Behavioural Confirmation Results: BEH_01 - BEH_08
 
 <div class="center">
 
@@ -915,17 +915,17 @@ Harvey J. Stein. *Model Validation Report Template*. Bloomberg Enterprise Risk,
 
 Harvey J. Stein. *Model Validation Municipal Bonds*. Bloomberg Enterprise Risk, 2014.
 
-David Goldberg. “What Every Computer Scientist Should Know About Floating-Point Arithmetic.” *ACM Computing Surveys*, 23(1):5–48, 1991.
+David Goldberg. “What Every Computer Scientist Should Know About Floating-Point Arithmetic.” *ACM Computing Surveys*, 23(1):5 - 48, 1991.
 
 John C. Hull. *Options, Futures, and Other Derivatives*, 10th ed. Pearson, 2018.
 
-Paul H. Kupiec. “Techniques for Verifying the Accuracy of Risk Measurement Models.” *Journal of Derivatives*, 3(2):73–84, 1995.
+Paul H. Kupiec. “Techniques for Verifying the Accuracy of Risk Measurement Models.” *Journal of Derivatives*, 3(2):73 - 84, 1995.
 
-Peter F. Christoffersen. “Evaluating Interval Forecasts.” *International Economic Review*, 39(4):841–862, 1998.
+Peter F. Christoffersen. “Evaluating Interval Forecasts.” *International Economic Review*, 39(4):841 - 862, 1998.
 
-Robert C. Merton. “On the Pricing of Corporate Debt: The Risk Structure of Interest Rates.” *Journal of Finance*, 29(2):449–470, 1974.
+Robert C. Merton. “On the Pricing of Corporate Debt: The Risk Structure of Interest Rates.” *Journal of Finance*, 29(2):449 - 470, 1974.
 
-Fischer Black and Myron Scholes. “The Pricing of Options and Corporate Liabilities.” *Journal of Political Economy*, 81(3):637–654, 1973.
+Fischer Black and Myron Scholes. “The Pricing of Options and Corporate Liabilities.” *Journal of Political Economy*, 81(3):637 - 654, 1973.
 
 Alexander J. McNeil, Rüdiger Frey, and Paul Embrechts. *Quantitative Risk Management: Concepts, Techniques and Tools*, revised ed. Princeton University Press, 2015.
 

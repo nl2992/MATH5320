@@ -48,7 +48,7 @@ def merton_d1_d2(V0: float, B: float, nu: float, sigma: float, T: float) -> tupl
         T (float): Time to maturity in years (must be > 0).
 
     Returns:
-        tuple[float, float]: (d1, d2) — Merton distance-to-default metrics.
+        tuple[float, float]: (d1, d2) - Merton distance-to-default metrics.
 
     Raises:
         ValueError: If ``V0``, ``B``, ``sigma``, or ``T`` are non-positive.
@@ -86,7 +86,7 @@ def merton_pd(V0: float, B: float, nu: float, sigma: float, T: float) -> float:
 
 
 def merton_equity(V0: float, B: float, r: float, sigma: float, T: float) -> float:
-    """Merton equity value — a call option on the firm's assets (under Q).
+    """Merton equity value - a call option on the firm's assets (under Q).
 
     E₀ = V₀ N(d₁(r)) − B e^{−rT} N(d₂(r))
 
@@ -237,7 +237,7 @@ def merton_interval_default_prob(
 
     Returns ``pd_T`` if the interval straddles the maturity T (t1 < T ≤ t2),
     and 0 otherwise.  This reflects the Merton timing defect: default can
-    only occur at T, so P(default in year 3–4) = 0 when maturity T = 5.
+    only occur at T, so P(default in year 3 - 4) = 0 when maturity T = 5.
 
     Args:
         t1 (float): Start of interval in years.
@@ -246,7 +246,7 @@ def merton_interval_default_prob(
         pd_T (float): Probability of default at maturity ∈ [0, 1].
 
     Returns:
-        float: Marginal default probability — either ``pd_T`` or 0.
+        float: Marginal default probability - either ``pd_T`` or 0.
 
     Raises:
         ValueError: If ``t2 < t1``, ``T ≤ 0``, or ``pd_T`` outside [0, 1].

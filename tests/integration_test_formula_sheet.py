@@ -1,7 +1,7 @@
 """
 integration_test_formula_sheet.py
 End-to-end integration test exercising the full formula-sheet stack against
-real Yahoo data. Network-required — skip if `MATH5320_SKIP_NETWORK=1`.
+real Yahoo data. Network-required - skip if `MATH5320_SKIP_NETWORK=1`.
 
 Run with:
     python tests/integration_test_formula_sheet.py
@@ -59,7 +59,7 @@ r = fetch_risk_free_rate(date.today())
 print(f"    r = {r:.4%}")
 assert 0.0 < r < 0.20, f"Risk-free rate out of sensible range: {r}"
 
-# ── 3. Stock + option portfolio — all three VaR/ES models ─────────────────────
+# ── 3. Stock + option portfolio - all three VaR/ES models ─────────────────────
 print("\n[3] Stock+option portfolio → RiskEngineService.run_all()")
 eq_prices = prices[["AAPL", "MSFT"]].dropna()
 portfolio = Portfolio(
@@ -136,8 +136,8 @@ var_short = var_short_lognormal(V0=V0, mu=mu, sigma=sigma, h=h, p=0.99)
 print(f"    var_long={var_long:,.2f}  var_short={var_short:,.2f}")
 assert var_short > var_long, "Short VaR should exceed long VaR under GBM."
 
-# ── 6. Merton — structural Q-PD ∈ (0,1) and P-PD > Q-PD when μ < r ────────────
-print("\n[6] merton_summary — Q-PD ∈ (0,1), structural μ vs r relation")
+# ── 6. Merton - structural Q-PD ∈ (0,1) and P-PD > Q-PD when μ < r ────────────
+print("\n[6] merton_summary - Q-PD ∈ (0,1), structural μ vs r relation")
 snap = merton_summary(V0=100.0, B=80.0, r=0.05, mu=0.02, sigma=0.25, T=1.0)
 print(
     f"    Q-PD={snap['Q']['PD']:.4%}  P-PD={snap['P']['PD']:.4%}  "

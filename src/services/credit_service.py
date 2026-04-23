@@ -1,6 +1,6 @@
 """
 credit_service.py
-Orchestration for credit-risk calculations (formula-sheet §8–§11).
+Orchestration for credit-risk calculations (formula-sheet §8 - §11).
 
 Streamlit panels call only this service; it never touches the UI layer.
 """
@@ -135,8 +135,8 @@ def merton_summary(
     Returns:
         dict: Merton snapshot with keys:
             - ``"V0"``, ``"B"``, ``"T"`` (float): Input parameters echoed.
-            - ``"Q"`` (dict): Q-measure results — ``{d1, d2, PD}``.
-            - ``"P"`` (dict): P-measure results — ``{d1, d2, PD}``.
+            - ``"Q"`` (dict): Q-measure results - ``{d1, d2, PD}``.
+            - ``"P"`` (dict): P-measure results - ``{d1, d2, PD}``.
             - ``"E0"`` (float): Equity value (call on assets under Q).
             - ``"D0"`` (float): Risky debt value (V0 − E0).
     """
@@ -293,7 +293,7 @@ def epe_from_portfolio_mc(
     Thin service-layer wrapper around :func:`src.credit.cva.epe_profile_from_mc`.
 
     Args:
-        V_paths (np.ndarray): Simulated future portfolio values — shape
+        V_paths (np.ndarray): Simulated future portfolio values - shape
             ``(n_paths,)`` for a single horizon or ``(n_paths, n_horizons)``
             for a term structure.
         V0 (float): Current portfolio value used as the exposure reference.

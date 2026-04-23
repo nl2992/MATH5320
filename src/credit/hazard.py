@@ -155,7 +155,7 @@ def survival_piecewise(
         if t <= hi:
             break
     else:
-        # Past the last knot — extrapolate with the final hazard.
+        # Past the last knot - extrapolate with the final hazard.
         if t > grid[-1]:
             integral += hazards[-1] * (t - grid[-1])
 

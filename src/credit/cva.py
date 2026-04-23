@@ -125,7 +125,7 @@ def risky_bond_price(
     # Notional at maturity.
     pv += notional * math.exp(-r * t[-1]) * s[-1]
 
-    # Recovery integral — midpoint approximation over each coupon interval.
+    # Recovery integral - midpoint approximation over each coupon interval.
     prev_t, prev_s = 0.0, 1.0
     for ti, si in zip(t, s):
         mid = 0.5 * (prev_t + ti)
@@ -155,7 +155,7 @@ def epe_profile_from_mc(
             "at-the-money" reference.
 
     Returns:
-        np.ndarray: EPE at each horizon — shape ``(n_horizons,)`` or a
+        np.ndarray: EPE at each horizon - shape ``(n_horizons,)`` or a
             length-1 array for 1-D input.
     """
     arr = np.asarray(V_paths, dtype=float)

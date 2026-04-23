@@ -114,8 +114,8 @@ To ground the analysis throughout this report we adopt the following representat
 <div class="tabular">
 
 @L0.20L0.12r L0.12L0.12r@ Position & Type & Quantity & Strike & Maturity & $`\sigma`$\
-AAPL equity & Stock & 24,679 shares & — & — & —\
-CAT equity & Stock & 171 shares & — & — & —\
+AAPL equity & Stock & 24,679 shares & - & - & - \
+CAT equity & Stock & 171 shares & - & - & - \
 AAPL call & Call & $`+10`$ contracts & \$190 & Jun 2026 & 25%\
 CAT put & Put & $`-5`$ contracts & \$300 & Dec 2025 & 22%\
 
@@ -455,11 +455,11 @@ This section works through the principal modeling assumptions in turn, assessing
 
 ## Log-Return Shock Convention
 
-The log-return convention is the appropriate choice for non-negative equity prices. It is consistent with the GBM dynamics underlying Black-Scholes and keeps shocked prices strictly positive even for historically extreme moves. For equity VaR at 1–10 day horizons and confidence levels up to 99.5%, the numerical difference between log and arithmetic shocks is small; for longer horizons or more extreme quantiles the log convention is materially more conservative and analytically more defensible. We verified this by running both conventions on the example portfolio: the log-return VaR exceeds the arithmetic-return VaR by approximately 0.3–0.8% at the 99th percentile for 10-day horizon, which is well within the residual variance of the historical estimator and is therefore not a material source of bias for this use case.
+The log-return convention is the appropriate choice for non-negative equity prices. It is consistent with the GBM dynamics underlying Black-Scholes and keeps shocked prices strictly positive even for historically extreme moves. For equity VaR at 1 - 10 day horizons and confidence levels up to 99.5%, the numerical difference between log and arithmetic shocks is small; for longer horizons or more extreme quantiles the log convention is materially more conservative and analytically more defensible. We verified this by running both conventions on the example portfolio: the log-return VaR exceeds the arithmetic-return VaR by approximately 0.3 - 0.8% at the 99th percentile for 10-day horizon, which is well within the residual variance of the historical estimator and is therefore not a material source of bias for this use case.
 
 ## Window Size Selection
 
-The lookback window is user-configurable from 60 to 504 trading days. Across this range, VaR estimates for the example portfolio vary by 15–40%. Shorter windows amplify the current volatility regime and react quickly to stress, but produce high day-to-day variance in the VaR estimate; at $`N_w = 60`$ only 60 overlapping scenarios are available to the 99th-percentile quantile estimator, meaning the VaR is determined by the single worst scenario — an unstable estimate. Longer windows smooth across regime changes at the cost of slower reaction to sustained market stress.
+The lookback window is user-configurable from 60 to 504 trading days. Across this range, VaR estimates for the example portfolio vary by 15 - 40%. Shorter windows amplify the current volatility regime and react quickly to stress, but produce high day-to-day variance in the VaR estimate; at $`N_w = 60`$ only 60 overlapping scenarios are available to the 99th-percentile quantile estimator, meaning the VaR is determined by the single worst scenario - an unstable estimate. Longer windows smooth across regime changes at the cost of slower reaction to sustained market stress.
 
 We recommend a minimum lookback of 252 trading days (one calendar year) for the primary VaR run. The 60-day lower bound is made available for experimentation and cross-window comparison. This recommendation is consistent with the guidance in Harvey : “a large enough window should be chosen to yield stable VaR calculations; we would recommend a 3-year historical window for stability reasons, but a 1-year window could be used as well.”
 
@@ -471,7 +471,7 @@ For the intended course scope this limitation is structural and deliberate. The 
 
 ## Delta-Normal Approximation for Options
 
-The parametric engine uses first-order delta-dollar exposures per equation (<a href="#eq:exposure" data-reference-type="ref" data-reference="eq:exposure">[eq:exposure]</a>). This approximation is accurate for small moves in the underlying but underestimates VaR for large moves, near-expiry options, and portfolios with significant short-gamma exposure. For the representative portfolio (modest option notional relative to the equity book), the approximation error is small and is confirmed by comparing parametric VaR against the full-repricing Monte Carlo estimate: the two agree within approximately 2–5% for this portfolio.
+The parametric engine uses first-order delta-dollar exposures per equation (<a href="#eq:exposure" data-reference-type="ref" data-reference="eq:exposure">[eq:exposure]</a>). This approximation is accurate for small moves in the underlying but underestimates VaR for large moves, near-expiry options, and portfolios with significant short-gamma exposure. For the representative portfolio (modest option notional relative to the equity book), the approximation error is small and is confirmed by comparing parametric VaR against the full-repricing Monte Carlo estimate: the two agree within approximately 2 - 5% for this portfolio.
 
 For portfolios dominated by short-gamma positions (short straddles, short puts, or large leveraged option books), the parametric method will systematically understate VaR. A delta-gamma correction (Cornish-Fisher expansion or quadratic portfolio approximation) would materially improve accuracy for such books and is identified as a recommended enhancement in Section <a href="#sec:conclusions" data-reference-type="ref" data-reference="sec:conclusions">7</a>.
 
@@ -479,7 +479,7 @@ For portfolios dominated by short-gamma positions (short straddles, short puts, 
 
 Under the `fixed` mode, $`\sigma`$ is held constant across all scenarios. This is the largest single simplification in the options VaR engine: in practice, implied volatility rises when the underlying falls (the volatility skew), so holding $`\sigma`$ fixed underestimates the loss on a short-put position under a large market decline.
 
-The `underlying_beta` mode addresses this via equation (<a href="#eq:vol_shock" data-reference-type="ref" data-reference="eq:vol_shock">[eq:vol_shock]</a>). Testing on the example portfolio with 5 short CAT put contracts shows a 4–7% increase in portfolio VaR under `underlying_beta` relative to `fixed` mode, which is directionally correct: short puts become more dangerous when volatility rises during market declines. Both modes are explicitly documented as course-level approximations. A production options VaR system would require a full implied-volatility surface model with vega, vanna, and volga sensitivities. The simplified vol-shock mode here is substantially better than ignoring vol dynamics entirely and is the appropriate level of sophistication for MATH GR 5320.
+The `underlying_beta` mode addresses this via equation (<a href="#eq:vol_shock" data-reference-type="ref" data-reference="eq:vol_shock">[eq:vol_shock]</a>). Testing on the example portfolio with 5 short CAT put contracts shows a 4 - 7% increase in portfolio VaR under `underlying_beta` relative to `fixed` mode, which is directionally correct: short puts become more dangerous when volatility rises during market declines. Both modes are explicitly documented as course-level approximations. A production options VaR system would require a full implied-volatility surface model with vega, vanna, and volga sensitivities. The simplified vol-shock mode here is substantially better than ignoring vol dynamics entirely and is the appropriate level of sophistication for MATH GR 5320.
 
 ## Walk-Forward Backtesting Results
 
@@ -533,8 +533,8 @@ Merton Q-PD (NVDA): $`V_0{=}\$16.3`$B, $`B{=}\$1.3`$B, $`\sigma_A{=}31.2\%`$, $`
 CDS par spread: $`\lambda{=}3\%`$, $`R{=}40\%`$ & 180 bps & 180 bps & Pass\
 Capital ratio (HW10 balance sheet) & 8.77% & 8.77% & Pass\
 Kupiec LR: 18 exceptions vs. expected 7.5 & $`p = 0.0011`$ & Reject & Pass\
-$`\mathop{\mathrm{ES}}_\alpha \geq \mathop{\mathrm{VaR}}_\alpha`$: all three methods, all cases & — & — & Pass\
-Portfolio diversification benefit (AAPL/CAT, HW08) & 20.8% & — & Pass\
+$`\mathop{\mathrm{ES}}_\alpha \geq \mathop{\mathrm{VaR}}_\alpha`$: all three methods, all cases & - & - & Pass\
+Portfolio diversification benefit (AAPL/CAT, HW08) & 20.8% & - & Pass\
 
 </div>
 
@@ -582,13 +582,13 @@ Harvey J. Stein. *Model Validation Municipal Bonds*. Bloomberg Enterprise Risk,
 
 John C. Hull. *Options, Futures, and Other Derivatives*, 10th ed. Pearson, 2018.
 
-Paul H. Kupiec. “Techniques for Verifying the Accuracy of Risk Measurement Models.” *Journal of Derivatives*, 3(2):73–84, 1995.
+Paul H. Kupiec. “Techniques for Verifying the Accuracy of Risk Measurement Models.” *Journal of Derivatives*, 3(2):73 - 84, 1995.
 
-Peter F. Christoffersen. “Evaluating Interval Forecasts.” *International Economic Review*, 39(4):841–862, 1998.
+Peter F. Christoffersen. “Evaluating Interval Forecasts.” *International Economic Review*, 39(4):841 - 862, 1998.
 
-Robert C. Merton. “On the Pricing of Corporate Debt: The Risk Structure of Interest Rates.” *Journal of Finance*, 29(2):449–470, 1974.
+Robert C. Merton. “On the Pricing of Corporate Debt: The Risk Structure of Interest Rates.” *Journal of Finance*, 29(2):449 - 470, 1974.
 
-Fischer Black and Myron Scholes. “The Pricing of Options and Corporate Liabilities.” *Journal of Political Economy*, 81(3):637–654, 1973.
+Fischer Black and Myron Scholes. “The Pricing of Options and Corporate Liabilities.” *Journal of Political Economy*, 81(3):637 - 654, 1973.
 
 Alexander J. McNeil, Rüdiger Frey, and Paul Embrechts. *Quantitative Risk Management: Concepts, Techniques and Tools*, revised ed. Princeton University Press, 2015.
 

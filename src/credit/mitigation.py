@@ -104,7 +104,7 @@ def simple_collateralized_exposure(exposure: float, collateral: float) -> float:
         collateral (float): Dollar value of collateral already posted.
 
     Returns:
-        float: max(exposure − collateral, 0) — residual uncovered exposure.
+        float: max(exposure − collateral, 0) - residual uncovered exposure.
     """
     return float(max(exposure - collateral, 0.0))
 
@@ -128,7 +128,7 @@ def csa_call_amount(
         collateral (float): Collateral already posted by the counterparty.
         threshold (float): CSA threshold below which no margin call is made
             (default 0.0 = fully collateralised).
-        mta (float): Minimum Transfer Amount — calls below this size are
+        mta (float): Minimum Transfer Amount - calls below this size are
             not triggered (default 0.0).
 
     Returns:

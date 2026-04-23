@@ -63,7 +63,7 @@ def option_value(
     """
     T = _time_to_maturity(pricing_date, pos.maturity_date)
     if T <= 0.0:
-        # Expired option — intrinsic value only
+        # Expired option - intrinsic value only
         if pos.option_type.lower() == "call":
             intrinsic = max(spot - pos.strike, 0.0)
         else:
@@ -92,8 +92,8 @@ def shocked_option_volatility(
     """Compute a scenario-specific implied volatility for an option position.
 
     Two modes are supported:
-        ``"fixed"`` — returns pos.volatility unchanged regardless of the return.
-        ``"underlying_beta"`` — applies a leverage-style shock so that a
+        ``"fixed"`` - returns pos.volatility unchanged regardless of the return.
+        ``"underlying_beta"`` - applies a leverage-style shock so that a
             negative underlying return increases the implied vol:
                 sigma' = max(floor, sigma0 × (1 − beta × R))
 

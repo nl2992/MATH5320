@@ -111,7 +111,7 @@ def _render_option_table() -> list[OptionPosition]:
     for idx, row in edited.iterrows():
         row_err = _validate_option_row(idx, row)
         if row_err is None:
-            # Row is entirely blank — skip silently.
+            # Row is entirely blank - skip silently.
             continue
         if row_err:
             row_errors.append(row_err)

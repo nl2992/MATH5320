@@ -47,7 +47,7 @@ class TestLoadCSV:
             market_data.load_price_history_csv(io.StringIO(csv))
 
 
-# ── download_adjusted_close — mocked yfinance ─────────────────────────────────
+# ── download_adjusted_close - mocked yfinance ─────────────────────────────────
 
 def _multi_ticker_frame(tickers):
     """Build a fake yfinance multi-ticker response."""

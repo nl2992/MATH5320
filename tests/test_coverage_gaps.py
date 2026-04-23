@@ -57,7 +57,7 @@ def pf_stocks():
 
 @pytest.fixture
 def pf_with_option_same_underlying():
-    """Option on a stock that is already held — exercises the dedup branch."""
+    """Option on a stock that is already held - exercises the dedup branch."""
     mat = date.today() + timedelta(days=90)
     return Portfolio(
         stocks=[StockPosition("AAPL", 100)],
@@ -93,7 +93,7 @@ class TestBSValidation:
             bs_delta(S=100, K=100, T=1, r=0.05, q=0, sigma=0.2, option_type="banana")
 
 
-# ── portfolio.py — option underlying dedup ────────────────────────────────────
+# ── portfolio.py - option underlying dedup ────────────────────────────────────
 
 class TestPortfolioDedup:
     def test_portfolio_exposure_option_already_seen(self, pf_with_option_same_underlying):
@@ -106,7 +106,7 @@ class TestPortfolioDedup:
         assert len(exp) == 1
 
 
-# ── positions.py — expired put branch + T<=0 delta exposure ───────────────────
+# ── positions.py - expired put branch + T<=0 delta exposure ───────────────────
 
 class TestPositionsEdgeCases:
     def test_expired_put_intrinsic(self):
@@ -129,7 +129,7 @@ class TestPositionsEdgeCases:
         assert delta == 0.0
 
 
-# ── returns.py — horizon_days < 1 raise ───────────────────────────────────────
+# ── returns.py - horizon_days < 1 raise ───────────────────────────────────────
 
 class TestReturns:
     def test_overlapping_horizon_bad_horizon_raises(self):
@@ -140,7 +140,7 @@ class TestReturns:
             build_overlapping_horizon_log_returns(df, 0)
 
 
-# ── estimators.py — dispatcher routes to ewma ─────────────────────────────────
+# ── estimators.py - dispatcher routes to ewma ─────────────────────────────────
 
 class TestEstimatorsDispatch:
     def test_get_mean_cov_ewma_path(self, sample_prices):
@@ -155,7 +155,7 @@ class TestEstimatorsDispatch:
         assert cov.shape == (2, 2)
 
 
-# ── backtest.py — exception path, monte_carlo path, unknown model, Kupiec N=0 ─
+# ── backtest.py - exception path, monte_carlo path, unknown model, Kupiec N=0 ─
 
 class TestBacktestGaps:
     def test_forecast_var_unknown_model_raises(self, sample_prices, pf_stocks):
@@ -207,7 +207,7 @@ class TestBacktestGaps:
         assert out["reject_h0"] is False
 
 
-# ── monte_carlo.py — random_seed=None + option dedup ──────────────────────────
+# ── monte_carlo.py - random_seed=None + option dedup ──────────────────────────
 
 class TestMonteCarloGaps:
     def test_mc_without_seed(self, sample_prices, pf_stocks):
@@ -255,7 +255,7 @@ class TestManualMeanCovValidation:
         assert res["var"] > 0
 
 
-# ── historical.py — option underlying dedup ───────────────────────────────────
+# ── historical.py - option underlying dedup ───────────────────────────────────
 
 class TestHistoricalGaps:
     def test_historical_with_duplicate_underlying(self, sample_prices, pf_with_option_same_underlying):
@@ -269,7 +269,7 @@ class TestHistoricalGaps:
         assert res["var"] > 0
 
 
-# ── Option on a *new* underlying — exercises the append branch in `_all_underlyings`
+# ── Option on a *new* underlying - exercises the append branch in `_all_underlyings`
 # and `_portfolio_underlyings` helpers inside portfolio.py, historical.py, monte_carlo.py.
 
 class TestOptionOnNewUnderlying:
@@ -330,7 +330,7 @@ class TestFetchRiskFreeRateColumnMissing:
         assert r == 0.06
 
 
-# ── services/risk_engine_service.py — portfolio_value + run_backtest empty ────
+# ── services/risk_engine_service.py - portfolio_value + run_backtest empty ────
 
 class TestRiskEngineServiceGaps:
     def test_service_portfolio_value(self, sample_prices, pf_stocks):
@@ -388,7 +388,7 @@ class TestRiskEngineServiceGaps:
             svc.run_all()
 
 
-# ── normal.py — portfolio_delta_normal_mean_var ──────────────────────────────
+# ── normal.py - portfolio_delta_normal_mean_var ──────────────────────────────
 
 class TestNormalPortfolioMeanVar:
     def test_basic_two_asset(self):
@@ -409,7 +409,7 @@ class TestNormalPortfolioMeanVar:
         assert s == 0.0
 
 
-# ── returns.py — absolute-return horizon builder ─────────────────────────────
+# ── returns.py - absolute-return horizon builder ─────────────────────────────
 
 class TestAbsoluteReturns:
     def test_build_absolute_returns(self):
@@ -425,7 +425,7 @@ class TestAbsoluteReturns:
             build_overlapping_horizon_absolute_returns(prices, horizon=0)
 
 
-# ── estimators.py — validation branches in manual_mean_cov ───────────────────
+# ── estimators.py - validation branches in manual_mean_cov ───────────────────
 
 class TestManualMeanCovAllBranches:
     def _valid_params(self):
@@ -479,7 +479,7 @@ class TestManualMeanCovAllBranches:
             manual_mean_cov(p, ["A", "B"])
 
 
-# ── risk/historical.py — absolute shock path ─────────────────────────────────
+# ── risk/historical.py - absolute shock path ─────────────────────────────────
 
 class TestHistoricalAbsoluteShock:
     def test_absolute_shock_mode(self, sample_prices, pf_stocks):
@@ -494,7 +494,7 @@ class TestHistoricalAbsoluteShock:
         assert res["es"] >= res["var"]
 
 
-# ── credit/cds.py — input validation + q==0 edge case ────────────────────────
+# ── credit/cds.py - input validation + q==0 edge case ────────────────────────
 
 class TestCDSParSpreadClosedForm:
     def test_negative_lambda_raises(self):
@@ -523,7 +523,7 @@ class TestCDSParSpreadClosedForm:
         assert spread > 0
 
 
-# ── credit/hazard.py — piecewise functions ───────────────────────────────────
+# ── credit/hazard.py - piecewise functions ───────────────────────────────────
 
 class TestHazardPiecewise:
     _GRID = [0.0, 1.0, 3.0, 5.0]
@@ -550,7 +550,7 @@ class TestHazardPiecewise:
         assert 0 < p < 1
 
 
-# ── credit/cva.py — validation branches ──────────────────────────────────────
+# ── credit/cva.py - validation branches ──────────────────────────────────────
 
 class TestCVAValidation:
     def test_negative_exposure_raises(self):
@@ -582,7 +582,7 @@ class TestCVAValidation:
             cva_continuous_constant_exposure(K=1.0, lam=0.03, T=1, R=0.4, r=-0.01)
 
 
-# ── credit/mitigation.py — ccp waterfall validation + csa branch ─────────────
+# ── credit/mitigation.py - ccp waterfall validation + csa branch ─────────────
 
 class TestMitigationCoverage:
     def test_ccp_negative_loss_raises(self):
@@ -607,7 +607,7 @@ class TestMitigationCoverage:
         assert result >= 0
 
 
-# ── services/regulatory_service.py — run_dfast_capital_path ──────────────────
+# ── services/regulatory_service.py - run_dfast_capital_path ──────────────────
 
 class TestRegulatoryServiceDFAST:
     def test_run_dfast_capital_path_returns_all_scenarios(self):

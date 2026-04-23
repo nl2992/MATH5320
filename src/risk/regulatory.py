@@ -141,7 +141,7 @@ def apply_stress_scenario(
 #
 # These are illustrative defaults of the shape used in the §12 lecture examples
 # (broad equity shocks with a flight-to-quality rate move). They are NOT the
-# official Federal Reserve DFAST numbers — real DFAST scenarios are multi-asset,
+# official Federal Reserve DFAST numbers - real DFAST scenarios are multi-asset,
 # path-dependent, and published annually. Treat these as teaching values.
 
 DFAST_SCENARIOS: dict[str, dict[str, float]] = {
@@ -290,7 +290,7 @@ def min_capital_ratio(path: list[dict]) -> float:
     """Return the minimum capital ratio across a projected capital path.
 
     Args:
-        path (list[dict]): Output of :func:`project_capital_path` — each
+        path (list[dict]): Output of :func:`project_capital_path` - each
             dict must contain a ``"capital_ratio"`` key.
 
     Returns:

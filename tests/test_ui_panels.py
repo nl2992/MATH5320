@@ -2,7 +2,7 @@
 test_ui_panels.py
 Coverage-focused tests for src/ui/*.py panels using streamlit's AppTest
 harness. AppTest.from_function serializes the target function to a temp
-script that runs in isolation — so each app-function here is fully
+script that runs in isolation - so each app-function here is fully
 self-contained (inline imports + inline data construction).
 """
 import sys
@@ -129,7 +129,7 @@ def test_risk_settings_manual_mode():
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# portfolio_editor.py — _validate_option_row direct tests
+# portfolio_editor.py - _validate_option_row direct tests
 # ──────────────────────────────────────────────────────────────────────────────
 
 def _valid_row(**overrides):
@@ -540,7 +540,7 @@ def test_mdp_yf_fail():
 # ──────────────────────────────────────────────────────────────────────────────
 
 def _build_option_portfolio():
-    """String copied into scripts — don't call, copy/paste the body."""
+    """String copied into scripts - don't call, copy/paste the body."""
     pass  # (documentation only)
 
 
@@ -1473,7 +1473,7 @@ def test_mdp_csv_upload_fail(monkeypatch):
 
 
 def _app_mdp_yf_bad_data():
-    """YF download succeeds but returns a frame that fails validation —
+    """YF download succeeds but returns a frame that fails validation - 
     covers validation-error branch (market_data_panel.py:68-70)."""
     import sys, os
     sys.path.insert(0, os.getcwd())
@@ -1531,7 +1531,7 @@ def test_cds_cva_csv_upload_good(monkeypatch):
 
 
 def _app_cds_cva_csv_upload_missing_cols():
-    """CSV upload missing required columns — hits the error branch 242-243."""
+    """CSV upload missing required columns - hits the error branch 242-243."""
     import sys, os
     sys.path.insert(0, os.getcwd())
     import streamlit as st
@@ -1582,7 +1582,7 @@ def _app_cds_cva_csv_upload_parse_fail():
 
 
 def _app_mdp_csv_upload_good():
-    """CSV upload that parses successfully — hits market_data_panel.py:172."""
+    """CSV upload that parses successfully - hits market_data_panel.py:172."""
     import sys, os
     sys.path.insert(0, os.getcwd())
     from io import BytesIO

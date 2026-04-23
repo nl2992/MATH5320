@@ -254,7 +254,7 @@ def _render_cva_section(
                 st.error(f"CSV parse error: {exc}")
 
     if exposure_df is None or exposure_df.empty:
-        st.info("No exposure profile yet — build from portfolio MC or upload a CSV.")
+        st.info("No exposure profile yet - build from portfolio MC or upload a CSV.")
         return
 
     st.markdown("**Exposure profile (EPE)**")
@@ -367,9 +367,9 @@ def _render_mitigated_cva_section(
     Show unmitigated vs mitigated CVA side-by-side.
 
     Mitigation:
-        1. Netting — portfolio MTM is summed before CVA (already embedded in
+        1. Netting - portfolio MTM is summed before CVA (already embedded in
            the EPE from Section B).
-        2. CSA collateral — user inputs threshold and MTA; collateral is
+        2. CSA collateral - user inputs threshold and MTA; collateral is
            subtracted from exposure each period.
 
     Requires the EPE profile from Section B to be built first.

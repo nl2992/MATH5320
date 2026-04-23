@@ -76,7 +76,7 @@ Mathematical specification in detail & Section 2.5\
 Assumptions, merits, and limitations & Section 2.6\
 Comparison with alternatives & Section 2.7\
 Subjective component documentation & Section 2.8\
-Software design documentation & Sections 3–6\
+Software design documentation & Sections 3 - 6\
 Data analysis & Sections 4, 7, and 9\
 Testing & Section 11\
 System analysis and testing & Sections 4, 8, and 11\
@@ -102,7 +102,7 @@ Delta-normal parametric & Closed-form; analytically tractable; serves as a fast 
 Monte Carlo VaR/ES & Full repricing of nonlinear payoffs; the standard for option-heavy portfolios; convergence to exact GBM VaR is verified in tests & Glasserman, *Monte Carlo Methods in Financial Engineering*, Springer, 2003, Ch. 9\
 EWMA covariance & Down-weights old data; faster regime adaptation than rolling equal-weight; directly addresses volatility clustering & *RiskMetrics Technical Document*, 1996, Section 5; Zivot & Wang, *Modeling Financial Time Series with S-PLUS*, 2nd ed., Ch. 6\
 Kupiec backtest & Likelihood-ratio test of unconditional exception frequency; the Basel II/III standard regulatory backtest & Kupiec (1995), *FEDS Discussion Paper 95-24*\
-Christoffersen test & Conditional coverage; detects clustering of exceptions in time; complements Kupiec; directly relevant to our RED zone result & Christoffersen (1998), *Int. Economic Review* 39(4):841–862\
+Christoffersen test & Conditional coverage; detects clustering of exceptions in time; complements Kupiec; directly relevant to our RED zone result & Christoffersen (1998), *Int. Economic Review* 39(4):841 - 862\
 Hazard / Merton credit & Two canonical credit risk frameworks; reduced-form for market-implied default and structural for balance-sheet default & Lando, *Credit Risk Modeling*, Princeton, 2004; Merton (1974), *JF* 29(2)\
 Regulatory capital & Basel III-inspired RWA and capital ratio; illustrative DFAST stress path; consistent with course formula sheet & BCBS, *Basel III: A Global Regulatory Framework*, 2010\
 
@@ -134,7 +134,7 @@ and $`N(\cdot)`$ is the standard normal CDF. The delta sensitivities that feed t
 \Delta_C = e^{-qT}\,N(d_1), \qquad \Delta_P = -e^{-qT}\,N(-d_1)
 ```
 
-**Numerical technique.** Formulas <a href="#eq:bs-call" data-reference-type="eqref" data-reference="eq:bs-call">[eq:bs-call]</a>–<a href="#eq:bs-put" data-reference-type="eqref" data-reference="eq:bs-put">[eq:bs-put]</a> are evaluated directly using `scipy.stats.norm.cdf`. No numerical integration or lattice is used. At $`T \to 0^+`$ the implementation returns discounted intrinsic value; negative volatility or maturity raises a controlled exception rather than returning a NaN.
+**Numerical technique.** Formulas <a href="#eq:bs-call" data-reference-type="eqref" data-reference="eq:bs-call">[eq:bs-call]</a> - <a href="#eq:bs-put" data-reference-type="eqref" data-reference="eq:bs-put">[eq:bs-put]</a> are evaluated directly using `scipy.stats.norm.cdf`. No numerical integration or lattice is used. At $`T \to 0^+`$ the implementation returns discounted intrinsic value; negative volatility or maturity raises a controlled exception rather than returning a NaN.
 
 ### Historical Simulation VaR and ES
 
@@ -226,7 +226,7 @@ The exponentially weighted moving average (EWMA) estimator with decay parameter 
 
 The effective memory of this estimator is $`N`$ days: half the total weight is carried by the most recent $`N\ln 2 \approx 0.693N`$ observations. For the default $`N=60`$, $`\lambda \approx 0.9833`$ and the effective look-back is roughly one calendar quarter.
 
-Equations <a href="#eq:ewma-var" data-reference-type="eqref" data-reference="eq:ewma-var">[eq:ewma-var]</a>–<a href="#eq:ewma-cov" data-reference-type="eqref" data-reference="eq:ewma-cov">[eq:ewma-cov]</a> are vectorised over all asset pairs and initialised with sample estimates from the first 30 return observations (burn-in). The resulting matrix is positive semi-definite by construction because it is a convex combination of positive semi-definite matrices.
+Equations <a href="#eq:ewma-var" data-reference-type="eqref" data-reference="eq:ewma-var">[eq:ewma-var]</a> - <a href="#eq:ewma-cov" data-reference-type="eqref" data-reference="eq:ewma-cov">[eq:ewma-cov]</a> are vectorised over all asset pairs and initialised with sample estimates from the first 30 return observations (burn-in). The resulting matrix is positive semi-definite by construction because it is a convex combination of positive semi-definite matrices.
 
 ### Walk-Forward Backtesting and Statistical Diagnostics
 
@@ -321,7 +321,7 @@ Several parameters required expert judgment. They are documented here with their
 <div class="tabular">
 
 L3.0cmL1.8cmL8.0cm **Parameter** & **Default** & **Justification and sensitivity**\
-Lookback window & 252 days & One calendar year; the standard RiskMetrics and Basel II convention. Shorter windows (e.g. 60 days) react faster to recent volatility but produce noisier estimates; longer windows (e.g. 504 days) are more stable but may mix fundamentally different market regimes. Robustness tests confirm finite, monotone VaR across 60–504 days.\
+Lookback window & 252 days & One calendar year; the standard RiskMetrics and Basel II convention. Shorter windows (e.g. 60 days) react faster to recent volatility but produce noisier estimates; longer windows (e.g. 504 days) are more stable but may mix fundamentally different market regimes. Robustness tests confirm finite, monotone VaR across 60 - 504 days.\
 EWMA half-life $`N`$ & 60 & Corresponds to $`\lambda = 59/60 \approx 0.9833`$ decay per day and an effective memory of roughly one calendar quarter. RiskMetrics (1996) recommends $`\lambda=0.94`$ ($`N\approx17`$) for daily equities; we choose $`N=60`$ for greater stability, accepting slower regime adaptation. Robustness tests show PSD covariance and smooth VaR across $`N \in
     \{10, 20, 60, 120\}`$.\
 Monte Carlo paths & 10 000 & Balances stability against runtime at academic scale. At $`n=10{,}000`$, approximately 100 scenarios fall in the 99% tail, giving a VaR coefficient of variation of roughly 10%. A seeded test at $`n=100{,}000`$ confirms convergence to within 2% of the exact GBM VaR; gains beyond 10 000 paths are marginal for coursework.\
@@ -334,7 +334,7 @@ Backtest lookback & 252 days & Enough observations to make the Kupiec and Christ
 
 </div>
 
-**Validation of subjective choices.** Each parameter above is user-configurable through the risk-settings UI. Robustness tests in `tests/test_coverage_gaps.py` and `tests/test_strict_numerics.py` sweep the key parameters (lookback 60–504 days; EWMA $`N`$ 10–120; MC paths 100–10 000; confidence 95%–99.9%) and confirm that results are finite, positive, and monotone throughout the tested ranges.
+**Validation of subjective choices.** Each parameter above is user-configurable through the risk-settings UI. Robustness tests in `tests/test_coverage_gaps.py` and `tests/test_strict_numerics.py` sweep the key parameters (lookback 60 - 504 days; EWMA $`N`$ 10 - 120; MC paths 100 - 10 000; confidence 95% - 99.9%) and confirm that results are finite, positive, and monotone throughout the tested ranges.
 
 ## Software Architecture Justification
 
@@ -689,7 +689,7 @@ No-network unit test command:
 
 <div class="shellcode">
 
-python -m pytest tests/  –ignore=tests/integration_test.py  –ignore=tests/integration_test_formula_sheet.py -v
+python -m pytest tests/   - ignore=tests/integration_test.py   - ignore=tests/integration_test_formula_sheet.py -v
 
 </div>
 
@@ -699,7 +699,7 @@ Coverage command:
 
 <div class="shellcode">
 
-python -m pytest tests/ –cov=src –cov-report=term-missing  –cov-report=html:submission/coverage_report  –ignore=tests/integration_test.py  –ignore=tests/integration_test_formula_sheet.py
+python -m pytest tests/ - cov=src - cov-report=term-missing   - cov-report=html:submission/coverage_report   - ignore=tests/integration_test.py   - ignore=tests/integration_test_formula_sheet.py
 
 </div>
 
@@ -727,7 +727,7 @@ Historical edge paths & Insufficient-history and absolute-shock branches & Add s
 
 <div class="shellcode">
 
-pip install -r requirements.txt streamlit run app.py python -m pytest tests/  –ignore=tests/integration_test.py  –ignore=tests/integration_test_formula_sheet.py
+pip install -r requirements.txt streamlit run app.py python -m pytest tests/   - ignore=tests/integration_test.py   - ignore=tests/integration_test_formula_sheet.py
 
 </div>
 
@@ -782,7 +782,7 @@ Historical simulation clusters exceptions & Christoffersen $`p < 10^{-14}`$ & EW
 
 7.  **Architecture justification.** Section 2.9: pure functions, separation of concerns, and service boundary justified on MRM grounds.
 
-8.  **Design documentation.** Sections 3–6: layered diagram, separation-of-concerns table, module inventory, interfaces, and schemas.
+8.  **Design documentation.** Sections 3 - 6: layered diagram, separation-of-concerns table, module inventory, interfaces, and schemas.
 
 9.  **Data analysis.** Section 9: validation design and error-handling table.
 

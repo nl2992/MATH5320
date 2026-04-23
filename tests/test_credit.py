@@ -1,6 +1,6 @@
 """
 test_credit.py
-Unit tests for src/credit/ — hazard, Merton, CDS, CVA.
+Unit tests for src/credit/ - hazard, Merton, CDS, CVA.
 Targets 100% branch coverage of each module.
 """
 import sys

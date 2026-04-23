@@ -601,7 +601,7 @@ The coverage target is the highest achievable with the no-network unit suite. St
 
 <div class="shellcode">
 
-python -m pytest tests/  –cov=src  –cov-report=term-missing  –cov-report=html:submission/coverage_report  –cov-report=xml:submission/coverage_report/coverage.xml  –ignore=tests/integration_test.py  –ignore=tests/integration_test_formula_sheet.py
+python -m pytest tests/   --cov=src   --cov-report=term-missing   --cov-report=html:submission/coverage_report   --cov-report=xml:submission/coverage_report/coverage.xml   --ignore=tests/integration_test.py   --ignore=tests/integration_test_formula_sheet.py
 
 </div>
 
@@ -776,6 +776,6 @@ The primary convergence and inversion tests are now documented in Section <a hr
 
 9
 
-Goldberg, D. (1991). *What Every Computer Scientist Should Know About Floating-Point Arithmetic*. ACM Computing Surveys, 23(1), 5–48.
+Goldberg, D. (1991). *What Every Computer Scientist Should Know About Floating-Point Arithmetic*. ACM Computing Surveys, 23(1), 5 - 48.
 
 </div>

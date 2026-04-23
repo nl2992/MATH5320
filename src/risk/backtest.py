@@ -2,7 +2,7 @@
 backtest.py
 Walk-forward VaR backtesting and Kupiec unconditional coverage test.
 
-Spec §14–15:
+Spec §14 - 15:
     Walk-forward algorithm:
         For each time t:
             Fit model using data up to t
@@ -79,7 +79,7 @@ def run_backtest(
         var_confidence (float): VaR tail probability, e.g. 0.99 for 99% VaR.
         model (str): Risk model to use. One of ``"historical"``, ``"parametric"``,
             or ``"monte_carlo"``.
-        estimator (str): ``"window"`` or ``"ewma"`` — mean/cov estimator for
+        estimator (str): ``"window"`` or ``"ewma"`` - mean/cov estimator for
             parametric and Monte Carlo models.
         ewma_N (int): EWMA half-life parameter N; only used when estimator=``"ewma"``.
         n_simulations (int): MC paths per forecast; only used when model=``"monte_carlo"``.
@@ -496,8 +496,8 @@ def basel_traffic_light(n_exceptions: int) -> dict:
     """Basel II/III traffic-light zone and capital multiplier for a VaR model.
 
     Classifies model quality based on exception count in a 250-day window:
-        0–4  → GREEN  (model acceptable, multiplier 3.00)
-        5–9  → YELLOW (model under scrutiny, multiplier 3.40–3.85)
+        0 - 4  → GREEN  (model acceptable, multiplier 3.00)
+        5 - 9  → YELLOW (model under scrutiny, multiplier 3.40 - 3.85)
         10+  → RED    (model rejected, multiplier 4.00)
 
     Args:
@@ -561,7 +561,7 @@ def exception_severity(backtest_df: pd.DataFrame) -> dict:
             - ``"n_exceptions"`` (int): Number of exception days.
             - ``"exception_rate"`` (float): n_exceptions / n_observations.
             - ``"exception_gap"`` (float): Mean of (realized_loss − var_forecast)
-              on exception days — how far losses exceeded the VaR forecast.
+              on exception days - how far losses exceeded the VaR forecast.
             - ``"average_exception_loss"`` (float): Mean realized_loss on
               exception days.
             - ``"max_exception_loss"`` (float): Worst realized_loss on any

@@ -101,7 +101,7 @@ def cds_par_spread(
     def s(t: float) -> float:
         return survival_piecewise(t, grid, hazards)
 
-    # Numerator — protection leg: (1−R) ∫₀ᵀ D(u) p(u) du, p(u) = -s'(u).
+    # Numerator - protection leg: (1−R) ∫₀ᵀ D(u) p(u) du, p(u) = -s'(u).
     # Premium-leg denominator: Σ a(t_i) D(t_i) s(t_i)
     #                          + ∫₀ᵀ a*(u) D(u) p(u) du   (if accrual).
     numerator = 0.0

@@ -69,7 +69,7 @@ def portfolio_delta_normal_mean_var(
         cov_h (np.ndarray): Horizon covariance matrix, shape (k, k).
 
     Returns:
-        tuple[float, float]: (m, s) — portfolio mean P&L and portfolio std dev.
+        tuple[float, float]: (m, s) - portfolio mean P&L and portfolio std dev.
             s is clamped to 0 if the quadratic form is slightly negative (numerical noise).
     """
     x = np.asarray(exposures, dtype=float)

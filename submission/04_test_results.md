@@ -76,7 +76,7 @@ The following files were written to `submission/test_artifacts/` for the submiss
 
 <div class="shellcode">
 
-python -m pytest tests/  –ignore=tests/integration_test.py  –ignore=tests/integration_test_formula_sheet.py -v
+python -m pytest tests/   --ignore=tests/integration_test.py   --ignore=tests/integration_test_formula_sheet.py -v
 
 </div>
 
@@ -84,7 +84,7 @@ python -m pytest tests/  –ignore=tests/integration_test.py  –ignore=tests/
 
 <div class="shellcode">
 
-python -m pytest tests/ –cov=src –cov-report=term-missing  –cov-report=html:submission/coverage_report  –cov-report=xml:submission/coverage_report/coverage.xml  –ignore=tests/integration_test.py  –ignore=tests/integration_test_formula_sheet.py
+python -m pytest tests/ --cov=src --cov-report=term-missing   --cov-report=html:submission/coverage_report   --cov-report=xml:submission/coverage_report/coverage.xml   --ignore=tests/integration_test.py   --ignore=tests/integration_test_formula_sheet.py
 
 </div>
 

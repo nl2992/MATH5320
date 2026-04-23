@@ -218,7 +218,7 @@ def download_adjusted_close_cached(
                 df = pd.read_parquet(cache_path)
                 df.index = pd.to_datetime(df.index)
                 return df
-            except Exception as exc:  # corrupt cache — fall through to refetch
+            except Exception as exc:  # corrupt cache - fall through to refetch
                 logger.warning("Cache read failed (%s); refetching.", exc)
 
     # Batch attempt with exponential backoff.
@@ -236,7 +236,7 @@ def download_adjusted_close_cached(
             )
             time.sleep(wait)
     else:
-        # All batch retries failed — try per-ticker.
+        # All batch retries failed - try per-ticker.
         logger.warning(
             "Batch download exhausted retries; falling back to per-ticker. "
             "Last error: %s", last_exc,

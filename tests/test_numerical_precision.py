@@ -69,7 +69,7 @@ def test_NP_01_bs_underflow_low_vol():
 
 def test_NP_02_bs_overflow_high_vol():
     """BS call/put at extreme high sigma: finite, bounded, and monotone toward limits."""
-    # Test across escalating vols — call should approach S, put should approach K*exp(-rT)
+    # Test across escalating vols - call should approach S, put should approach K*exp(-rT)
     high_vols = [5.0, 10.0, 50.0, 100.0, 500.0]
     S, K, r, q, T = 100.0, 100.0, 0.05, 0.0, 1.0
     prev_call = 0.0
@@ -151,7 +151,7 @@ def test_NP_04_log_return_near_zero_increment():
     assert abs(first_ret) < 1e-6, f"First log return {first_ret:.2e} unexpectedly large"
 
     # Lecture example: cancellation from very large vs very small values
-    # 1e17 - 1.0 = 1e17 in float64 — returns should handle this gracefully
+    # 1e17 - 1.0 = 1e17 in float64 - returns should handle this gracefully
     large_prices = pd.DataFrame(
         {"BIG": [1e10, 1e10 + 1.0, 1e10 + 2.0]},
         index=pd.date_range("2022-01-01", periods=3, freq="B"),
@@ -159,7 +159,7 @@ def test_NP_04_log_return_near_zero_increment():
     big_ret = compute_log_returns(large_prices)
     assert np.all(np.isfinite(big_ret.values)), "Log returns not finite for large prices"
 
-    # Multiple tickers with mixed scales — tests independent noise cancellation
+    # Multiple tickers with mixed scales - tests independent noise cancellation
     mixed = pd.DataFrame(
         {
             "SMALL": [0.001, 0.001 + 1e-10, 0.001 + 2e-10, 0.001 + 3e-10],
@@ -330,7 +330,7 @@ def test_NP_07_parametric_var_extreme_confidence():
         options=[],
     )
 
-    # Test across confidence levels — VaR should be monotone increasing
+    # Test across confidence levels - VaR should be monotone increasing
     alphas = [0.90, 0.95, 0.99, 0.999, 0.9999]
     prev_var = 0.0
     for alpha in alphas:

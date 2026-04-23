@@ -441,10 +441,10 @@ def test_expired_option_intrinsic_value():
         dividend_yield=0.0,
         contract_multiplier=100.0,
     )
-    # Spot above strike — intrinsic = 20
+    # Spot above strike - intrinsic = 20
     v_itm = option_value(expired, spot=120.0, pricing_date=date.today())
     assert v_itm == 20.0 * 100.0
-    # Spot below strike — intrinsic = 0
+    # Spot below strike - intrinsic = 0
     v_otm = option_value(expired, spot=80.0, pricing_date=date.today())
     assert v_otm == 0.0
 
@@ -455,7 +455,7 @@ class TestBehavioralConfirmation:
     """BEH_01 through BEH_08: mathematical properties of BS and risk measures."""
 
     def test_BEH_01_call_monotone_in_spot(self):
-        """Call price is strictly increasing in spot S — across parameter regimes."""
+        """Call price is strictly increasing in spot S - across parameter regimes."""
         # Base case
         spots = [60.0, 70.0, 80.0, 90.0, 100.0, 110.0, 120.0, 140.0, 160.0]
         for sigma in [0.1, 0.2, 0.4]:
@@ -716,7 +716,7 @@ class TestConvergenceAndInversion:
         if err_coarse > 1e-6:
             ratio = err_coarse / max(err_fine, 1e-10)
             assert ratio > 1.2, (
-                f"Convergence ratio {ratio:.2f} too low — expected > 1.2 for sqrt(10) scaling"
+                f"Convergence ratio {ratio:.2f} too low - expected > 1.2 for sqrt(10) scaling"
             )
 
         # All results should be positive

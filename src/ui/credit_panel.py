@@ -1,6 +1,6 @@
 """
 credit_panel.py
-Streamlit UI for credit-risk analysis — formula-sheet §8 (reduced-form) + §9 (Merton).
+Streamlit UI for credit-risk analysis - formula-sheet §8 (reduced-form) + §9 (Merton).
 """
 from __future__ import annotations
 
@@ -26,8 +26,8 @@ def render_credit_panel(
     """Render both Reduced-form and Merton sections."""
     st.subheader("Credit Risk")
     st.caption(
-        "Reduced-form (§8) — hazard / survival / default density. "
-        "Merton (§9) — structural default of a firm modelled as GBM."
+        "Reduced-form (§8) - hazard / survival / default density. "
+        "Merton (§9) - structural default of a firm modelled as GBM."
     )
 
     _render_reduced_form_section()
@@ -35,7 +35,7 @@ def render_credit_panel(
     _render_merton_section(portfolio, prices)
 
 
-# ── Section A — Reduced-form ──────────────────────────────────────────────────
+# ── Section A - Reduced-form ──────────────────────────────────────────────────
 
 def _render_reduced_form_section() -> None:
     st.markdown("### A · Reduced-form (hazard rate)")
@@ -108,7 +108,7 @@ def _render_reduced_form_section() -> None:
     st.dataframe(df_fmt, use_container_width=True, hide_index=True)
 
 
-# ── Section B — Merton ────────────────────────────────────────────────────────
+# ── Section B - Merton ────────────────────────────────────────────────────────
 
 def _render_merton_section(
     portfolio: Portfolio,
@@ -247,7 +247,7 @@ def _render_merton_section(
     st.dataframe(det, use_container_width=True, hide_index=True)
 
     # ── Target-survival inversion (HW IX) ─────────────────────────────────────
-    st.markdown("**Target-survival inversion** — HW IX")
+    st.markdown("**Target-survival inversion** - HW IX")
     target_surv = st.slider(
         "Target survival s*",
         min_value=0.01,

@@ -47,7 +47,7 @@ def manual_mean_cov(
             returned μ and Σ are aligned to this order.
 
     Returns:
-        tuple[pd.Series, pd.DataFrame]: (mu, cov) — daily mean vector and
+        tuple[pd.Series, pd.DataFrame]: (mu, cov) - daily mean vector and
             daily covariance matrix, both aligned to ``underlyings``.
 
     Raises:
@@ -216,7 +216,7 @@ def get_mean_cov(
             Only used when estimator=``"ewma"``. Default 60.
 
     Returns:
-        tuple[pd.Series, pd.DataFrame]: (mu, cov) — daily mean log-return vector
+        tuple[pd.Series, pd.DataFrame]: (mu, cov) - daily mean log-return vector
             and daily covariance matrix, indexed by ticker.
 
     Raises:

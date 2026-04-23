@@ -14,7 +14,7 @@ from src.data.market_data import download_adjusted_close
 from src.services.risk_engine_service import RiskEngineService
 
 print("=" * 60)
-print("MATH5320 Risk System — Integration Test")
+print("MATH5320 Risk System - Integration Test")
 print("=" * 60)
 
 # ── 1. Download market data ────────────────────────────────────────────────────

@@ -188,7 +188,7 @@ class RiskEngineService:
         """Run walk-forward VaR backtest, Kupiec POF test, and Basel traffic light.
 
         Args:
-            model (str): VaR model to backtest — ``"historical"``,
+            model (str): VaR model to backtest - ``"historical"``,
                 ``"parametric"``, or ``"monte_carlo"``.
 
         Returns:

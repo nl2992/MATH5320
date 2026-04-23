@@ -56,7 +56,7 @@ REL = 0.01  # 1% relative tolerance.
 # ──────────────────────────────────────────────────────────────────────────────
 
 class TestLN01_CanonicalSymmetric:
-    """LN01 — m=0, σ=0.2, h=1, V0=10k."""
+    """LN01 - m=0, σ=0.2, h=1, V0=10k."""
 
     inputs = dict(V0=10_000.0, m=0.0, sigma=0.2, h=1.0)
     mu = inputs["m"] + 0.5 * inputs["sigma"] ** 2
@@ -83,7 +83,7 @@ class TestLN01_CanonicalSymmetric:
 
 
 class TestLN02_HomeworkIV:
-    """LN02 — Homework IV: 1,400 shares × $82, daily m=0.00015, σ=0.035, h=5d."""
+    """LN02 - Homework IV: 1,400 shares × $82, daily m=0.00015, σ=0.035, h=5d."""
 
     V0 = 114_800.0
     sigma = 0.035
@@ -109,7 +109,7 @@ class TestLN02_HomeworkIV:
 
 
 class TestLN03_ZeroVolatility:
-    """LN03 — σ=0, h=5 → deterministic, VaR=0. API rejects σ≤0 by design."""
+    """LN03 - σ=0, h=5 → deterministic, VaR=0. API rejects σ≤0 by design."""
 
     def test_zero_sigma_raises(self):
         with pytest.raises(ValueError, match="sigma"):
@@ -122,7 +122,7 @@ class TestLN03_ZeroVolatility:
 
 
 class TestLN04_ZeroHorizon:
-    """LN04 — h=0 → all risk measures zero. API rejects h≤0 by design."""
+    """LN04 - h=0 → all risk measures zero. API rejects h≤0 by design."""
 
     def test_zero_h_raises(self):
         with pytest.raises(ValueError, match="h"):
@@ -141,7 +141,7 @@ class TestLN04_ZeroHorizon:
 # ──────────────────────────────────────────────────────────────────────────────
 
 class TestHZ01_ConstantHazard:
-    """HZ01 — λ=0.0074: s(5), P(τ≤5), P(3<τ≤4)."""
+    """HZ01 - λ=0.0074: s(5), P(τ≤5), P(3<τ≤4)."""
 
     lam = 0.0074
 
@@ -160,7 +160,7 @@ class TestHZ01_ConstantHazard:
 
 
 class TestHZ02_PiecewiseHazard:
-    """HZ02 — schedule [0,1,2,inf) with hazards [0.01, 0.011, 0.012]."""
+    """HZ02 - schedule [0,1,2,inf) with hazards [0.01, 0.011, 0.012]."""
 
     # Use a far-out right endpoint as a practical stand-in for "inf".
     grid = [0.0, 1.0, 2.0, 50.0]
@@ -185,7 +185,7 @@ class TestHZ02_PiecewiseHazard:
 
 
 class TestHZ03_KnotContinuity:
-    """HZ03 — survival must stay continuous at hazard knots."""
+    """HZ03 - survival must stay continuous at hazard knots."""
 
     grid = [0.0, 1.0, 2.0, 50.0]
     hazards = [0.01, 0.011, 0.012]
@@ -208,7 +208,7 @@ class TestHZ03_KnotContinuity:
 
 
 class TestHZ04_RiskyZCB:
-    """HZ04 — r=0.05, λ=0.03, R=0.4, T=5 → price, spread."""
+    """HZ04 - r=0.05, λ=0.03, R=0.4, T=5 → price, spread."""
 
     def test_risky_zcb_price(self):
         s_T = survival(5.0, 0.03)
@@ -226,7 +226,7 @@ class TestHZ04_RiskyZCB:
 # ──────────────────────────────────────────────────────────────────────────────
 
 class TestMR01_HomeworkVII_QvsP:
-    """MR01 — V0=1.1M, B=850k, σ=0.28, T=5, r=0.055, μ=0.023."""
+    """MR01 - V0=1.1M, B=850k, σ=0.28, T=5, r=0.055, μ=0.023."""
 
     V0, B, sigma, T = 1_100_000.0, 850_000.0, 0.28, 5.0
     r, mu = 0.055, 0.023
@@ -254,7 +254,7 @@ class TestMR01_HomeworkVII_QvsP:
 
 
 class TestMR02_TargetSurvivalInversion:
-    """MR02 — invert target_survival=0.96368 to get B*, then recover identity."""
+    """MR02 - invert target_survival=0.96368 to get B*, then recover identity."""
 
     V0, sigma, r, T, target = 15_000_000.0, 0.3, 0.05, 5.0, 0.96368
 
@@ -288,7 +288,7 @@ class TestMR02_TargetSurvivalInversion:
 # ──────────────────────────────────────────────────────────────────────────────
 
 class TestCDS01_FlatApprox:
-    """CDS01 — approximation (1-R)λ with R=0.4, λ=0.03 → 180 bps."""
+    """CDS01 - approximation (1-R)λ with R=0.4, λ=0.03 → 180 bps."""
 
     def test_spread(self):
         s = cds_par_spread_constant_hazard(lam=0.03, R=0.4)
@@ -300,7 +300,7 @@ class TestCDS01_FlatApprox:
 
 
 class TestCDS02_FullAnnualPaymentParSpread:
-    """CDS02 — r=0.05, λ=0.03, R=0.4, annual pay, T=5 and T=10."""
+    """CDS02 - r=0.05, λ=0.03, R=0.4, annual pay, T=5 and T=10."""
 
     r, lam, R = 0.05, 0.03, 0.4
 
@@ -324,7 +324,7 @@ class TestCDS02_FullAnnualPaymentParSpread:
 
 
 class TestCDS03_ZeroHazard:
-    """CDS03 — λ=0 → par_spread = 0."""
+    """CDS03 - λ=0 → par_spread = 0."""
 
     def test_zero_hazard(self):
         times = [1.0, 2.0, 3.0, 4.0, 5.0]
@@ -333,7 +333,7 @@ class TestCDS03_ZeroHazard:
 
 
 class TestCDS04_FullRecovery:
-    """CDS04 — R=1 → par_spread = 0 (LGD = 0)."""
+    """CDS04 - R=1 → par_spread = 0 (LGD = 0)."""
 
     def test_full_recovery(self):
         times = [1.0, 2.0, 3.0, 4.0, 5.0]
@@ -346,7 +346,7 @@ class TestCDS04_FullRecovery:
 # ──────────────────────────────────────────────────────────────────────────────
 
 class TestCVA01_ConstantExposure:
-    """CVA01 — constant exposure, constant hazard, no discounting (lecture form)."""
+    """CVA01 - constant exposure, constant hazard, no discounting (lecture form)."""
 
     R, lam, T, exposure = 0.4, 0.03, 5.0, 12.0
 
@@ -360,7 +360,7 @@ class TestCVA01_ConstantExposure:
 
 
 class TestCVA02_RiskyCouponBond:
-    """CVA02 — 3-year, 5% annual coupon, r=0.04, λ=0.02, R=0.4, face=100."""
+    """CVA02 - 3-year, 5% annual coupon, r=0.04, λ=0.02, R=0.4, face=100."""
 
     face, coupon = 100.0, 0.05
     times = [1.0, 2.0, 3.0]
@@ -390,7 +390,7 @@ class TestCVA02_RiskyCouponBond:
 
 
 class TestCVA03_EPEMixedSigns:
-    """CVA03 — EPE should be mean of positive exposures only.
+    """CVA03 - EPE should be mean of positive exposures only.
 
     `epe_profile_from_mc(V_paths, V0)` returns E[max(V_T - V0, 0)].
     With V0=0 and V_paths=[-5,0,7,10], we get mean(0,0,7,10) = 4.25.
@@ -404,7 +404,7 @@ class TestCVA03_EPEMixedSigns:
 
 
 class TestCVA04_EPEAllNegative:
-    """CVA04 — EPE must be zero when all exposures are non-positive."""
+    """CVA04 - EPE must be zero when all exposures are non-positive."""
 
     def test_epe_zero(self):
         paths = np.array([-5.0, -1.0])
@@ -413,7 +413,7 @@ class TestCVA04_EPEAllNegative:
 
 
 class TestCVA05_BucketedCVA:
-    """CVA05 — bucketed CVA via year-by-year default probs should match CVA01."""
+    """CVA05 - bucketed CVA via year-by-year default probs should match CVA01."""
 
     R, lam, exposure = 0.4, 0.03, 12.0
     year_buckets = [1, 2, 3, 4, 5]
@@ -438,7 +438,7 @@ class TestCVA05_BucketedCVA:
 # ──────────────────────────────────────────────────────────────────────────────
 
 class TestREG01_RWAAndCapitalRatio:
-    """REG01 — cash(20, w=0) + corp_bond(50, w=1) + interbank(40, w=0.2)."""
+    """REG01 - cash(20, w=0) + corp_bond(50, w=1) + interbank(40, w=0.2)."""
 
     assets = [20.0, 50.0, 40.0]  # cash, corp_bond, interbank
     weights = [0.0, 1.0, 0.2]
@@ -461,7 +461,7 @@ class TestREG01_RWAAndCapitalRatio:
 
 
 class TestREG02_FailingBank:
-    """REG02 — assets=100, equity=1, RWA=100 → both ratios = 0.01, fail both."""
+    """REG02 - assets=100, equity=1, RWA=100 → both ratios = 0.01, fail both."""
 
     def test_capital_ratio_fails(self):
         out = capital_ratio(equity=1.0, rwa=100.0)
@@ -477,7 +477,7 @@ class TestREG02_FailingBank:
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# 8. ACCEPTANCE / REGRESSION — AAPL/CAT dataset (course data)
+# 8. ACCEPTANCE / REGRESSION - AAPL/CAT dataset (course data)
 # ──────────────────────────────────────────────────────────────────────────────
 #
 # The PDF references `AAPL-bloomberg.csv` and `CAT-bloomberg.csv` fixtures that
@@ -491,7 +491,7 @@ _HAS_AAPL_CAT = os.path.exists(os.path.join(_DATA_DIR, "AAPL-bloomberg.csv")) an
 
 @pytest.mark.skipif(not _HAS_AAPL_CAT, reason="AAPL/CAT Bloomberg CSVs not in repo")
 class TestACC01_DatasetRegression:
-    """ACC01 — dataset rows, purchase date, share counts, latest PV."""
+    """ACC01 - dataset rows, purchase date, share counts, latest PV."""
 
     expected = {
         "aapl_rows": 10898, "cat_rows": 11480,
@@ -508,7 +508,7 @@ class TestACC01_DatasetRegression:
 
 @pytest.mark.skipif(not _HAS_AAPL_CAT, reason="AAPL/CAT Bloomberg CSVs not in repo")
 class TestACC02_ParametricOutputs:
-    """ACC02 — exact-GBM vs normal 5d-99% VaR/ES, normalized to $10k."""
+    """ACC02 - exact-GBM vs normal 5d-99% VaR/ES, normalized to $10k."""
 
     expected = {
         "gbm_exact_var_99_per_10k": 835.9482338069789,

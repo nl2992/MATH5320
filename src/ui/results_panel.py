@@ -69,7 +69,7 @@ def render_results_panel(
     pv_ok = portfolio_value is not None and portfolio_value > 0
     if not pv_ok:
         st.warning(
-            "Portfolio value is non-positive — likely all weights cancelled, "
+            "Portfolio value is non-positive - likely all weights cancelled, "
             "or market data missing. VaR/Portfolio ratios suppressed."
         )
 

@@ -20,7 +20,7 @@ from src.services.regulatory_service import (
 )
 
 
-# Reasonable default Basel-ish weights for equity (1.0) — users can override.
+# Reasonable default Basel-ish weights for equity (1.0) - users can override.
 _DEFAULT_EQUITY_WEIGHT = 1.0
 
 

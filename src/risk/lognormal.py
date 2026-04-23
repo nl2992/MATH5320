@@ -119,7 +119,7 @@ def es_short_lognormal(V0: float, mu: float, sigma: float, h: float, p: float) -
     ES_short(p, h) = V₀ × [ exp(m_h + ½ s_h²) × N(s_h − z_p) / (1 − p) − 1 ]
 
     Note: m_h + ½ s_h² = (μ − ½σ²)h + ½σ²h = μ h, so the exponential term
-    simplifies to exp(μ h) — the expected growth of the underlying.
+    simplifies to exp(μ h) - the expected growth of the underlying.
 
     Args:
         V0 (float): Absolute value of the short position in dollars (must be > 0).

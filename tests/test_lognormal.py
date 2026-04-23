@@ -1,6 +1,6 @@
 """
 test_lognormal.py
-Unit tests for src/risk/lognormal.py — §4 (long) + §7 (short) exact GBM VaR/ES.
+Unit tests for src/risk/lognormal.py - §4 (long) + §7 (short) exact GBM VaR/ES.
 """
 import sys
 import os

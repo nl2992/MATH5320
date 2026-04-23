@@ -110,7 +110,7 @@ def parametric_var_es(
     z_var = norm.ppf(var_confidence)
     var = float(-m + s * z_var)
 
-    # ES — use es_confidence separately
+    # ES - use es_confidence separately
     z_es = norm.ppf(es_confidence)
     alpha_es = 1.0 - es_confidence
     es = float(-m + s * norm.pdf(z_es) / alpha_es)

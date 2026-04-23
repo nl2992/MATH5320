@@ -1,5 +1,5 @@
 ============================================================
-MATH5320 Risk System — Integration Test
+MATH5320 Risk System - Integration Test
 ============================================================
 
 [1] Downloading AAPL + MSFT price history (2 years)...

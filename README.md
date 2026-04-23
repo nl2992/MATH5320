@@ -49,7 +49,7 @@ The app has 8 tabs: Portfolio Input, Market Data, Risk Settings, Run Analysis, B
 
 The system handles arbitrary portfolios. Two pre-built notebooks demonstrate this end to end without requiring the Streamlit app. Both are fully executed and included in `submission/`.
 
-### `submission/demo.ipynb` — Formula-sheet walkthrough (15 sections)
+### `submission/demo.ipynb` - Formula-sheet walkthrough (15 sections)
 
 Walks through every formula-sheet topic using the programmatic API:
 
@@ -71,7 +71,7 @@ Walks through every formula-sheet topic using the programmatic API:
 | §14 | CVA and counterparty risk mitigation |
 | §15 | Regulatory capital / RWA |
 
-### `submission/advanced_demo.ipynb` — Equal-weight Magnificent 7 portfolio
+### `submission/advanced_demo.ipynb` - Equal-weight Magnificent 7 portfolio
 
 Demonstrates the system on a realistic multi-asset portfolio (AAPL, MSFT, GOOGL, AMZN, NVDA, META, TSLA) with options:
 
@@ -82,8 +82,8 @@ Demonstrates the system on a realistic multi-asset portfolio (AAPL, MSFT, GOOGL,
 | §3 | Diversification benefit (portfolio VaR < sum of individual VaRs) |
 | §4 | Adding option positions to an existing portfolio |
 | §5 | Full stock + option portfolio risk across all models |
-| §6 | **Manual parameter input** — bypasses historical calibration, feeds μ and Σ directly |
-| §7 | **Option volatility shock sensitivity** — demonstrates `underlying_beta` mode |
+| §6 | **Manual parameter input** - bypasses historical calibration, feeds μ and Σ directly |
+| §7 | **Option volatility shock sensitivity** - demonstrates `underlying_beta` mode |
 | §8 | Walk-forward VaR backtesting with diagnostics |
 | §9 | Merton structural default model on a real ticker |
 | §10 | Frontend validation summary with screenshots |
@@ -96,16 +96,16 @@ jupyter notebook submission/demo.ipynb
 jupyter notebook submission/advanced_demo.ipynb
 ```
 
-### `submission/demo.md` / `submission/advanced_demo.md` — Frontend workflow traces
+### `submission/demo.md` / `submission/advanced_demo.md` - Frontend workflow traces
 
 Step-by-step Streamlit screenshots showing the full UI workflow for the same portfolios.
 
-### `notebooks/ta_grader_demo.ipynb` — TA / grader notebook
+### `notebooks/ta_grader_demo.ipynb` - TA / grader notebook
 
 > **For the TA / grader:** This notebook is designed so you can test the system with your own price data without touching any other file.
 
 1. Drop your Bloomberg or Yahoo-format CSV files into `data/`.
-2. Open `notebooks/ta_grader_demo.ipynb` and edit **only the configuration cell at the top** (§ 1) — tickers, filenames, portfolio weights, horizon, confidence level.
+2. Open `notebooks/ta_grader_demo.ipynb` and edit **only the configuration cell at the top** (§ 1) - tickers, filenames, portfolio weights, horizon, confidence level.
 3. Run all cells top-to-bottom. No other changes are needed.
 
 The notebook covers the full pipeline: data loading → covariance estimation (rolling and EWMA) → historical / parametric / Monte Carlo VaR and ES → walk-forward backtesting with Kupiec and Christoffersen diagnostics → credit and CVA extension formulas. Each section is self-contained and labelled.
@@ -204,7 +204,7 @@ Requirements from `docs/references/project_requirements.pdf`.
 flowchart TB
     U["User"] --> APP["app.py · Streamlit entry point"]
 
-    subgraph UI["src/ui/ — UI panels"]
+    subgraph UI["src/ui/ - UI panels"]
         PE["portfolio_editor"]
         MD["market_data_panel"]
         RS["risk_settings"]
@@ -212,7 +212,7 @@ flowchart TB
         XUI["credit_panel · cds_cva_panel · capital_panel"]
     end
 
-    subgraph SVC["src/services/ — orchestration"]
+    subgraph SVC["src/services/ - orchestration"]
         RSE["risk_engine_service"]
         CRS["credit_service"]
         RGS["regulatory_service"]
@@ -359,7 +359,7 @@ submission/
 
 ## Programmatic API
 
-All quantitative modules are plain Python — no Streamlit dependency — so you can call them directly from a notebook, script, or test without running the app.  The canonical entry points are described below, grouped by layer.
+All quantitative modules are plain Python - no Streamlit dependency - so you can call them directly from a notebook, script, or test without running the app.  The canonical entry points are described below, grouped by layer.
 
 ### 1 · Data structures
 
@@ -576,7 +576,7 @@ from src.risk.lognormal import (
 var = var_long_lognormal(V0=100_000, mu=0.08, sigma=0.20, h=5/252, p=0.99)
 es  = es_long_lognormal( V0=100_000, mu=0.08, sigma=0.20, h=5/252, p=0.975)
 
-# Short position — losses come from upward moves
+# Short position - losses come from upward moves
 var_short = var_short_lognormal(V0=100_000, mu=0.08, sigma=0.20, h=5/252, p=0.99)
 ```
 

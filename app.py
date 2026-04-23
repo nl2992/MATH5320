@@ -1,6 +1,6 @@
 """
 app.py
-MATH5320 Portfolio Risk System — Streamlit entry point.
+MATH5320 Portfolio Risk System - Streamlit entry point.
 
 All risk logic lives in src/. This file handles only UI orchestration.
 
@@ -156,7 +156,7 @@ def _render_backtest_results(bt_result: dict, params: dict) -> None:
     # ── Kupiec test results ────────────────────────────────────────────────────
     st.subheader("Kupiec Unconditional Coverage Test")
     if kupiec["n_observations"] == 0:
-        st.info("Backtest produced no observations — cannot run Kupiec test.")
+        st.info("Backtest produced no observations - cannot run Kupiec test.")
     else:
         kupiec_df = pd.DataFrame(
             {

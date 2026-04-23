@@ -19,7 +19,7 @@ MATH5320 Formula-Sheet Integration Test
 [5] var_short > var_long for AAPL (5d, 99%)
     var_long=2,288.56  var_short=2,671.95
 
-[6] merton_summary — Q-PD ∈ (0,1), structural μ vs r relation
+[6] merton_summary - Q-PD ∈ (0,1), structural μ vs r relation
     Q-PD=16.6629%  P-PD=19.8338%  E₀=25.4125  D₀=74.5875
 
 [7] cds_par_spread_constant_hazard(0.03, 0.40) ≈ 180 bps

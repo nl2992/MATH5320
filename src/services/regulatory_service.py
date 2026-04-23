@@ -106,7 +106,7 @@ def run_dfast(
     Applies a uniform multiplicative equity shock to every underlying in the
     portfolio for each of the three scenarios (baseline / adverse /
     severely_adverse).  Rate shocks from ``DFAST_SCENARIOS`` are recorded in
-    the output but not applied — the portfolio contains no explicit rate
+    the output but not applied - the portfolio contains no explicit rate
     instruments.
 
     Args:
@@ -152,7 +152,7 @@ def run_custom_stress(
 
     Returns:
         dict: Stress result with keys ``"V_pre"``, ``"V_post"``, ``"pnl"``,
-            ``"pnl_pct"`` — see :func:`apply_stress_scenario`.
+            ``"pnl_pct"`` - see :func:`apply_stress_scenario`.
     """
     return apply_stress_scenario(portfolio, prices, dict(shock_map), pricing_date)
 
