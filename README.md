@@ -41,6 +41,12 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
+For a full reproduction or marking workflow, install the validation and notebook tooling too:
+
+```bash
+pip install -r requirements-dev.txt
+```
+
 The app has 8 tabs: Portfolio Input, Market Data, Risk Settings, Run Analysis, Backtesting, Credit Risk, CDS/CVA, and Capital & Stress.
 
 ---
@@ -91,7 +97,7 @@ Demonstrates the system on a realistic multi-asset portfolio (AAPL, MSFT, GOOGL,
 To re-run either notebook yourself:
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 jupyter notebook submission/demo.ipynb
 jupyter notebook submission/advanced_demo.ipynb
 ```
@@ -119,7 +125,7 @@ Supported data formats:
 | Yahoo Finance (via `yfinance`) | *(downloaded automatically)* | n/a |
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 jupyter notebook notebooks/ta_grader_demo.ipynb
 ```
 
@@ -130,19 +136,21 @@ jupyter notebook notebooks/ta_grader_demo.ipynb
 ### Full no-network suite
 
 ```bash
+pip install -r requirements-dev.txt
 python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py
 ```
 
-Expected: **644 passed, 1 skipped**.
+Expected: **624 passed, 0 skipped**.
 
 ### With coverage
 
 ```bash
+pip install -r requirements-dev.txt
 python -m pytest tests/ --cov=src --cov-report=term-missing \
   --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py
 ```
 
-Expected: **95% statement coverage** (2225 statements, 110 missed).
+Expected: **about 96% statement coverage**.
 
 ### Network integration tests
 
@@ -333,8 +341,8 @@ submission/
 ├── advanced_demo.ipynb                 # M7 portfolio demo (10 sections, executed)
 ├── advanced_demo.md                    # M7 frontend trace with screenshots
 └── test_artifacts/
-    ├── pytest_output.txt               # Full pytest output (644 passed, 1 skipped)
-    └── coverage_output.txt             # Coverage report (95%, 2225 stmts, 110 missed)
+    ├── pytest_output.txt               # Full pytest output (624 passed, 0 skipped)
+    └── coverage_output.txt             # Coverage report (about 96% statement coverage)
 ```
 
 ---
