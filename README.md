@@ -47,6 +47,53 @@ For a full reproduction or marking workflow, install the validation and notebook
 pip install -r requirements-dev.txt
 ```
 
+### Recommended environment setup
+
+#### Option A: `venv` for the app only
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+#### Option B: `venv` for notebooks, tests, and the app
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+python -m ipykernel install --user --name math5320-risk-dev \
+  --display-name "Python (MATH5320 Risk)"
+```
+
+After that, Jupyter can use the `Python (MATH5320 Risk)` kernel for
+`submission/demo.ipynb`, `submission/advanced_demo.ipynb`, and
+`notebooks/ta_grader_demo.ipynb`.
+
+#### Option C: Conda environment for the app only
+
+```bash
+conda env create -f environment.yml
+conda activate math5320-risk
+streamlit run app.py
+```
+
+#### Option D: Conda environment for notebooks, tests, and the app
+
+```bash
+conda env create -f environment-dev.yml
+conda activate math5320-risk-dev
+python -m ipykernel install --user --name math5320-risk-dev \
+  --display-name "Python (MATH5320 Risk)"
+```
+
+The two dependency files are intentional:
+
+- `requirements.txt` is the lean runtime install for the app.
+- `requirements-dev.txt` adds the notebook and validation tooling.
+
 The app has 8 tabs: Portfolio Input, Market Data, Risk Settings, Run Analysis, Backtesting, Credit Risk, CDS/CVA, and Capital & Stress.
 
 ---
@@ -100,6 +147,13 @@ To re-run either notebook yourself:
 pip install -r requirements-dev.txt
 jupyter notebook submission/demo.ipynb
 jupyter notebook submission/advanced_demo.ipynb
+```
+
+If you want the notebook picker to show a dedicated project kernel, run:
+
+```bash
+python -m ipykernel install --user --name math5320-risk-dev \
+  --display-name "Python (MATH5320 Risk)"
 ```
 
 ### `submission/demo.md` / `submission/advanced_demo.md` - Frontend workflow traces
@@ -267,7 +321,10 @@ All quantitative logic lives in pure Python modules under `src/` with no Streaml
 ```
 MATH5320/
 ├── app.py                          # Streamlit entry point (UI only)
+├── environment.yml
+├── environment-dev.yml
 ├── requirements.txt
+├── requirements-dev.txt
 ├── README.md
 ├── src/
 │   ├── schemas.py                  # StockPosition, OptionPosition, Portfolio

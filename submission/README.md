@@ -23,6 +23,8 @@ This folder contains all deliverables and supporting evidence for the MATH GR 53
 ```bash
 # Install validation and notebook tooling
 pip install -r requirements-dev.txt
+python -m ipykernel install --user --name math5320-risk-dev \
+  --display-name "Python (MATH5320 Risk)"
 
 # Run all no-network unit tests (624 pass as of current submission state)
 python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py
@@ -47,3 +49,44 @@ python -m jupyter nbconvert --to notebook --execute --inplace \
 # Launch the Streamlit application
 streamlit run app.py
 ```
+
+## Environment options
+
+### App-only environment
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+or
+
+```bash
+conda env create -f environment.yml
+conda activate math5320-risk
+streamlit run app.py
+```
+
+### Full marking environment
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+python -m ipykernel install --user --name math5320-risk-dev \
+  --display-name "Python (MATH5320 Risk)"
+```
+
+or
+
+```bash
+conda env create -f environment-dev.yml
+conda activate math5320-risk-dev
+python -m ipykernel install --user --name math5320-risk-dev \
+  --display-name "Python (MATH5320 Risk)"
+```
+
+`requirements.txt` is the lean runtime install. `requirements-dev.txt` adds
+pytest, coverage, and notebook execution support.

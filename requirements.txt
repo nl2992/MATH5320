@@ -1,3 +1,4 @@
+# Runtime dependencies for the Streamlit app and importable package.
 streamlit>=1.32.0
 yfinance>=0.2.38
 numpy>=1.26.0
