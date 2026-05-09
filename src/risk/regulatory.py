@@ -359,3 +359,69 @@ def run_dfast_scenarios(
             "passes": passes_stress(path, hurdle),
         })
     return results
+
+
+# ── Balance-sheet helpers (§12 / HW XII) ─────────────────────────────────────
+
+def balance_sheet_equity(assets: float, liabilities: float) -> float:
+    """
+    Equity = Assets − Liabilities  (balance-sheet identity).
+
+    Parameters
+    ----------
+    assets : float
+        Total book-value assets (non-negative).
+    liabilities : float
+        Total book-value liabilities (non-negative).
+
+    Returns
+    -------
+    float  — may be negative (insolvent entity).
+    """
+    if assets < 0:
+        raise ValueError(f"assets must be non-negative (got {assets}).")
+    if liabilities < 0:
+        raise ValueError(f"liabilities must be non-negative (got {liabilities}).")
+    return assets - liabilities
+
+
+def balance_sheet_after_asset_loss(
+    assets: float, liabilities: float, loss: float
+) -> dict:
+    """
+    Post-stress balance sheet after an asset write-down of `loss`.
+
+    Returns a dict with keys:
+        assets_post   — original assets minus the loss
+        liabilities   — unchanged (liabilities not affected by market loss)
+        equity_post   — assets_post − liabilities
+        solvent       — True iff equity_post >= 0
+    """
+    if assets < 0:
+        raise ValueError(f"assets must be non-negative (got {assets}).")
+    if liabilities < 0:
+        raise ValueError(f"liabilities must be non-negative (got {liabilities}).")
+    if loss < 0:
+        raise ValueError(f"loss must be non-negative (got {loss}).")
+    assets_post = assets - loss
+    equity_post = assets_post - liabilities
+    return {
+        "assets_post": assets_post,
+        "liabilities": liabilities,
+        "equity_post": equity_post,
+        "solvent": equity_post >= 0.0,
+    }
+
+
+def leverage_ratio(equity: float, assets: float) -> float:
+    """
+    Simple leverage ratio = equity / assets.
+
+    Basel III leverage ratio uses Tier-1 capital over exposure measure;
+    here we use the textbook approximation: equity / total assets.
+
+    Raises ValueError if assets <= 0.
+    """
+    if assets <= 0:
+        raise ValueError(f"assets must be positive (got {assets}).")
+    return equity / assets
