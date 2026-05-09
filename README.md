@@ -153,3 +153,9 @@ methodology checks). Numerical goldens are compared at ~10% relative tolerance.
 
 The two AAPL/CAT acceptance tests (ACC01, ACC02) skip cleanly unless
 `data/AAPL-bloomberg.csv` and `data/CAT-bloomberg.csv` are present.
+
+### Final Report
+
+The complete final project report is available here:
+
+[Final Project Report](report/FINAL_REPORT.md)
