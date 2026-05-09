@@ -104,3 +104,48 @@ def _validate(V0: float, B: float, sigma: float, T: float) -> None:
         raise ValueError(f"sigma must be positive (got {sigma}).")
     if T <= 0:
         raise ValueError(f"T must be positive (got {T}).")
+
+
+# ── Merton timing helpers (§9 / HW VII) ──────────────────────────────────────
+#
+# Basic Merton: default occurs ONLY at maturity T.
+# Therefore P(default between t1 and t2) = 0 for any t2 ≤ T,
+# and = pd_T for t1 < T ≤ t2.  This unrealistic feature motivates Black-Cox.
+
+def merton_survival_step(u: float, T: float, pd_T: float) -> float:
+    """
+    Merton survival at time u given maturity T and default probability pd_T.
+
+    Because default can only occur at T:
+        s(u) = 1          for u < T
+        s(u) = 1 − pd_T   for u >= T
+    """
+    if u < 0:
+        raise ValueError(f"u must be non-negative (got {u}).")
+    if T <= 0:
+        raise ValueError(f"T must be positive (got {T}).")
+    if not (0.0 <= pd_T <= 1.0):
+        raise ValueError(f"pd_T must be in [0, 1] (got {pd_T}).")
+    return 1.0 if u < T else (1.0 - pd_T)
+
+
+def merton_interval_default_prob(
+    t1: float, t2: float, T: float, pd_T: float
+) -> float:
+    """
+    P(t₁ < τ ≤ t₂) under Merton (default only at maturity T).
+
+    Returns pd_T if the interval [t1, t2] straddles T (i.e. t1 < T ≤ t2),
+    otherwise returns 0.  This is the Merton timing defect: default between
+    years 3 and 4 is zero when maturity T = 5.
+    """
+    if t2 < t1:
+        raise ValueError(f"t2 must be >= t1 (got {t1}, {t2}).")
+    if T <= 0:
+        raise ValueError(f"T must be positive (got {T}).")
+    if not (0.0 <= pd_T <= 1.0):
+        raise ValueError(f"pd_T must be in [0, 1] (got {pd_T}).")
+    # Default at T falls in (t1, t2] iff t1 < T <= t2.
+    if t1 < T <= t2:
+        return float(pd_T)
+    return 0.0
