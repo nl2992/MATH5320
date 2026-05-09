@@ -55,26 +55,32 @@ def var_short_lognormal(V0: float, mu: float, sigma: float, h: float, p: float) 
     """
     Exact short-position VaR under GBM (§7).
 
-        VaR_short(p, h) = V₀ [ exp( μ h + z_p σ √h ) − 1 ]
+        VaR_short(p, h) = V₀ [ exp( m_h + z_p σ √h ) − 1 ]
+
+    where m_h = (μ − ½σ²) h is the log-return drift (NOT the arithmetic drift μ h).
     """
     _validate(V0, sigma, h, p)
+    m_h = (mu - 0.5 * sigma ** 2) * h
     s_h = sigma * math.sqrt(h)
     z_p = norm.ppf(p)
-    return V0 * (math.exp(mu * h + z_p * s_h) - 1.0)
+    return V0 * (math.exp(m_h + z_p * s_h) - 1.0)
 
 
 def es_short_lognormal(V0: float, mu: float, sigma: float, h: float, p: float) -> float:
     """
     Exact short-position ES under GBM (§7).
 
-        ES_short(p, h) = V₀ [ exp(μ h + ½σ²h) · N( σ√h − z_p ) / (1 − p) − 1 ]
+        ES_short(p, h) = V₀ [ exp(m_h + ½s_h²) · N( s_h − z_p ) / (1 − p) − 1 ]
+
+    Note: m_h + ½s_h² = (μ − ½σ²)h + ½σ²h = μ h, so this simplifies to exp(μ h).
     """
     _validate(V0, sigma, h, p)
+    m_h = (mu - 0.5 * sigma ** 2) * h
     s_h = sigma * math.sqrt(h)
     z_p = norm.ppf(p)
     alpha = 1.0 - p
     return V0 * (
-        math.exp(mu * h + 0.5 * sigma ** 2 * h) * norm.cdf(s_h - z_p) / alpha - 1.0
+        math.exp(m_h + 0.5 * s_h ** 2) * norm.cdf(s_h - z_p) / alpha - 1.0
     )
 
 

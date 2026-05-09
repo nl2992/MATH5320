@@ -45,6 +45,8 @@ def interval_default_prob(t1: float, t2: float, lam: float) -> float:
     """P(t₁ < τ ≤ t₂) = e^{−λ t₁} − e^{−λ t₂}."""
     if t2 < t1:
         raise ValueError(f"t2 must be >= t1 (got {t1}, {t2}).")
+    if lam < 0:
+        raise ValueError(f"lambda must be non-negative (got {lam}).")
     return math.exp(-lam * t1) - math.exp(-lam * t2)
 
 
