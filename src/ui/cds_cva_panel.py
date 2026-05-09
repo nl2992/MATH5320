@@ -11,7 +11,8 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-from src.credit.cva import epe_profile_from_mc
+from src.credit.cva import cva_discounted, epe_profile_from_mc
+from src.credit.mitigation import mitigated_cva, netted_exposure
 from src.portfolio.portfolio import portfolio_value, reprice_portfolio
 from src.risk.estimators import get_mean_cov
 from src.risk.returns import compute_log_returns
@@ -32,12 +33,15 @@ def render_cds_cva_panel(
     st.subheader("CDS · CVA")
     st.caption(
         "CDS par spread (§10) under constant- or piecewise-hazard λ. "
-        "CVA (§11) = (1−R)·Σ Ē·p̄ against a time-stepped exposure profile."
+        "CVA (§11) = (1−R)·Σ Ē·p̄ against a time-stepped exposure profile. "
+        "Mitigated CVA (§11) with netting + CSA collateral."
     )
 
     _render_cds_section()
     st.divider()
     _render_cva_section(portfolio, prices, risk_params)
+    st.divider()
+    _render_mitigated_cva_section(portfolio, prices, risk_params)
 
 
 # ── Section A · CDS ───────────────────────────────────────────────────────────
@@ -350,3 +354,162 @@ def _simulate_epe(
         epe[i] = float(epe_profile_from_mc(V_paths, V0)[0])
 
     return epe
+
+
+# ── Section C · Mitigated CVA ─────────────────────────────────────────────────
+
+def _render_mitigated_cva_section(
+    portfolio: Portfolio,
+    prices: pd.DataFrame | None,
+    risk_params: dict,
+) -> None:
+    """
+    Show unmitigated vs mitigated CVA side-by-side.
+
+    Mitigation:
+        1. Netting — portfolio MTM is summed before CVA (already embedded in
+           the EPE from Section B).
+        2. CSA collateral — user inputs threshold and MTA; collateral is
+           subtracted from exposure each period.
+
+    Requires the EPE profile from Section B to be built first.
+    """
+    st.markdown("### C · Mitigated CVA (netting + CSA)")
+    st.caption(
+        "Applies CSA collateral and a netting agreement to the Section B "
+        "exposure profile to show the CVA reduction from credit risk mitigation."
+    )
+
+    exposure_df = st.session_state.get("cva_exposure_df")
+    if exposure_df is None or exposure_df.empty:
+        st.info("Build or upload an exposure profile in Section B first.")
+        return
+
+    lam_cva = float(st.session_state.get("cva_lam", 0.03))
+    R = float(st.session_state.get("cva_R", 0.40))
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        collateral = st.number_input(
+            "Initial collateral ($)",
+            min_value=0.0,
+            value=0.0,
+            step=1000.0,
+            format="%.2f",
+            key="mit_collateral",
+            help="Posted collateral reduces gross exposure.",
+        )
+    with col2:
+        threshold = st.number_input(
+            "CSA threshold ($)",
+            min_value=0.0,
+            value=0.0,
+            step=1000.0,
+            format="%.2f",
+            key="mit_threshold",
+            help="Collateral is only called above this exposure level.",
+        )
+    with col3:
+        mta = st.number_input(
+            "Minimum transfer amount ($)",
+            min_value=0.0,
+            value=0.0,
+            step=100.0,
+            format="%.2f",
+            key="mit_mta",
+            help="Minimum margin call size.",
+        )
+
+    ts = exposure_df["t"].to_numpy()
+    exposures_raw = exposure_df["exposure"].to_numpy()
+
+    # Marginal default probs from flat hazard
+    s = np.exp(-lam_cva * ts)
+    s_prev = np.concatenate(([1.0], s[:-1]))
+    marginal = np.maximum(s_prev - s, 0.0)
+    discount_factors = np.ones(len(ts))  # no discounting in base CVA; user can extend
+
+    # Unmitigated CVA (no collateral)
+    try:
+        cva_unmitigated = float(
+            cva_discounted(
+                exposures=exposures_raw,
+                marginal_default_probs=marginal,
+                discount_factors=discount_factors,
+                R=R,
+            )
+        )
+    except Exception as exc:
+        st.error(f"Unmitigated CVA failed: {exc}")
+        return
+
+    # Mitigated CVA (netting + CSA)
+    try:
+        # Build fake MTM path per bucket: each bucket has a single MTM = exposure
+        # (already a netted EPE; CSA will further reduce via threshold/MTA logic)
+        mtm_paths = [np.array([e]) for e in exposures_raw]
+        cva_mit = float(
+            mitigated_cva(
+                mtm_paths=mtm_paths,
+                marginal_default_probs=marginal,
+                discount_factors=discount_factors,
+                R=R,
+                collateral=float(collateral),
+                threshold=float(threshold),
+                mta=float(mta),
+            )
+        )
+    except Exception as exc:
+        st.error(f"Mitigated CVA failed: {exc}")
+        return
+
+    reduction = cva_unmitigated - cva_mit
+    reduction_pct = reduction / cva_unmitigated if cva_unmitigated > 0 else 0.0
+
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Unmitigated CVA ($)", f"{cva_unmitigated:,.2f}")
+    c2.metric("Mitigated CVA ($)", f"{cva_mit:,.2f}")
+    c3.metric(
+        "CVA reduction",
+        f"{reduction:,.2f}",
+        f"{reduction_pct:+.2%}",
+    )
+
+    # Per-period breakdown
+    detail_rows = []
+    for i, (t_val, exp_raw) in enumerate(zip(ts, exposures_raw)):
+        # Compute per-period mitigated exposure: max(E - collateral, 0)
+        exp_mit = max(exp_raw - float(collateral), 0.0)
+        # Apply threshold/MTA approximately (simplified)
+        if exp_raw - float(collateral) > float(threshold) + float(mta):
+            exp_csa = float(threshold)
+        else:
+            exp_csa = exp_mit
+        detail_rows.append(
+            {
+                "t (yr)": t_val,
+                "EPE (unmitigated)": exp_raw,
+                "EPE (after collateral)": exp_mit,
+                "EPE (after CSA)": exp_csa,
+                "Marginal PD": marginal[i],
+                "CVA contrib (unmit)": (1 - R) * exp_raw * marginal[i],
+                "CVA contrib (mit)": (1 - R) * exp_csa * marginal[i],
+            }
+        )
+
+    detail_df = pd.DataFrame(detail_rows)
+    st.dataframe(
+        detail_df.style.format(
+            {
+                "t (yr)": "{:.3f}",
+                "EPE (unmitigated)": "{:,.2f}",
+                "EPE (after collateral)": "{:,.2f}",
+                "EPE (after CSA)": "{:,.2f}",
+                "Marginal PD": "{:.6f}",
+                "CVA contrib (unmit)": "{:,.4f}",
+                "CVA contrib (mit)": "{:,.4f}",
+            }
+        ),
+        use_container_width=True,
+        hide_index=True,
+    )
