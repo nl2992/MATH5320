@@ -89,12 +89,15 @@ def monte_carlo_var_es(
         losses[i] = V0 - V_sim
 
     var = float(np.quantile(losses, var_confidence))
-    tail_losses = losses[losses >= var]
-    es = float(tail_losses.mean()) if len(tail_losses) > 0 else var
+    es_threshold = float(np.quantile(losses, es_confidence))
+    tail_losses = losses[losses >= es_threshold]
+    es = float(tail_losses.mean()) if len(tail_losses) > 0 else es_threshold
 
     return {
         "var": var,
         "es": es,
+        "var_confidence": var_confidence,
+        "es_confidence": es_confidence,
         "losses": losses,
         "n_simulations": n_simulations,
     }

@@ -22,7 +22,11 @@ import numpy as np
 import pandas as pd
 
 from src.portfolio.portfolio import portfolio_value, reprice_portfolio
-from src.risk.returns import build_overlapping_horizon_log_returns, compute_log_returns
+from src.risk.returns import (
+    build_overlapping_horizon_log_returns,
+    build_overlapping_horizon_absolute_returns,
+    compute_log_returns,
+)
 from src.schemas import Portfolio
 
 
@@ -34,6 +38,7 @@ def historical_var_es(
     horizon_days: int,
     var_confidence: float,
     es_confidence: float,
+    shock_type: str = "log",
 ) -> dict:
     """
     Compute Historical VaR and ES.
@@ -68,31 +73,60 @@ def historical_var_es(
     # V0
     V0 = portfolio_value(portfolio, spots_0, pricing_date)
 
-    # Log returns → overlapping h-day returns
-    log_ret = compute_log_returns(prices)
-    horizon_ret = build_overlapping_horizon_log_returns(log_ret, horizon_days)
-
-    # Restrict to lookback window
-    scenario_ret = horizon_ret.tail(lookback_days)
-
     # Identify the underlyings we actually need
     underlyings = _portfolio_underlyings(portfolio)
-    # Only keep columns that appear in the portfolio
-    available = [u for u in underlyings if u in scenario_ret.columns]
-    scenario_ret = scenario_ret[available]
 
-    losses = _compute_losses(portfolio, spots_0, scenario_ret, pricing_date, V0)
+    if shock_type == "absolute":
+        # Overlapping h-day dollar changes
+        horizon_ret = build_overlapping_horizon_absolute_returns(prices, horizon_days)
+        scenario_ret = horizon_ret.tail(lookback_days)
+        available = [u for u in underlyings if u in scenario_ret.columns]
+        scenario_ret = scenario_ret[available]
+        losses = _compute_losses_absolute(portfolio, spots_0, scenario_ret, pricing_date, V0)
+    else:
+        # Default: log returns
+        log_ret = compute_log_returns(prices)
+        horizon_ret = build_overlapping_horizon_log_returns(log_ret, horizon_days)
+        scenario_ret = horizon_ret.tail(lookback_days)
+        available = [u for u in underlyings if u in scenario_ret.columns]
+        scenario_ret = scenario_ret[available]
+        losses = _compute_losses(portfolio, spots_0, scenario_ret, pricing_date, V0)
 
     var = float(np.quantile(losses, var_confidence))
-    tail_losses = losses[losses >= var]
-    es = float(tail_losses.mean()) if len(tail_losses) > 0 else var
+    es_threshold = float(np.quantile(losses, es_confidence))
+    tail_losses = losses[losses >= es_threshold]
+    es = float(tail_losses.mean()) if len(tail_losses) > 0 else es_threshold
 
     return {
         "var": var,
         "es": es,
+        "var_confidence": var_confidence,
+        "es_confidence": es_confidence,
         "losses": losses,
         "n_scenarios": len(losses),
     }
+
+
+def _compute_losses_absolute(
+    portfolio: Portfolio,
+    spots_0: pd.Series,
+    scenario_dollar_changes: pd.DataFrame,
+    pricing_date: date,
+    V0: float,
+) -> np.ndarray:
+    """Loss computation using absolute (dollar) shocks."""
+    losses = np.empty(len(scenario_dollar_changes))
+
+    for i, (_, row) in enumerate(scenario_dollar_changes.iterrows()):
+        shocked = spots_0.copy()
+        for ticker in row.index:
+            if ticker in shocked.index:
+                shocked[ticker] = float(spots_0[ticker]) + float(row[ticker])
+
+        V_scenario = reprice_portfolio(portfolio, shocked, pricing_date)
+        losses[i] = V0 - V_scenario
+
+    return losses
 
 
 def _compute_losses(

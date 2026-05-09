@@ -78,14 +78,16 @@ def parametric_var_es(
     z_var = norm.ppf(var_confidence)
     var = float(-m + s * z_var)
 
-    # ES
-    alpha_var = 1.0 - var_confidence
-    phi_z = norm.pdf(z_var)
-    es_var = float(-m + s * phi_z / alpha_var)
+    # ES — use es_confidence separately
+    z_es = norm.ppf(es_confidence)
+    alpha_es = 1.0 - es_confidence
+    es = float(-m + s * norm.pdf(z_es) / alpha_es)
 
     return {
         "var": var,
-        "es": es_var,
+        "es": es,
+        "var_confidence": var_confidence,
+        "es_confidence": es_confidence,
         "portfolio_mean": m,
         "portfolio_vol": s,
         "exposure": exposure,
