@@ -33,16 +33,17 @@ The principal modelling limitations are the use of a fixed historical volatility
 
 1. [Requirement Coverage Matrix](#1-requirement-coverage-matrix)  
 2. [Introduction and Scope](#2-introduction-and-scope)  
-3. [Application Screenshots](#3-application-screenshots)  
-4. [Product / System Description](#4-product--system-description)  
-5. [Model Description](#5-model-description)  
-6. [Software Design and Implementation](#6-software-design-and-implementation)  
-7. [Validation Methodology and Scope](#7-validation-methodology-and-scope)  
-8. [Validation Results](#8-validation-results)  
-9. [Limitations](#9-limitations)  
-10. [Recommendations](#10-recommendations)  
-11. [Bibliography](#11-bibliography)  
-12. [Appendices](#12-appendices)  
+3. [Model Risk Management Framework](#3-model-risk-management-framework)  
+4. [Application Screenshots](#4-application-screenshots)  
+5. [Product / System Description](#5-product--system-description)  
+6. [Model Description](#6-model-description)  
+7. [Software Design and Implementation](#7-software-design-and-implementation)  
+8. [Validation Methodology and Scope](#8-validation-methodology-and-scope)  
+9. [Validation Results](#9-validation-results)  
+10. [Limitations](#10-limitations)  
+11. [Recommendations](#11-recommendations)  
+12. [Bibliography](#12-bibliography)  
+13. [Appendices](#13-appendices)  
 
 ---
 
@@ -116,53 +117,164 @@ The system is **not** intended for:
 
 ---
 
-## 3. Application Screenshots
+## 3. Model Risk Management Framework
+
+This report documents the model according to a model risk management framework drawn from the Lecture 5 course material: purpose and scope, design justification, data analysis, implementation controls, testing, validation, limitations, and post-deployment monitoring. The aim is not only to show that the formulas run, but to show that the model is appropriate for its intended use, that its assumptions are documented, and that its outputs are validated against independent benchmarks and expected behaviours.
+
+Post-crisis model risk management has expanded from point-in-time model validation toward full lifecycle governance, with effective governance structures, robust development and implementation practices, and sound ongoing validation. This section captures those requirements explicitly.
+
+---
+
+### 3.1  Purpose, Scope, and Performance Requirements
+
+Lecture 5 states that the requirements document must define the model's purpose, scope of use, and performance requirements. The table below records each item for this system.
+
+| Item | Documentation |
+|---|---|
+| **Purpose** | Course-level risk calculation system for portfolios of stocks and European options |
+| **Scope** | Historical, parametric, and Monte Carlo VaR; historical and Monte Carlo ES; walk-forward VaR backtesting with Kupiec, Christoffersen, and conditional-coverage tests; formula-sheet extension modules (lognormal VaR/ES, hazard, Merton, CDS, CVA, regulatory capital) |
+| **Non-scope** | Production trading, official regulatory capital reporting, production XVA, CCAR/DFAST filing, American or path-dependent options |
+| **Performance requirement** | Deterministic formulas pass strict unit tests at machine precision; historical and MC methods agree with known benchmarks within stated tolerance (1% relative for HW fixtures); the UI handles arbitrary stock/option portfolios without requiring code changes |
+| **Data requirement** | Aligned price histories, sufficient lookback (≥ 2 days), valid option inputs (positive spot/strike/vol/maturity), documented proxies for any inputs not sourced from official market data |
+
+---
+
+### 3.2  Model Choice Justification
+
+The Lecture 5 design document requirements state that model choice must be justified using published research or industry practice, with explanation of mathematical specification and numerical techniques, analysis of assumptions and limitations, comparison of alternatives, and validation of subjective components. The table below provides this justification for each core modelling choice.
+
+| Model choice | Why chosen | Alternative | Limitation |
+|---|---|---|---|
+| Historical simulation VaR | Nonparametric; uses realised scenarios without distributional assumption | Filtered historical simulation, EVT tail model | History may not represent future; extreme quantiles are unstable with short lookback |
+| Parametric delta-normal VaR | Fast, transparent, analytically tractable normal approximation | Delta-gamma, Cornish-Fisher expansion | Weak for nonlinear option portfolios and fat-tailed return distributions |
+| Monte Carlo VaR | Full repricing under simulated shocks; captures option nonlinearity better than delta-normal | Bootstrap MC, scenario lattice | Distributional assumption (multivariate normal) and MC sampling error |
+| Black-Scholes for option pricing | Industry-standard European option pricer; closed-form, well-understood | Local vol (Dupire), stochastic vol (Heston), binomial lattice, American LSMC | Constant volatility; no early exercise; smile/skew risk not captured |
+| GBM log-returns | Ensures non-negative simulated stock prices; standard assumption in equity derivatives | Arithmetic Brownian motion (Bachelier), arithmetic returns | Log-return aggregation introduces a convexity correction; may not hold for near-zero or negative risk factors |
+| EWMA / rolling window estimation | Course-aligned estimators; rolling window is transparent and easy to explain; EWMA allows faster reaction to volatility clustering | GARCH(1,1), DCC-GARCH | Parameter sensitivity (window length, EWMA decay parameter); no volatility regime detection |
+
+**GBM vs ABM note:** GBM is used for equity risk factors that must remain non-negative (stock prices). For risk factors that can be negative — such as interest rate spreads, credit spreads, or PnL differentials — Arithmetic Brownian Motion (Bachelier model) is more appropriate. Our system scope is limited to equity underlyings, so GBM is applied throughout. This is explicitly noted as a scope boundary.
+
+---
+
+### 3.3  Data Validation and Proxy Assumptions
+
+Lecture 5 emphasises that data is critical and that problematic data gives questionable results. It requires documentation of data used, assessment of quality and suitability, identification and justification of proxies, and documentation of any cleaning, smoothing, or averaging assumptions.
+
+| Data item | Validation required |
+|---|---|
+| Price histories | No missing dates after alignment; no impossible prices (negative or zero for equity); no stale sequences (constant price over consecutive days) |
+| Return series | Outlier review; return distribution summary; window-size check (lookback must be > number of positions for full-rank covariance) |
+| Option inputs | Positive spot, strike, volatility, and time-to-maturity; risk-free rate and dividend yield explicitly documented |
+| Proxies | Yahoo Finance adjusted close is used as a proxy for official market data. It is not official Bloomberg or exchange-direct data. This is documented as a data limitation, not a validated production data source |
+| Data cleaning | Dropped NaN rows after alignment are documented; no price interpolation is performed; date alignment uses outer join then forward-fill only if explicitly requested |
+| Covariance matrix | Checked for symmetry; checked for positive semidefiniteness or handled gracefully via numerical regularisation |
+
+**Data limitation statement:** The main data limitation is that downloaded or user-supplied historical prices may contain missing observations, stale prices, corporate-action issues, or inconsistent calendar alignments. The engine therefore treats data validation as part of model validation rather than as a cosmetic preprocessing step. Any proxy data source should be disclosed to end users as part of the model's usage documentation.
+
+---
+
+### 3.4  Conceptual Soundness
+
+Lecture 5 states that validation should evaluate conceptual soundness: independent experts should review documentation, confirm the model is appropriate for its task, assess design and construction quality, review empirical evidence, check for sound judgment in model selection, review any changes, and run sensitivity analysis.
+
+| Conceptual soundness check | Evidence in this project |
+|---|---|
+| Appropriate for intended task | VaR and ES for stocks and European options is the explicit course project requirement; the model scope is a direct match |
+| Mathematical specification documented | Formula sheet and §6 model description with explicit formulae for all methods |
+| Alternative approaches considered | Historical vs parametric vs Monte Carlo comparison in §3.2; estimator comparison notebooks |
+| Assumptions documented | Lognormal returns (GBM), multivariate normal simulation, Black-Scholes constant volatility, covariance stationarity, all documented in §6 and §9 |
+| Sensitivity analysis performed | Lookback window (252 days baseline), VaR/ES confidence (99%/97.5%), horizon (1 day), Monte Carlo path count (10,000) — each configurable and tested |
+| Limitations documented | §9 Limitations table; option vega risk, delta-normal gamma approximation, multivariate normality, data quality all listed explicitly |
+
+---
+
+### 3.5  Ongoing Monitoring and Post-Deployment
+
+Lecture 5 states that after deployment, teams should obtain user feedback, confirm reports are clear and indicate uncertainty appropriately, and ensure users understand model limitations. It also states that changes must be justified, logged, tested, and revalidated based on materiality.
+
+**Future monitoring plan:**
+
+| Monitoring item | Proposed action |
+|---|---|
+| Daily / periodic VaR exceptions | Track exception rate and clustering; re-run Kupiec and Christoffersen tests periodically |
+| Input drift | Monitor volatility level, covariance structure, and return outliers across the lookback window |
+| Data quality | Detect missing or stale prices and ticker mismatches at each data load |
+| Model code changes | Log all code and model changes; rerun full regression test suite (`pytest tests/`) after every change |
+| User parameter overrides | Document any manual override of lookback, horizon, confidence, or volatility inputs |
+| New instruments | Require a model scope review and test extension before adding support for new instrument types |
+
+**Change management:** Any material change to model methodology, pricing logic, data source, or risk measure definition should trigger revalidation. Small implementation changes (bug fixes, refactoring) require unit tests and peer review. Large methodology changes (new VaR method, new option pricing model, new credit module) require updated documentation, independent review, and full regression testing against existing fixtures. This follows the Lecture 5 change-management principle directly.
+
+---
+
+### 3.6  Outcome Analysis and Backtesting
+
+Lecture 5 states that outcome analysis compares model outputs to actual outcomes. For VaR, this requires: confirming exception frequency against the expected rate, checking for exception clustering, testing across multiple confidence levels, and developing analogous tests for other risk measures.
+
+**Key principle from Lecture 5:** VaR backtesting is not optional. It is the model's primary outcome-analysis tool. It should be run regularly, at multiple confidence levels, and with clustering diagnostics. ES is harder to validate directly but can be addressed through joint VaR/ES tests or through expected shortfall regression.
+
+| Backtest diagnostic | Required? | Status in this project |
+|---|---|---|
+| Exception count | Yes | Implemented — 10 exceptions over 1,001 days |
+| Expected vs actual exception rate | Yes | Implemented — 1.00% observed vs 1.00% expected |
+| Kupiec unconditional coverage test | Yes | Implemented — LR = 0.0000, p = 0.9975, H₀ not rejected |
+| Exception clustering (Christoffersen) | Should add | Implemented in `src/risk/backtest.py`; not yet surfaced as default UI output |
+| Conditional coverage (LR_cc) | Should add | Implemented in `src/risk/backtest.py`; available as API call |
+| Multiple VaR percentiles (95%, 97.5%, 99%) | Should add | Partial — UI allows any single confidence level; multi-percentile sweep is a future enhancement |
+| ES backtesting | Optional extension | Not yet implemented; ES validation currently relies on ES ≥ VaR structural check and formula-level unit tests |
+
+**ES validation note:** Direct ES backtesting is more complex than VaR backtesting because ES is not elicitable in the classical sense. Current validation relies on: (1) confirming ES ≥ VaR for all methods, (2) unit tests against analytical ES formulas, (3) confirming the relationship ES ≥ VaR holds across simulated loss distributions. A future enhancement would implement a joint VaR/ES regression test or a Murphy diagram as proposed in the recent risk measure elicitability literature.
+
+
+---
+
+## 4. Application Screenshots
 
 The following screenshots were captured from the live application running at `localhost:8502` against five years of Yahoo Finance data (AAPL + MSFT, 2021-05-11 to 2026-05-08, 1,255 trading days).
 
-### 3.1 Tab 1 — Portfolio Input
+### 4.1 Tab 1 — Portfolio Input
 
 We enter equity positions (AAPL × 100, MSFT × 50) and one option position (10 AAPL call contracts, strike $200). The editor validates every field and shows a live summary.
 
 ![Portfolio Input tab](docs/screenshots/01_portfolio_input.png)
 
-### 3.2 Tab 2 — Market Data
+### 4.2 Tab 2 — Market Data
 
 Data is downloaded from Yahoo Finance with one click. The system confirms **1,255 rows × 2 tickers (2021-05-11 → 2026-05-08)**. A local parquet cache avoids repeated downloads.
 
 ![Market Data tab](docs/screenshots/02_market_data.png)
 
-### 3.3 Tab 3 — Risk Settings
+### 4.3 Tab 3 — Risk Settings
 
 We configure the risk engine: lookback window 252 days, horizon 1 day, VaR confidence 99%, ES confidence 97.5%, rolling-window estimator, 10,000 Monte Carlo paths.
 
 ![Risk Settings tab](docs/screenshots/03_risk_settings.png)
 
-### 3.4 Tab 4 — Run Analysis
+### 4.4 Tab 4 — Run Analysis
 
 One click runs all three VaR/ES engines simultaneously. The live portfolio value is **$145,864.49** (AAPL at $270.71, MSFT at $424.82 on the last data date). The VaR/ES comparison table and bar chart are shown immediately.
 
 ![Run Analysis — results](docs/screenshots/04_run_analysis.png)
 
-### 3.5 Tab 5 — Backtesting
+### 4.5 Tab 5 — Backtesting
 
 Walk-forward backtesting over 1,001 days: **10 exceptions, 1.00% observed rate** (expected 1.00%). The exception-over-VaR chart shows exceptions as orange crosses above the red VaR forecast line. Kupiec test: LR = 0.0000, p = 0.9975 — H₀ not rejected.
 
 ![Backtesting results](docs/screenshots/05_backtesting.png)
 
-### 3.6 Tab 6 — Credit Risk
+### 4.6 Tab 6 — Credit Risk
 
 Reduced-form hazard panel computes survival probabilities, cumulative default probability, default density, risky ZCB price, and credit spread at user-supplied horizons. At λ = 3%, R = 40% the CDS approximation reads **180.0 bps** — exactly the §14 landmark value. The Merton structural model section below it accepts firm-value and balance-sheet inputs.
 
 ![Credit Risk tab](docs/screenshots/06_credit_risk.png)
 
-### 3.7 Tab 7 — CDS / CVA
+### 4.7 Tab 7 — CDS / CVA
 
 Par-spread curve computed under constant hazard: approx spread 180.0 bps, full-formula par spread at the 10-year tenor 180.7 bps. The CVA section builds a time-stepped exposure profile from the MC engine or from a user-uploaded CSV, and computes gross and mitigated CVA.
 
 ![CDS / CVA tab](docs/screenshots/07_cds_cva.png)
 
-### 3.8 Tab 8 — Capital & Stress
+### 4.8 Tab 8 — Capital & Stress
 
 RWA is computed from current portfolio exposures and user-editable Basel risk weights (equities default to 100%). With equity capital auto-set to 8% of portfolio value ($11,669.16) the capital ratio is **22.84%** — well above the 8% hurdle (PASS ✅). DFAST stress scenarios and a 9-quarter capital-path projection are available.
 
@@ -170,9 +282,9 @@ RWA is computed from current portfolio exposures and user-editable Basel risk we
 
 ---
 
-## 4. Product / System Description
+## 5. Product / System Description
 
-### 4.1 User Workflow
+### 5.1 User Workflow
 
 The product is an eight-tab Streamlit application. The required market-risk workflow spans Tabs 1–5; the formula-sheet extensions occupy Tabs 6–8.
 
@@ -187,7 +299,7 @@ The product is an eight-tab Streamlit application. The required market-risk work
 | 7 | CDS / CVA | CDS par-spread curve and CVA / mitigated CVA |
 | 8 | Capital & Stress | RWA, capital ratio, DFAST stress scenarios |
 
-### 4.2 Input Schema
+### 5.2 Input Schema
 
 We define three dataclasses in `src/schemas.py`:
 
@@ -216,7 +328,7 @@ class Portfolio:
     options: list[OptionPosition]
 ```
 
-### 4.3 Market Data
+### 5.3 Market Data
 
 For the core market-risk engine we require an aligned wide price frame indexed by date, one column per underlying ticker. Two loading paths exist:
 
@@ -225,7 +337,7 @@ For the core market-risk engine we require an aligned wide price frame indexed b
 
 A `fetch_risk_free_rate(asof)` helper pulls the 10-year Treasury yield (`^TNX`) and converts to decimal, falling back to 4% on any failure.
 
-### 4.4 Inputs, Sources, and Validation Checks
+### 5.4 Inputs, Sources, and Validation Checks
 
 | Input | Source | Validation |
 |---|---|---|
@@ -238,7 +350,7 @@ A `fetch_risk_free_rate(asof)` helper pulls the 10-year Treasury yield (`^TNX`) 
 | VaR confidence | Float slider | 0 < α < 1 |
 | Price history | CSV / yfinance | Non-empty, all portfolio tickers present, no all-NaN columns |
 
-### 4.5 Outputs
+### 5.5 Outputs
 
 | Output | Format | Delivery |
 |---|---|---|
@@ -256,9 +368,9 @@ A `fetch_risk_free_rate(asof)` helper pulls the 10-year Treasury yield (`^TNX`) 
 
 ---
 
-## 5. Model Description
+## 6. Model Description
 
-### 5.1 Overview
+### 6.1 Overview
 
 The core market-risk engine consists of:
 
@@ -271,7 +383,7 @@ The core market-risk engine consists of:
 
 The formula-sheet extensions add exact GBM VaR/ES, credit risk, CDS, CVA, and regulatory capital modules.
 
-### 5.2 Return and Scenario Construction
+### 6.2 Return and Scenario Construction
 
 We work with daily log-returns throughout:
 
@@ -286,7 +398,7 @@ Key assumptions:
 - Historical scenarios are equally weighted within the lookback window  
 - Horizon scaling uses `μ_h = h·μ` and `Σ_h = h·Σ`
 
-### 5.3 Option Pricing Model
+### 6.3 Option Pricing Model
 
 European calls and puts are priced with Black-Scholes with continuous dividends (`src/pricing/black_scholes.py`):
 
@@ -307,7 +419,7 @@ Deltas used in the parametric engine:
 
 **Key limitation**: volatility σ is fixed at the user-supplied value. We do not shock the volatility surface when we reprice options under stressed spots. This means vega risk is not captured, and the course project specification explicitly warns against this choice. We document it here as a known limitation and in the module docstring.
 
-### 5.4 Historical VaR and ES
+### 6.4 Historical VaR and ES
 
 Implemented in `src/risk/historical.py`. Algorithm:
 
@@ -335,7 +447,7 @@ ES_α   = E[loss | loss > ES threshold]
 - Extreme quantiles are unstable with short history
 - Assumes historical scenarios are representative of future risk
 
-### 5.5 Parametric (Delta-Normal) VaR and ES
+### 6.5 Parametric (Delta-Normal) VaR and ES
 
 Implemented in `src/risk/parametric.py`. We build a dollar-exposure vector **x** from stock positions and option deltas, estimate mean **μ** and covariance **Σ** from log-returns, scale to horizon, then compute:
 
@@ -363,7 +475,7 @@ The large discrepancy between parametric and historical VaR ($1.3k vs $11.1k) is
 - First-order option approximation; gamma and vega risk ignored  
 - Covariance estimation is sensitive to the lookback window
 
-### 5.6 Monte Carlo VaR and ES
+### 6.6 Monte Carlo VaR and ES
 
 Implemented in `src/risk/monte_carlo.py`. We estimate **μ** and **Σ** from log-returns, scale to horizon, and simulate:
 
@@ -389,7 +501,7 @@ Design choices:
 - Monte Carlo error requires large path counts  
 - Covariance quality directly affects scenario quality
 
-### 5.7 Estimation Methods: Rolling Window and EWMA
+### 6.7 Estimation Methods: Rolling Window and EWMA
 
 Two estimators are available in `src/risk/estimators.py`:
 
@@ -407,7 +519,7 @@ where *N* is the EWMA parameter (default 60). Recent observations receive higher
 
 We chose rolling window as the default to keep the base case interpretable and transparent, with EWMA available for comparison.
 
-### 5.8 VaR Backtesting
+### 6.8 VaR Backtesting
 
 Implemented in `src/risk/backtest.py` as a walk-forward procedure. For each evaluation date *t* in the out-of-sample period:
 
@@ -456,7 +568,7 @@ LR_cc = LR_uc + LR_ind  ~ χ²(2)
 
 The observed exception rate matches the expected rate exactly. The model correctly predicts VaR exceedances 99% of the time.
 
-### 5.9 Exact Lognormal VaR and ES (§4 / §7 Extension)
+### 6.9 Exact Lognormal VaR and ES (§4 / §7 Extension)
 
 Implemented in `src/risk/lognormal.py`. For a GBM asset with drift μ and volatility σ over horizon *h*, the exact long-position VaR and ES are:
 
@@ -469,7 +581,7 @@ ES_long   = V₀·[1 − exp(m_h + ½s_h²)·N(z_{1−p} − s_h)/(1−p)]
 
 Short-position analogues are implemented with sign-reversed quantile arguments.
 
-### 5.10 Credit Risk Extension (§8–§11)
+### 6.10 Credit Risk Extension (§8–§11)
 
 #### Reduced-form hazard model (`src/credit/hazard.py`)
 
@@ -530,9 +642,9 @@ DFAST stress scenarios (baseline / adverse / severely adverse) apply uniform equ
 
 ---
 
-## 6. Software Design and Implementation
+## 7. Software Design and Implementation
 
-### 6.1 Architecture
+### 7.1 Architecture
 
 We designed the system in distinct layers so that business logic is completely separated from the UI and can be tested independently.
 
@@ -568,7 +680,7 @@ We designed the system in distinct layers so that business logic is completely s
 └─────────────────────────────────────────────┘
 ```
 
-### 6.2 Module Map
+### 7.2 Module Map
 
 | Module | Role |
 |---|---|
@@ -596,7 +708,7 @@ We designed the system in distinct layers so that business logic is completely s
 | `src/ui/*.py` | One panel file per tab |
 | `app.py` | Tab wiring and session-state management |
 
-### 6.3 Key Design Decisions
+### 7.3 Key Design Decisions
 
 1. **Thin UI** — All quantitative logic sits below the Streamlit layer. UI panels call service objects; they do not implement formulas directly. This makes the analytics reusable in notebooks and tests without any Streamlit imports.
 
@@ -610,7 +722,7 @@ We designed the system in distinct layers so that business logic is completely s
 
 6. **EWMA parameterisation** — We use `λ = (N-1)/(N+1)` exactly as defined in the course formula sheet, so that results from the app are directly comparable to lecture examples.
 
-### 6.4 Notebook Sequence
+### 7.4 Notebook Sequence
 
 | Notebook | Topic |
 |---|---|
@@ -628,9 +740,9 @@ We designed the system in distinct layers so that business logic is completely s
 
 ---
 
-## 7. Validation Methodology and Scope
+## 8. Validation Methodology and Scope
 
-### 7.1 Validation Objectives
+### 8.1 Validation Objectives
 
 Our validation program aims to establish:
 
@@ -642,7 +754,7 @@ Our validation program aims to establish:
 - Correct data loading, caching, and input validation  
 - Correct UI-service integration
 
-### 7.2 Validation Types
+### 8.2 Validation Types
 
 | Validation type | Files | Purpose |
 |---|---|---|
@@ -658,7 +770,7 @@ Our validation program aims to establish:
 | Regulatory | `test_regulatory.py`, `test_dfast_pathing.py`, `test_balance_sheet.py` | RWA, DFAST path, solvency |
 | Network integration | `integration_test_formula_sheet.py` | Live Yahoo Finance + formula-sheet sanity |
 
-### 7.3 Tolerances
+### 8.3 Tolerances
 
 | Tolerance type | Value | Applied to |
 |---|---|---|
@@ -668,7 +780,7 @@ Our validation program aims to establish:
 | Monte Carlo | Up to 5% relative | Stochastic simulation outputs |
 | Live integration | Positive / finite | Yahoo Finance end-to-end check |
 
-### 7.4 Test Plan Summary
+### 8.4 Test Plan Summary
 
 **Baseline correctness tests:**
 1. Black-Scholes call and put pricing vs. analytic formula  
@@ -704,9 +816,9 @@ Our validation program aims to establish:
 
 ---
 
-## 8. Validation Results
+## 9. Validation Results
 
-### 8.1 Unit and Integration Test Results
+### 9.1 Unit and Integration Test Results
 
 Run command (no network required):
 ```bash
@@ -729,7 +841,7 @@ python -m pytest tests/ --cov=src --cov-report=term-missing \
 
 Observed result: **569 passed, 92% statement coverage across `src/`**
 
-### 8.2 Homework Validation (23/23 PASS)
+### 9.2 Homework Validation (23/23 PASS)
 
 Notebook `11_end_to_end_demo.ipynb` validates all course homework cases at 1% tolerance. Selected results:
 
@@ -748,7 +860,7 @@ Notebook `11_end_to_end_demo.ipynb` validates all course homework cases at 1% to
 
 All 23 cases pass at the 1% relative tolerance (absolute tolerance for cases where the expected value is zero).
 
-### 8.3 Live Application Backtest
+### 9.3 Live Application Backtest
 
 | Metric | Value |
 |---|---|
@@ -768,7 +880,7 @@ All 23 cases pass at the 1% relative tolerance (absolute tolerance for cases whe
 
 The model achieved exactly the expected exception frequency. The Kupiec p-value of 0.9975 is very high, indicating strong statistical concordance between observed and expected exception rates.
 
-### 8.4 Formula-Sheet Sanity Values Confirmed
+### 9.4 Formula-Sheet Sanity Values Confirmed
 
 | §14 landmark | Target | Observed | Tolerance | Status |
 |---|---|---|---|---|
@@ -778,7 +890,7 @@ The model achieved exactly the expected exception frequency. The Kupiec p-value 
 | CVA > 0 | Structural | Confirmed | Structural | PASS |
 | Capital ratio > 8% (PASS) | Structural | 22.84% | Structural | PASS |
 
-### 8.5 Integration Test Results
+### 9.5 Integration Test Results
 
 `tests/integration_test.py` — exercises the full `RiskEngineService.run_all()` pipeline with synthetic data against Yahoo Finance. All VaR estimates are positive and ES ≥ VaR for all three methods.
 
@@ -786,9 +898,9 @@ The model achieved exactly the expected exception frequency. The Kupiec p-value 
 
 ---
 
-## 9. Limitations
+## 10. Limitations
 
-### 9.1 Market Risk Limitations
+### 10.1 Market Risk Limitations
 
 | Limitation | Description | Impact | Mitigation |
 |---|---|---|---|
@@ -799,7 +911,7 @@ The model achieved exactly the expected exception frequency. The Kupiec p-value 
 | Estimation window sensitivity | 252-day default may be too long in fast markets | Slow reaction to regime change | Allow EWMA; consider filtering |
 | Overnight and gap risk | Daily close-to-close returns only | Overnight gaps and weekend risk not captured | Scope limitation; acceptable for academic use |
 
-### 9.2 Option-Specific Limitations
+### 10.2 Option-Specific Limitations
 
 | Limitation | Description |
 |---|---|
@@ -808,7 +920,7 @@ The model achieved exactly the expected exception frequency. The Kupiec p-value 
 | No dividend modelling beyond continuous yield | Discrete dividends not modelled |
 | Maturity cliff | Expired options use intrinsic value only |
 
-### 9.3 Credit and Regulatory Limitations
+### 10.3 Credit and Regulatory Limitations
 
 | Limitation | Description |
 |---|---|
@@ -819,7 +931,7 @@ The model achieved exactly the expected exception frequency. The Kupiec p-value 
 | DFAST: illustrative scenarios | Not official Fed CCAR/DFAST numbers |
 | RWA: equity weight = 1.0 | Basel Standardised Approach simplified |
 
-### 9.4 Data Limitations
+### 10.4 Data Limitations
 
 | Limitation | Description |
 |---|---|
@@ -830,7 +942,7 @@ The model achieved exactly the expected exception frequency. The Kupiec p-value 
 
 ---
 
-## 10. Recommendations
+## 11. Recommendations
 
 1. **Shock the volatility surface** — Replace the static σ input with a volatility term-structure that is shocked alongside spot, capturing vega risk.
 
@@ -852,7 +964,7 @@ The model achieved exactly the expected exception frequency. The Kupiec p-value 
 
 ---
 
-## 11. Bibliography
+## 12. Bibliography
 
 - Black, F. and Scholes, M. (1973). *The Pricing of Options and Corporate Liabilities.* Journal of Political Economy, 81(3), 637–654.  
 - Christoffersen, P. (1998). *Evaluating Interval Forecasts.* International Economic Review, 39(4), 841–862.  
@@ -864,7 +976,7 @@ The model achieved exactly the expected exception frequency. The Kupiec p-value 
 
 ---
 
-## 12. Appendices
+## 13. Appendices
 
 ### Appendix A. Formula Reference
 

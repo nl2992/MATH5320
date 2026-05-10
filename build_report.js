@@ -223,38 +223,146 @@ const children = [
   ),
   pageBreak(),
 
+  // ── Model Risk Management Framework ────────────────────────────────────────
+  h1('3  Model Risk Management Framework'),
+  p('This report documents the model according to a model risk management framework drawn from Lecture 5: purpose and scope, design justification, data analysis, implementation controls, testing, validation, limitations, and post-deployment monitoring.'),
+  p('Post-crisis model risk management has expanded from point-in-time model validation toward full lifecycle governance, with effective governance structures, robust development and implementation practices, and sound ongoing validation.'),
+  ...blank(1),
+
+  h2('3.1  Purpose, Scope, and Performance Requirements'),
+  p('Lecture 5 states that the requirements document must define the model\'s purpose, scope of use, and performance requirements. The table below records each item for this system.'),
+  makeTable(
+    ['Item', 'Documentation'],
+    [
+      ['Purpose', 'Course-level risk calculation system for portfolios of stocks and European options'],
+      ['Scope', 'Historical, parametric, and Monte Carlo VaR; historical and MC ES; walk-forward VaR backtesting with Kupiec, Christoffersen, and conditional-coverage tests; formula-sheet extension modules (lognormal VaR/ES, hazard, Merton, CDS, CVA, regulatory capital)'],
+      ['Non-scope', 'Production trading, official regulatory capital reporting, production XVA, CCAR/DFAST filing, American or path-dependent options'],
+      ['Performance requirement', 'Deterministic formulas pass strict unit tests at machine precision; historical and MC methods agree with known benchmarks within 1% relative tolerance for HW fixtures; the UI handles arbitrary stock/option portfolios without code changes'],
+      ['Data requirement', 'Aligned price histories, sufficient lookback (>= 2 days), valid option inputs (positive spot/strike/vol/maturity), documented proxies for any inputs not sourced from official market data'],
+    ],
+    [2340, 7020]
+  ),
+  ...blank(1),
+
+  h2('3.2  Model Choice Justification'),
+  p('Lecture 5 design document requirements state that model choice must be justified using published research or industry practice, with explanation of mathematical specification, analysis of assumptions and limitations, comparison of alternatives, and validation of subjective components.'),
+  makeTable(
+    ['Model choice', 'Why chosen', 'Alternative', 'Limitation'],
+    [
+      ['Historical simulation VaR', 'Nonparametric; uses realised scenarios without distributional assumption', 'Filtered historical simulation, EVT tail model', 'History may not represent future; extreme quantiles unstable with short lookback'],
+      ['Parametric delta-normal VaR', 'Fast, transparent, analytically tractable normal approximation', 'Delta-gamma, Cornish-Fisher expansion', 'Weak for nonlinear option portfolios and fat-tailed return distributions'],
+      ['Monte Carlo VaR', 'Full repricing under simulated shocks; captures option nonlinearity better than delta-normal', 'Bootstrap MC, scenario lattice', 'Distributional assumption (multivariate normal) and MC sampling error'],
+      ['Black-Scholes for option pricing', 'Industry-standard European option pricer; closed-form, well-understood', 'Local vol (Dupire), stochastic vol (Heston), binomial lattice', 'Constant volatility; no early exercise; smile/skew risk not captured'],
+      ['GBM log-returns', 'Ensures non-negative simulated stock prices; standard equity assumption', 'Arithmetic Brownian Motion (Bachelier)', 'Log-return aggregation convexity; not suitable for near-zero or negative risk factors'],
+      ['EWMA / rolling window estimation', 'Course-aligned estimators; transparent; EWMA allows faster reaction to volatility clustering', 'GARCH(1,1), DCC-GARCH', 'Parameter sensitivity; no volatility regime detection'],
+    ],
+    [2340, 2340, 2340, 2340]
+  ),
+  p('GBM vs ABM note: GBM is used for equity risk factors that must remain non-negative (stock prices). For risk factors that can be negative — such as interest rate spreads or credit spreads — Arithmetic Brownian Motion (Bachelier model) is more appropriate. Our system scope is limited to equity underlyings, so GBM is applied throughout. This is explicitly noted as a scope boundary.'),
+  ...blank(1),
+
+  h2('3.3  Data Validation and Proxy Assumptions'),
+  p('Lecture 5 emphasises that data is critical and that problematic data gives questionable results. It requires documentation of data used, assessment of quality and suitability, identification and justification of proxies, and documentation of any cleaning or smoothing assumptions.'),
+  makeTable(
+    ['Data item', 'Validation required'],
+    [
+      ['Price histories', 'No missing dates after alignment; no impossible prices (negative or zero for equity); no stale sequences (constant price over consecutive days)'],
+      ['Return series', 'Outlier review; return distribution summary; window-size check (lookback must be > number of positions for full-rank covariance)'],
+      ['Option inputs', 'Positive spot, strike, volatility, and time-to-maturity; risk-free rate and dividend yield explicitly documented'],
+      ['Proxies', 'Yahoo Finance adjusted close is used as a proxy for official market data — not official Bloomberg or exchange-direct data. Documented as a data limitation, not a validated production data source'],
+      ['Data cleaning', 'Dropped NaN rows after alignment are documented; no price interpolation is performed; date alignment uses outer join then forward-fill only if explicitly requested'],
+      ['Covariance matrix', 'Checked for symmetry; checked for positive semidefiniteness or handled gracefully via numerical regularisation'],
+    ],
+    [2340, 7020]
+  ),
+  p('Data limitation statement: The main data limitation is that downloaded or user-supplied historical prices may contain missing observations, stale prices, corporate-action issues, or inconsistent calendar alignments. The engine treats data validation as part of model validation rather than as a cosmetic preprocessing step. Any proxy data source should be disclosed to end users as part of the model\'s usage documentation.'),
+  ...blank(1),
+
+  h2('3.4  Conceptual Soundness'),
+  p('Lecture 5 states that validation should evaluate conceptual soundness: independent experts should review documentation, confirm the model is appropriate for its task, assess design and construction quality, review empirical evidence, check for sound judgment in model selection, and run sensitivity analysis.'),
+  makeTable(
+    ['Conceptual soundness check', 'Evidence in this project'],
+    [
+      ['Appropriate for intended task', 'VaR and ES for stocks and European options is the explicit course project requirement; the model scope is a direct match'],
+      ['Mathematical specification documented', 'Formula sheet and model description with explicit formulae for all methods'],
+      ['Alternative approaches considered', 'Historical vs parametric vs Monte Carlo comparison in §3.2; estimator comparison notebooks'],
+      ['Assumptions documented', 'Lognormal returns (GBM), multivariate normal simulation, Black-Scholes constant volatility, covariance stationarity — all documented in §6 and §10'],
+      ['Sensitivity analysis performed', 'Lookback window (252 days baseline), VaR/ES confidence (99%/97.5%), horizon (1 day), MC path count (10,000) — each configurable and tested'],
+      ['Limitations documented', '§10 Limitations table; option vega risk, delta-normal gamma approximation, multivariate normality, data quality — all listed explicitly'],
+    ],
+    [3900, 5460]
+  ),
+  ...blank(1),
+
+  h2('3.5  Ongoing Monitoring and Post-Deployment'),
+  p('Lecture 5 states that after deployment, teams should obtain user feedback, confirm reports are clear and indicate uncertainty appropriately, and ensure users understand model limitations. Changes must be justified, logged, tested, and revalidated based on materiality.'),
+  makeTable(
+    ['Monitoring item', 'Proposed action'],
+    [
+      ['Daily / periodic VaR exceptions', 'Track exception rate and clustering; re-run Kupiec and Christoffersen tests periodically'],
+      ['Input drift', 'Monitor volatility level, covariance structure, and return outliers across the lookback window'],
+      ['Data quality', 'Detect missing or stale prices and ticker mismatches at each data load'],
+      ['Model code changes', 'Log all code and model changes; rerun full regression test suite (pytest tests/) after every change'],
+      ['User parameter overrides', 'Document any manual override of lookback, horizon, confidence, or volatility inputs'],
+      ['New instruments', 'Require a model scope review and test extension before adding support for new instrument types'],
+    ],
+    [3120, 6240]
+  ),
+  p('Change management: Any material change to model methodology, pricing logic, data source, or risk measure definition should trigger revalidation. Small implementation changes (bug fixes, refactoring) require unit tests and peer review. Large methodology changes (new VaR method, new option pricing model, new credit module) require updated documentation, independent review, and full regression testing against existing fixtures.'),
+  ...blank(1),
+
+  h2('3.6  Outcome Analysis and Backtesting'),
+  p('Lecture 5 states that outcome analysis compares model outputs to actual outcomes. For VaR, this requires: confirming exception frequency against the expected rate, checking for exception clustering, testing across multiple confidence levels, and developing analogous tests for other risk measures.'),
+  p('Key principle from Lecture 5: VaR backtesting is not optional. It is the model\'s primary outcome-analysis tool. It should be run regularly, at multiple confidence levels, and with clustering diagnostics.'),
+  makeTable(
+    ['Backtest diagnostic', 'Required?', 'Status in this project'],
+    [
+      ['Exception count', 'Yes', 'Implemented — 10 exceptions over 1,001 days'],
+      ['Expected vs actual exception rate', 'Yes', 'Implemented — 1.00% observed vs 1.00% expected'],
+      ['Kupiec unconditional coverage test', 'Yes', 'Implemented — LR = 0.0000, p = 0.9975, H0 not rejected'],
+      ['Exception clustering (Christoffersen)', 'Should add', 'Implemented in src/risk/backtest.py; not yet surfaced as default UI output'],
+      ['Conditional coverage (LR_cc)', 'Should add', 'Implemented in src/risk/backtest.py; available as API call'],
+      ['Multiple VaR percentiles (95%, 97.5%, 99%)', 'Should add', 'Partial — UI allows any single confidence level; multi-percentile sweep is a future enhancement'],
+      ['ES backtesting', 'Optional extension', 'Not yet implemented; ES validation relies on ES >= VaR structural check and formula-level unit tests'],
+    ],
+    [3120, 2080, 4160]
+  ),
+  p('ES validation note: Direct ES backtesting is more complex than VaR backtesting because ES is not elicitable in the classical sense. Current validation relies on: (1) confirming ES >= VaR for all methods, (2) unit tests against analytical ES formulas, (3) confirming the ES >= VaR relationship holds across simulated loss distributions. A future enhancement would implement a joint VaR/ES regression test or a Murphy diagram.'),
+  pageBreak(),
+
+
   // ── Screenshots ────────────────────────────────────────────────────────────
-  h1('3  Application Screenshots'),
+  h1('4  Application Screenshots'),
   p('The following screenshots were captured from the live application running at localhost:8502 against five years of Yahoo Finance data (AAPL + MSFT, 2021-05-11 to 2026-05-08, 1,255 trading days).'),
   ...blank(1),
-  h2('3.1  Tab 1 — Portfolio Input'),
+  h2('4.1  Tab 1 — Portfolio Input'),
   p('Stock positions (AAPL × 100, MSFT × 50) and one option position (10 AAPL call contracts, strike $200) are entered. The editor validates every field and shows a live position summary.'),
   ...screenshot('01_portfolio_input.png', 'Figure 1: Portfolio Input — AAPL, MSFT stocks with AAPL call option'),
-  h2('3.2  Tab 2 — Market Data'),
+  h2('4.2  Tab 2 — Market Data'),
   p('Data downloaded from Yahoo Finance: 1,255 rows × 2 tickers (2021-05-11 to 2026-05-08). A local parquet cache avoids repeated downloads. Most recent prices: AAPL $270.71, MSFT $424.82.'),
   ...screenshot('02_market_data.png', 'Figure 2: Market Data — 1,255 rows, 2 tickers loaded from Yahoo Finance'),
-  h2('3.3  Tab 3 — Risk Settings'),
+  h2('4.3  Tab 3 — Risk Settings'),
   p('Lookback window 252 days, horizon 1 day, VaR confidence 99%, ES confidence 97.5%, rolling-window estimator, 10,000 Monte Carlo paths.'),
   ...screenshot('03_risk_settings.png', 'Figure 3: Risk Settings — 252-day lookback, 1-day horizon, 99% VaR confidence'),
-  h2('3.4  Tab 4 — Run Analysis'),
+  h2('4.4  Tab 4 — Run Analysis'),
   p('One click runs all three VaR/ES engines simultaneously. Portfolio value $145,864.49. Historical VaR $11,095.68, Parametric VaR $1,299.44, Monte Carlo VaR $10,488.89.'),
   ...screenshot('04_run_analysis.png', 'Figure 4: Run Analysis — VaR/ES comparison table and bar chart'),
-  h2('3.5  Tab 5 — Backtesting'),
+  h2('4.5  Tab 5 — Backtesting'),
   p('Walk-forward backtesting over 1,001 days: 10 exceptions, 1.00% observed rate (expected 1.00%). Kupiec LR = 0.0000, p = 0.9975 — H₀ not rejected.'),
   ...screenshot('05_backtesting.png', 'Figure 5: Backtesting — exception chart, Kupiec statistics, 1.00% observed rate'),
-  h2('3.6  Tab 6 — Credit Risk'),
+  h2('4.6  Tab 6 — Credit Risk'),
   p('Reduced-form hazard panel: λ = 3%, R = 40%, LGD = 60%, CDS approximation = 180.0 bps (§14 landmark value). Merton structural model below for firm-value analysis.'),
   ...screenshot('06_credit_risk.png', 'Figure 6: Credit Risk — hazard/survival table, 180 bps CDS spread confirmed'),
-  h2('3.7  Tab 7 — CDS / CVA'),
+  h2('4.7  Tab 7 — CDS / CVA'),
   p('Par-spread curve under constant hazard: approx 180.0 bps, full-formula par spread at 10-year tenor 180.7 bps. CVA section builds exposure profile from MC engine.'),
   ...screenshot('07_cds_cva.png', 'Figure 7: CDS/CVA — par spread curve and CVA computation'),
-  h2('3.8  Tab 8 — Capital & Stress'),
+  h2('4.8  Tab 8 — Capital & Stress'),
   p('RWA computed from portfolio exposures with unit Basel risk weights. Equity capital = $11,669.16 (8% of portfolio value). Capital ratio = 22.84% — PASS ✅.'),
   ...screenshot('08_capital_stress.png', 'Figure 8: Capital & Stress — RWA, capital ratio 22.84%, PASS'),
   pageBreak(),
 
   // ── Product Description ────────────────────────────────────────────────────
-  h1('4  Product / System Description'),
+  h1('5  Product / System Description'),
   h2('4.1  User Workflow'),
   makeTable(
     ['Tab', 'Name', 'Purpose'],
@@ -296,7 +404,7 @@ const children = [
   pageBreak(),
 
   // ── Model Description ──────────────────────────────────────────────────────
-  h1('5  Model Description'),
+  h1('6  Model Description'),
   h2('5.1  Overview'),
   p('The core market-risk engine consists of: (1) portfolio valuation under Black-Scholes, (2) log-return computation and estimation, (3) historical simulation VaR/ES, (4) parametric delta-normal VaR/ES, (5) Monte Carlo VaR/ES, and (6) walk-forward VaR backtesting. Formula-sheet extensions add exact GBM VaR/ES, credit risk, CDS, CVA, and regulatory capital.'),
   h2('5.2  Return and Scenario Construction'),
@@ -353,7 +461,7 @@ const children = [
   pageBreak(),
 
   // ── Software Design ────────────────────────────────────────────────────────
-  h1('6  Software Design and Implementation'),
+  h1('7  Software Design and Implementation'),
   h2('6.1  Architecture'),
   p('We designed the system in distinct layers so that business logic is completely separated from the UI and can be tested independently:'),
   ...codeBlock('UI Layer:      app.py + src/ui/*  (Streamlit only — no math)\n                   |\nService Layer: RiskEngineService · credit_service · regulatory_service\n                   |\nCore Risk:     historical · parametric · monte_carlo · backtest · estimators\nExtensions:    credit/* · risk/lognormal.py · risk/regulatory.py\n                   |\nPricing/Data:  black_scholes.py · portfolio.py · market_data.py\n                   |\nSchemas:       StockPosition · OptionPosition · Portfolio'),
@@ -392,7 +500,7 @@ const children = [
   pageBreak(),
 
   // ── Validation ─────────────────────────────────────────────────────────────
-  h1('7  Validation Methodology and Scope'),
+  h1('8  Validation Methodology and Scope'),
   h2('7.1  Validation Types'),
   makeTable(
     ['Validation Type', 'Files', 'Purpose'],
@@ -426,7 +534,7 @@ const children = [
   pageBreak(),
 
   // ── Validation Results ─────────────────────────────────────────────────────
-  h1('8  Validation Results'),
+  h1('9  Validation Results'),
   h2('8.1  Unit and Integration Test Results'),
   p('Run command (no network required):'),
   ...codeBlock('python -m pytest tests/ --ignore=tests/integration_test.py\n  --ignore=tests/integration_test_formula_sheet.py -q'),
@@ -469,7 +577,7 @@ const children = [
   pageBreak(),
 
   // ── Limitations ────────────────────────────────────────────────────────────
-  h1('9  Limitations'),
+  h1('10  Limitations'),
   makeTable(
     ['Limitation', 'Description', 'Impact', 'Mitigation'],
     [
@@ -488,7 +596,7 @@ const children = [
   pageBreak(),
 
   // ── Recommendations ────────────────────────────────────────────────────────
-  h1('10  Recommendations'),
+  h1('11  Recommendations'),
   p('1. Shock the volatility surface — Replace static σ with a term-structure shocked alongside spot, capturing vega risk.'),
   p('2. Use implied volatility — Pull ATM implied vol from market data instead of historical volatility for option repricing.'),
   p('3. Add fat-tail simulation — Implement t-distributed or GARCH-filtered scenario generation for the MC engine.'),
@@ -499,7 +607,7 @@ const children = [
   pageBreak(),
 
   // ── Bibliography ───────────────────────────────────────────────────────────
-  h1('11  Bibliography'),
+  h1('12  Bibliography'),
   p('Black, F. and Scholes, M. (1973). The Pricing of Options and Corporate Liabilities. Journal of Political Economy, 81(3), 637–654.'),
   p('Christoffersen, P. (1998). Evaluating Interval Forecasts. International Economic Review, 39(4), 841–862.'),
   p('Kupiec, P. (1995). Techniques for Verifying the Accuracy of Risk Measurement Models. Journal of Derivatives, 3(2), 73–84.'),
@@ -510,7 +618,7 @@ const children = [
   pageBreak(),
 
   // ── Appendix ───────────────────────────────────────────────────────────────
-  h1('12  Appendices'),
+  h1('13  Appendices'),
   h2('Appendix A  Installation and Execution'),
   ...codeBlock('# Create environment\nconda create -n math5320 python=3.10\nconda activate math5320\npip install -r requirements.txt\n\n# Run the Streamlit application\nstreamlit run app.py\n\n# Run unit tests (no network)\npython -m pytest tests/ \\\n  --ignore=tests/integration_test.py \\\n  --ignore=tests/integration_test_formula_sheet.py -v\n\n# Run with coverage\npython -m pytest tests/ --cov=src --cov-report=term-missing \\\n  --ignore=tests/integration_test.py \\\n  --ignore=tests/integration_test_formula_sheet.py\n\n# Network integration tests\npython tests/integration_test.py\npython tests/integration_test_formula_sheet.py'),
   h2('Appendix B  Deliverable Checklist'),
