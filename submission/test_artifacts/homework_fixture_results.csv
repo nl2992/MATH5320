@@ -1,0 +1,8 @@
+Homework case,Area,Expected result,Actual result,Pass?
+HW4 single-stock VaR,GBM VaR,19037.040669837672,19037.040669837672,Pass
+HW6 reduced-form default,hazard,P(tau<=5)=0.0363238646509465; P(3<tau<=4)=0.0072108171597774495,P(tau<=5)=0.0363238646509465; P(3<tau<=4)=0.0072108171597774495,Pass
+HW6 piecewise hazard,hazard table,spread range 69.95bp to 80.44bp,spread range 69.89bp to 80.44bp,Pass
+HW7 Merton Q/P,structural credit,Q-PD≈0.295295; P-PD≈0.3888,Q-PD=0.29529523452711204; P-PD=0.38880693209330475,Pass
+HW8 CDS,CDS,approx spread 0.018,0.018,Pass
+HW9 short VaR/ES,short risk,short VaR > long VaR,VaR=5924.434136581646; ES=5999.595882590192,Pass
+HW10 RWA/capital,regulatory,RWA=100; capital ratio=0.12,RWA=100.0; ratio=0.12,Pass
