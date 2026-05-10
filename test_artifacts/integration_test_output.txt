@@ -1,0 +1,23 @@
+/opt/anaconda3/lib/python3.12/site-packages/pandas/core/computation/expressions.py:22: UserWarning: Pandas requires version '2.10.2' or newer of 'numexpr' (version '2.8.7' currently installed).
+  from pandas.core.computation.check import NUMEXPR_INSTALLED
+/opt/anaconda3/lib/python3.12/site-packages/pandas/core/arrays/masked.py:56: UserWarning: Pandas requires version '1.4.2' or newer of 'bottleneck' (version '1.3.7' currently installed).
+  from pandas.core import (
+============================================================
+MATH5320 Risk System — Integration Test
+============================================================
+
+[1] Downloading AAPL + MSFT price history (2 years)...
+    Loaded 500 rows, columns: ['AAPL', 'MSFT']
+
+[2] Building portfolio...
+    2 stocks, 1 options
+
+[3] Creating RiskEngineService...
+    Portfolio Value: $60,061.15
+
+[4] Running all risk models...
+    [HISTORICAL]  VaR = $4,821.40  |  ES = $4,793.83
+Traceback (most recent call last):
+  File "/Users/nigelli/Desktop/Columbia MAFN/26Spring/MATH5320/Project/MATH5320/tests/integration_test.py", line 83, in <module>
+    assert res["es"] >= res["var"], f"{model_name} ES must be >= VaR"
+AssertionError: historical ES must be >= VaR
