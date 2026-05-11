@@ -1,0 +1,437 @@
+MATH5320: Financial Risk & Management (HMWK3) 
+ 
+1)   
+a)   
+The p-level Value at Risk is the smallest number X, such that the losses do not exceed X with 
+probability p. For instance, under  
+𝑉𝑎𝑅𝑝 = 𝑖𝑛𝑓 {𝑋: 𝑃(𝑉0 − 𝑉𝑇 ≤ 𝑋) ≥  𝑝} 
+Alternatively, it can be shown as  
+𝑉𝑎𝑅(𝑉, 𝑇, 𝑃) = 𝐺−1(𝑝), 𝑠𝑢𝑐ℎ 𝑡ℎ𝑎𝑡 
+𝐺(𝑋) = 𝑃(𝑉0 − 𝑉𝑇 ≤ 𝑋) = 𝐸𝑃[1𝑉0−𝑉𝑇≤𝑋], 
+Where it is the p-quantile of the loss-distribution, where final value, or PnL of the position is shown 
+as 𝑉0 − 𝑉𝑇. Interpretively, we have a 99% VaR, such that if it is $1mm, 99% of the time losses are 
+$1mm or less over the time horizon. In many ways, it is a great risk measure, as it does offer a precise 
+percentile loss, and in turn, it is operationally actionable. As it is “elicitable”, it can be back-tested.  
+ 
+ 
+b)   
+In terms of the desirable aspects of risk measures, listed in slide 28, it is hard to back-test accurately, 
+and substantively harder to compute than the standard deviation, or volatiliy. 
+Invariably, the condition that can fail is the subadditivity condition for VaR in terms of coherence. 
+From the slide 29 given, we have the following conditions of coherence for P&L random variables V 
+& V’: 
+ 
+Normalisation condition is satisfied where 𝜌(0) = 0 is satisfied, as if there is no risk, the p-quantile 
+loss is 0. Following, monocity is fulfilled, as larger PnL, means 
+lower risk, and vice versa, where “worse portfolio” means smaller 
+PnL. VaR satisfies monotonicity, because quantiles preserve 
+ordering.  Homogeneity is satisfied, as quantiles scale linearly, 
+such that 𝜌(𝛼 𝑉) = 𝛼𝜌(𝑉), for 𝛼 ≥  0. Translation invariance is 
+similar, as VaR is shift invariant given that a “sure gain” 𝛼, will 
+shift the distribution down by 𝛼.  
+ 
+
+
+Subadditivity, does fail, as VAR, only looks at one percentile, but not the severity of tail outcomes, 
+and therefore, and can miss how risks combine in the tail, and diversification can increase measured 
+risk (diversification is supposed to reduce risk), and therefore fail the following: 
+𝜌(𝑉 + 𝑉′) ≤ 𝜌(𝑉)+ 𝜌(𝑉′). 
+ 
+Intuitively, two positions, can have losses that are rare, and just below the p-cutoff, such that they 
+have a “rare but nonzero” losses small enough that they occur less than 1- p of the time individually, 
+such that VaR = 0, but when combine, the chance that at least one loss occurs can exceed 1- p, 
+causing the VaR to increase, such that in this case, diversification can actually increase measured risk.  
+ 
+Notably, VaR performs well for certain cases, and is coherent and does not fail for elliptically 
+distributed factors, like for multivariate normals, where quantiles behave nicely and subadditivity 
+holds. Outside such settings with fat tails, skewness, non-linear payoffs, VaR’s lack of general 
+subadditivity is a key problem. 
+ 
+c)   
+VaR can violate the subadditivity or diversification property 
+𝜌(𝑉 + 𝑉′) ≤ 𝜌(𝑉)+ 𝜌(𝑉′). 
+This is because, loss positions, can individually be zero, but combined VaR be positive, and therefore 
+undermine the key tenet of portfolio allocation. 
+In considering the set-up, we generally consider the general situation, where we have 𝑝 =  0.95 , 
+where usually it is 0.95/0.99 in industry, and the losses are defined as follows. 
+𝐿 ∶=  𝑉0 − 𝑉𝑇 
+Then,  
+𝐿1 = {1 𝑤𝑖𝑡ℎ 𝑝𝑟𝑜𝑏 0.04
+0 𝑤𝑖𝑡ℎ 𝑝𝑟𝑜𝑏 0.96 , 𝐿2 = {1 𝑤𝑖𝑡ℎ 𝑝𝑟𝑜𝑏 0.04
+0 𝑤𝑖𝑡ℎ 𝑝𝑟𝑜𝑏 0.96 
+ 
+Where we assume 𝐿1 & 𝐿2 are independent. Then consider the VaR, of each individually, such that we 
+have it at level p, or the p-quantile of the loss distribution: 
+ 
+𝑃(𝐿1 ≤ 0) = 𝑃(𝐿1 = 0) = 0.96 > 0.95, 
+ 
+So therefore, in this case the smallest x achieving probability at least 0.95, is x = 0. Hence, the VaR of 
+𝐿1 & 𝐿2 are 0, individually. Now, we define a combined portfolio, such that:  
+𝐿 ∶=  𝐿1   +  𝐿2 
+And here, we consider the probabilities, such that we have “0” loss, as shown:  
+𝑃(𝐿 =  0) = 𝑃(𝐿1 = 0, 𝐿_2 =  0 )= 0.96 ∗  0.96 =  0.9216 
+
+Therefore, we can see that the: 
+𝑃(𝐿 ≤  0) =  0.9216 <  0.95 
+As such, the 95% VaR of the total portfolio cannot be 0. Then, checking when x = 1,  
+ 
+𝑃(𝐿 ≤  1)= 1 − 𝑃(𝐿 = 2) = 1 − (0.04 ∗ 0.04) = 1 − 0.0016 = 0.9984 ≥ 0.95 
+As such, the smallest x with 𝑃(𝐿 ≤  𝑋) ≥  0.95 is x = 1. As such, 
+VaR0.95(𝐿1 + 𝐿2)= 1 
+So, therefore,  
+VaR0.95(𝐿1)= 0, VaR0.95(𝐿2)= 0, VaR0.95(𝐿1 + 𝐿2) = 1 
+Going back, we have: 
+VaR0.95(𝐿1 + 𝐿2)= 1 >  0 +  0 =  VaR0.95(𝐿1)+  VaR0.95(𝐿2) 
+, so therefore, this violates the definition given as:  
+𝜌(𝑉 + 𝑉′) ≤ 𝜌(𝑉)+ 𝜌(𝑉′), 
+when p(.) is VaR applied to losses. To wrap up, each position has a rare chance of a certain loss 
+occurring, and less than the 5% tail probability (1 - p), and once combined, the probability at least 
+some loss occurs is now higher than the 5% tail, such that the quantile loss is higher, and therefore 
+diversification can increase VaR. 
+2)    
+ 
+a)   
+P-th percentile Expected shortfall,  
+𝐸𝑆(𝑉, 𝑇, 𝑝)= −𝐸𝑃[𝑉𝑇 − 𝑉0|𝑉𝑇 − 𝑉0 < −𝑉𝑎𝑅(𝑉𝑇, 𝑝)] 
+= 𝐸𝑃[𝑉0 − 𝑉𝑇|𝑉0 − 𝑉𝑇 > 𝑉𝑎𝑅(𝑉𝑇, 𝑝)], 
+As defined in slide 40.  
+ 
+The uses the  𝑉𝑎𝑅𝑝 threshold, such that with probability p, the loss at most is 𝑉𝑎𝑅𝑝. Then, ES 
+effectively refers to that given the worse 1 – p fraction of outcomes, what is the average loss. In more 
+technical terms, ES measures how large losses are on expectation, conditional on the worst possible 
+1– p outcomes.  
+  
+b)  
+Relative to the coherence properties listed on slide 29, ES does satisfy all the coherence conditions.  
+• Normalised, 𝜌(0) = 0 
+• Monotonic, such that worse PnL outcomes imply higher ES 
+
+
+• Positive homogeneity, such that scaling the portfolio, means ES is also scaled proportionally 
+• Translation means adding a “sure gain’ reduces ES the same rate.  
+• Sub additive, such that diversification never increases risk. 
+As such, expected shortfall is a coherent risk measure, and unlike VaR, and is therefore not 
+“deceptive’ in the coherence sense.  
+It does, however, have some issues. For instance, notably, if the PnL portfolio is normally distributed, 
+ES, functionally becomes something akin to:  
+𝐸𝑆𝑝 = 𝑚𝑒𝑎𝑛+ (constant   dependent  on   𝑝)∗ 𝑆𝑇𝐷𝐸𝑉 
+Therefore, under normality, ranking portfolios becomes equivalent to ranking by volatility, and 
+ranking portfolios are effectively akin to ranking by volatility, and therefore “the same as variance if 
+distribution is normal”.  
+It is notably more computationally expensive to computed, as it requires estimating and average the 
+tail beyond the quantile, especially in simulation-based environments with limited observations.  
+ 
+Most importantly, however, is the lack of elicitability in the validation-front, but it is still back-
+testable. In human terms, elicitability, refers to the notion of whether a clean way is there to check if 
+the risk forecast is correct using data. A risk measure is ‘elicitable’ if there is a scoring or loss 
+function, 𝐿(𝑥, 𝑉),   such that the true value of 𝜌(𝑉) is the unique minimiser of the expected score: 
+𝜌(𝑉)= 𝑎𝑟𝑔 𝑚𝑖𝑛𝑥𝐸[𝐿(𝑥, 𝑉)] 
+ 
+Note: “Scoring or loss function”, basically refers to the idea of when we predict an X (our risk 
+forecast), and when we observe realised V, what is the L(x,V), or error it was, or a “marking scheme” 
+or “error function” like in machine learning.  
+ 
+And the idea is that, if we forecast x every day, and then the realised V occurs, and the 𝐿(𝑥, 𝑉) reports 
+how wrong the forecast was, and elicitability means there exists a “marking scheme” under which the 
+best strategy is to report the true “risk measure”, and that is always unique. In this case, it is not, and 
+therefore ES is not elicitable on its own, as there is no single scoring rule that can “grade” or evaluate 
+ES forecasts. Practically, this makes ES harder to validate with simple statistical tests.  
+ 
+However, (VaR, ES) together are jointly elicitable, meaning that there is a loss function that can 
+more accurately validate ES using procedures that involve VaR, and is hence “backtestable”, but ES 
+by itself is not elicitable. 
+As far as actionability, ES reports an average of extreme losses, than can be more informative than 
+VaR for capital adequacy, it is less directly actionable, for example in terms of risk limit. 
+ 
+
+ 
+ 
+ 
+ 
+3)   
+ 
+a)     
+We are only given the 1,200 shares on intel in the current market, so therefore at time 0, we have:  
+𝑉0 = 1200× 24.65 = 29,580. 
+If we consider the delta, which is 1 for a stock, we have: 
+ 
+∂
+∂𝑆 (1200𝑆)= 1200 
+ 
+So a $1 change in Intel changes the position value by $1200. 
+ 
+b)   
+To ensure that sensitivity becomes 0, we need to delta-hedge it. So as such, we need to write n-calls, 
+such that we want to find the n, such that we are delta-neutral.  
+Δtotal = 1200− 𝑛Δcall. 
+ 
+And the standard result from BSM, is that the delta is:  
+Δ𝑐𝑎𝑙𝑙 = 𝜕C
+𝜕S = 𝑁(𝑑1), 𝑤ℎ𝑒𝑟𝑒𝑑1 = 𝑙𝑛(𝑆0/𝐾)+ (𝑟 + 𝜎2/2)𝑇
+𝜎√𝑇
+ 
+
+
+ 
+Plugging in the numbers, from (https://www.barchart.com/options/options-calculator)  
+ 
+ 
+Notably, a manual calculation yields a similar result that is correct to 4d.p with the calculator. 
+ 
+  
+Δtotal = 1200− 𝑛Δcall. 
+𝑛 = 1200
+0.6406 =  1873.2438 (4. dp)   
+ 
+So, to fully delta hedge, we need about 1873 calls.  
+ 
+c)   
+ 
+We will utilise the options calculator from MATH5010 by Dr Smirnov: 
+https://www.math.columbia.edu/~smirnov/options13.html 
+ 
+It shows that the European call price, should be about $5.3451.  
+ 
+
+
+So we note that, in practice with n = 1873, and from the BSM calculator, we get $5.3451, we have the 
+following positions of:  
+• Long 1200 shares of Intel. 
+• Short 1873 call options (strike 25, maturity 1.5y). 
+• Cash received from writing calls. 
+We consider the market values of the stock, short calls, and cash. In reality, we only consider the 
+stock, as we “sold” the calls. So,  the market values are:  
+ 
+𝑉𝑠𝑡𝑜𝑐𝑘,0 = 1200× 24.65 = 29,580. 
+ 
+𝑉𝑐𝑎𝑙𝑙𝑠,0 = −1873 × 5.34507891 = −10,011.33 
+ 
+𝐶𝑎𝑠ℎ0 = +1873 × 5.34507891 = +10,011.33 
+ 
+As such, 𝑉total,0  =  𝑉𝑐𝑎𝑙𝑙𝑠,0 + 𝑉𝑠𝑡𝑜𝑐𝑘,0  +  𝐶𝑎𝑠ℎ0 =  𝑉𝑠𝑡𝑜𝑐𝑘,0  =  $29,580, as the total portfolio value. 
+Notably, we also have about 0 delta.  
+ 
+ 
+d)   
+We consider the following scenario analysis of the underlying stock moving up and down 15%. The 
+risk factor of intel stock price has altered. We need to reprice the portfolio under each scenario using 
+the same pricing model of BSM, and identical assumptions into said model.  
+First considering the stock part of the portfolio:  
+ 
+𝑆up = 24.65(1.15) = 28.3475, 𝑆down = 24.65(0.85) = 20.9525. 
+ 
+Now, the options need to be repriced using the same parameters. Under Time-0 Call price is about 
+$5.3451.  
+ 
+Next, we consider the same idea 
+
+  
+ 
+ 
+𝐶(𝑆𝑢𝑝) ≈ 7.9074, 𝐶(𝑆𝑑𝑜𝑤𝑛) ≈ 3.2064 
+ 
+So, repricing this, we have:  
+ 
+𝑉𝑢𝑝 = 1200(28.3475)− 1873(7.9074)+ 1873(5.3451) ≈ 29,217.77038. 
+ 
+𝑉𝑑𝑜𝑤𝑛 = 1200(20.9525)− 1873(3.2064)+ 1873(5.3451) ≈ 29,148.65497. 
+ 
+Therefore, the losses are such that:  
+ 
+𝐿𝑜𝑠𝑠𝑢𝑝 = 29,580 −  29,217.77038 =  362.23 
+𝐿𝑜𝑠𝑠𝑑𝑜𝑤𝑛 =  29,580 −  29,148.65497 =  431.35  
+So after delta-hedging, the portfolio losses are about $360 if there is a rise of 15%, and a gain of about 
+$431 if intel falls 15%. 
+ 
+ 
+e)   
+ 
+In conclusion, the IBM slide’s conclusion is the key idea that a portfolio can have zero sensitivity to 
+the stock price but still have substantive risks. In this case, we are not fully delta-hedged, with some 
+residual, but we do fundamentally minimise the risks. 
+ 
+Notably, “sensitivity’ is only first-order, but options do introduce nonlinear P&L, such that the 
+curvature is mainly gamma exposure, akin to the “convexity” term in fixed income.  
+ 
+For the scenario analysis, without delta-hedging with only 1,200 shares, we have a huge directional 
+swing of: 
+• Up 15%: gain +$4,437 
+
+
+• Down 15%: loss −$4,437 
+ 
+On the other hand, when delta-hedged, the risk is much smaller, when we have a loss of 
+approximately either $360, or $430. As such zero-sensitivity does not mean low risk, it means that 
+first-order sensitivity is neutralised at the present point, or in other owrds, the local, linear effects. 
+ 
+ 
+4)     
+ 
+ 
+ 
+ 
+ 
+ 
+Then a simple sorting will help, so now we have worst loss to profit represented as Positives. 
+
+
+ 
+ 
+ 
+As such, we consider the VaR, and note the point that 90% VaR as the 10% worst loss from slide 39:  
+ 
+Percentile VaR 
+90th 3,931 
+80th 2,926 
+70th 2,434.8 
+60th 1,846.8 
+ 
+ 
+On the other hand, to calculate the ES, we have; 
+ 
+ 
+So from the simulations, we get the following numbers for ES: 
+ 
+Expected Shortfall 
+(ES)   
+
+
+90th ES 3,931.20 
+80th ES 3,428.60 
+70th ES 3,097.33 
+60th ES 2,784.70 
+ 
+For working out, please refer to attached excel file. 
+ 
+ 
+ 
+ 
+5)  
+ 
+We note from the slides that: 
+ 
+  
+ 
+We, therefore, apply these formulas. It has been given that 𝑉0 = 29000, 𝜇 = 0.040, 𝜎 = 0.35, and 
+then using the fact that T = 1 year, 1 week = 5/252, 1 day = 1/252. 
+For mean we have:  
+T = 1 day  T = 5/252 T = 1 year 
+𝐸[𝑉𝑇] = 𝑉0𝑒𝜇𝑇 
+= 29,000𝑒(0.04)(1/252) 
+= 29,004.60 
+𝐸[𝑉𝑇] = 𝑉0𝑒𝜇𝑇 
+= 29,000𝑒(0.04)(5/252) 
+= 29,023.03 
+𝐸[𝑉𝑇] = 𝑉0𝑒𝜇𝑇 
+= 29,000𝑒(0.04)(1) 
+= 30,183.51 
+ 
+For the standard deviation:  
+T = 1 day  T = 5/252 T = 1 year 
+𝑆𝐷(𝑉𝑇)= 𝑉0𝑒𝜇𝑇√𝑒𝜎2𝑇 − 1 𝑆𝐷(𝑉𝑇)= 𝑉0𝑒𝜇𝑇√𝑒𝜎2𝑇 − 1 𝑆𝐷(𝑉𝑇)= 𝑉0𝑒𝜇𝑇√𝑒𝜎2𝑇 − 1 
+
+
+= 29,000𝑒0.04(1/252) √𝑒0.352(1/252) − 1 
+= 639.57 
+= 29,000𝑒0.04(5/252) √𝑒0.352(5/252) − 1 
+= 1,431.72 
+= 29,000𝑒0.04(252/252) √𝑒0.352(252/252) − 1 
+=  10,896.17 
+ 
+On the other hand, if we consider the VaR,  
+𝑉𝑎𝑅0.98 = 𝑉0 [1 − 𝑒𝑥𝑝((𝜇 − 𝜎2
+2 ) 𝑇 + 𝜎√𝑇𝑧0.02)], 
+𝑧0.02 = Φ−1(0.02) ≈ −2.0537 
+ 
+T = 1 day  T = 5/252 T = 1 year 
+𝑉𝑎𝑅 
+=  29,000[1
+− 𝑒𝑥𝑝((0.04 − 0.352
+2 ) (1/252)
++ 0.35 ∗ √(1/252)(−2.0537))] 
+ 
+𝑉𝑎𝑅 =  1,286.20 
+𝑉𝑎𝑅 
+=  29,000[1
+− 𝑒𝑥𝑝((0.04 − 0.352
+2 ) (5/252)
++ 0.35 ∗ √(5/252)(−2.0537))] 
+ 
+𝑉𝑎𝑅 =  2,803.57 
+𝑉𝑎𝑅 
+=  29,000[1
+− 𝑒𝑥𝑝((0.04 − 0.352
+2 ) (1)
++ 0.35 ∗ √(1)(−2.0537))] 
+𝑉𝑎𝑅 =  15,164.56 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+6)  See below. 
+ 
+ 
+ 
+ 
+
+6ExpectedShortfallFormulaDerivation
+BydefinitiondSeMSedttoStdt
+Weknowthat PWTZ.FIZUNCO
+Stexpr12TtoWT
+2SoStsuchthat
+ESSTP LLvarCstip So Selsen
+where SoVarSTipsatisfies
+PX P
+
+
+HerewefindthecutoffofX
+Weknowlogstisnormalsowehave
+logs
+testv oT
+Then
+PCS X PainsLinx PZ INT
+Thenwedefine2_pastheC1PquantileNOI
+Zip EPF
+BytheVaRdefinition wechooseXS.fIPStax1phence
+Intstzip XSoexpMET oJT z_p
+y
+SoalsowesetVaRSTipSox CYoff
+effecials
+Thenwehave
+Silsix
+Égconsidering
+numerator
+detominator
+separately
+
+
+Numerator
+FSt1six SoeET.EE1ezczi.p3
+i i
+T.es
+gyofe242
+Fahaweode square
+ypigypjjyg.gg g
+e 25
+Therefore
+IsHesterÉu07T.es
+CÉp
+s
+Soe ZpOST
+
+
+Denominator
+PSTX PZ Zp 2_p 1P
+IESTISTLX Soent
+81 1
+FinalEstimatedshortfall
+ESCSTipSoISTSTLX
+ESCS.TNSo1 E E
+7 21pE4
+47
+ESCSTpSo1 etlI Io

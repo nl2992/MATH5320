@@ -2,23 +2,23 @@
 platform darwin -- Python 3.12.2, pytest-7.4.4, pluggy-1.6.0
 rootdir: /Users/nigelli/Desktop/Columbia MAFN/26Spring/MATH5320/Project/MATH5320
 plugins: anyio-4.9.0, cov-7.1.0, xonsh-0.22.8
-collected 569 items
+collected 576 items
 
-tests/test_backend.py .........................                          [  4%]
-tests/test_backtest_extensions.py ...............................        [  9%]
+tests/test_backend.py .............................                      [  5%]
+tests/test_backtest_extensions.py ...............................        [ 10%]
 tests/test_balance_sheet.py ....................                         [ 13%]
 tests/test_charts.py ......                                              [ 14%]
 tests/test_config_and_validation.py ..........                           [ 16%]
-tests/test_counterparty_mitigation.py .....................              [ 19%]
-tests/test_course_validation.py ........................................ [ 26%]
+tests/test_counterparty_mitigation.py .....................              [ 20%]
+tests/test_course_validation.py ........................................ [ 27%]
 ...........................                                              [ 31%]
-tests/test_coverage_gaps.py .........................                    [ 36%]
-tests/test_credit.py ................................................... [ 44%]
-..........                                                               [ 46%]
-tests/test_credit_service.py ...........                                 [ 48%]
+tests/test_coverage_gaps.py ...........................                  [ 36%]
+tests/test_credit.py ................................................... [ 45%]
+..........                                                               [ 47%]
+tests/test_credit_service.py ...........                                 [ 49%]
 tests/test_cva_mitigants.py ..............                               [ 51%]
 tests/test_dfast_pathing.py ...........                                  [ 53%]
-tests/test_es_confidence_split.py ....                                   [ 53%]
+tests/test_es_confidence_split.py ....                                   [ 54%]
 tests/test_homework_cases.py ........................................... [ 61%]
 ........................................                                 [ 68%]
 tests/test_lognormal.py ..................................               [ 74%]
@@ -27,8 +27,8 @@ tests/test_merton_timing.py ......................                       [ 82%]
 tests/test_regulatory.py ...............                                 [ 85%]
 tests/test_strict_numerics.py ..................                         [ 88%]
 tests/test_ui_panels.py ................................................ [ 96%]
-...................                                                      [100%]
-ERROR: Coverage failure: total of 92 is less than fail-under=100
+....................                                                     [100%]
+ERROR: Coverage failure: total of 91 is less than fail-under=100
 
 
 =============================== warnings summary ===============================
@@ -61,7 +61,7 @@ _______________ coverage: platform darwin, python 3.12.2-final-0 _______________
 Name                                  Stmts   Miss  Cover   Missing
 -------------------------------------------------------------------
 src/__init__.py                           0      0   100%
-src/config.py                            11      0   100%
+src/config.py                            15      0   100%
 src/credit/__init__.py                    0      0   100%
 src/credit/cds.py                        88     33    62%   151-196
 src/credit/cva.py                        86      8    91%   207, 209, 211, 213, 235, 237, 239, 241
@@ -72,25 +72,25 @@ src/data/__init__.py                      0      0   100%
 src/data/market_data.py                 101      0   100%
 src/data/validation.py                   26      0   100%
 src/portfolio/__init__.py                 0      0   100%
-src/portfolio/portfolio.py               36      0   100%
-src/portfolio/positions.py               25      0   100%
+src/portfolio/portfolio.py               41      0   100%
+src/portfolio/positions.py               31      1    97%   83
 src/pricing/__init__.py                   0      0   100%
 src/pricing/black_scholes.py             31      0   100%
 src/risk/__init__.py                      0      0   100%
-src/risk/backtest.py                    133      0   100%
-src/risk/estimators.py                   28      0   100%
-src/risk/historical.py                   60     14    77%   81-85, 118-129
+src/risk/backtest.py                    138      0   100%
+src/risk/estimators.py                   54      7    87%   30, 32, 48, 50, 52, 54, 56
+src/risk/historical.py                   62     16    74%   84-88, 143-164
 src/risk/lognormal.py                    38      0   100%
-src/risk/monte_carlo.py                  49      0   100%
+src/risk/monte_carlo.py                  52      0   100%
 src/risk/normal.py                       16      7    56%   37-43
-src/risk/parametric.py                   30      0   100%
+src/risk/parametric.py                   32      0   100%
 src/risk/regulatory.py                  118      2    98%   182, 257
 src/risk/returns.py                      13      3    77%   74-76
 src/schemas.py                           23      0   100%
 src/services/__init__.py                  0      0   100%
 src/services/credit_service.py           43      0   100%
 src/services/regulatory_service.py       41     11    73%   159-197
-src/services/risk_engine_service.py      35      0   100%
+src/services/risk_engine_service.py      40      0   100%
 src/ui/__init__.py                        0      0   100%
 src/ui/capital_panel.py                 100     18    82%   214-283
 src/ui/cds_cva_panel.py                 203     18    91%   442-444, 466-501
@@ -99,10 +99,10 @@ src/ui/credit_panel.py                  105      0   100%
 src/ui/market_data_panel.py              72      0   100%
 src/ui/portfolio_editor.py               74      0   100%
 src/ui/results_panel.py                  60      0   100%
-src/ui/risk_settings.py                  16      0   100%
+src/ui/risk_settings.py                 114     28    75%   202, 223-226, 246-252, 261-263, 293, 298-301, 304, 311, 314, 316, 318, 321, 324, 326
 -------------------------------------------------------------------
-TOTAL                                  1917    144    92%
-Coverage HTML written to dir htmlcov
-Coverage XML written to file coverage.xml
-FAIL Required test coverage of 100% not reached. Total coverage: 92.49%
-====================== 569 passed, 242 warnings in 30.13s ======================
+TOTAL                                  2073    182    91%
+Coverage HTML written to dir submission/coverage_report
+Coverage XML written to file submission/coverage_report/coverage.xml
+FAIL Required test coverage of 100% not reached. Total coverage: 91.22%
+====================== 576 passed, 242 warnings in 30.53s ======================

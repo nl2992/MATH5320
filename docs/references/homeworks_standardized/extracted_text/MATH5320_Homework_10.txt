@@ -1,0 +1,626 @@
+MATH5320 – Homework X 
+ 
+ 
+ 
+Question 1:  
+This answer primarily refers to the slide below and is predicated from the accounting 
+equation of A = L + E. 
+ 
+Position Classification Why 
+Cash Asset Banks owns the cash. 
+Savings Accounts Liability Despositor funds the bank 
+owes 
+Long Bond Asset Bond is an asset.  
+Loans from another bank  Liability Money borrowed by the 
+bank from another bank, and 
+is pending repayment.  
+Mortgages made by the bank Asset Loans owed to bank by 
+homeowners 
+Long Positions in MBS Asset MBS are collaterised loans, 
+that are bundled into a 
+
+
+security that the bank can 
+own.  
+Office Leases Liability (Asset if prepaid) Owes lease payments – 
+technically an expense, but 
+can be an asset if prepaid.  
+Payroll Liability Owes wages + salaries to 
+employees 
+ 
+ 
+ 
+Question 2: 
+ 
+a)   
+For the given items, we know that the: 
+Assets in this case are given as:  
+- Cash – 69,000 
+- Residential Mortgages – 73,000  
+- Corporate bonds – 47,000  
+As an aggregate these are:  
+69,000 +  73,000 +  47,000 =  189,000 
+As a result, we have 182,000 in liabilities (from the deposits), and 189,000 in assets. 
+b)  
+Given the above, of 182,000 in liabilities and 189,000 in assets, we have 7,000 in Capital, or 
+strictly speaking, Owner’s Equity. Using the Accounting equation: 
+
+
+𝑨 =  𝑳 +  𝑬  
+Therefore, from this equation, we have:  
+𝟏𝟖𝟗, 𝟎𝟎𝟎 =  𝟏𝟖𝟐, 𝟎𝟎𝟎 +  𝑬  
+ 
+∴  𝐄  =  𝟕, 𝟎𝟎𝟎 
+ 
+c)   
+From the above associated weights and assets: 
+ 
+We know that the assets are effectively a risk-weighing, as follows: 
+Σ𝐴𝑖𝑅𝑖 
+And then we have the following: 
+𝑅𝑊𝐴 = 𝐶𝑎𝑠ℎ ∗ 𝑅𝐶𝑎𝑠ℎ + 𝑅𝑀 ∗ 𝑅𝑅𝑀 + 𝐶𝐵 ∗ 𝑅𝐶𝐵 
+𝑅𝑊𝐴 = (73,000)(0.45)+ (47,000)(1.0)= 79,850 
+ 
+Resultingly, we have an RWA of 79,850.  
+ 
+d)   
+We know that capital ratios are generally quoted through capital ratios, which are derived 
+from the Accounting equation, as shown below:  
+ 
+ 
+
+
+ 
+ 
+ 
+ 
+Thereby, in this case, if we consider the RHS case considering it with: 
+𝐸
+𝑅𝑊𝐴 = 7,000
+79,850 =  0.0876 
+As a result, the given capital ratio, will be about 8.77%. As such, under the lecture’s 
+benchmark, this is above the 8% Total Capital Ratio under Basel II and the US. 
+ 
+So as a result, in this case, our toy bank is considered in compliance with the Capital 
+Adequacy Requiements. 
+ 
+ 
+ 
+ 
+
+
+e)   
+ 
+As shown, the leverage ratio is defined as Tier 1 Capital over tangible assets, with a 
+benchmark of 3% in the States.  
+ 
+We have worked out in 2(b) that our Capital is 7,000, whereas our total tangible assets are 
+189,000. As a result:  
+𝐿𝑒𝑣𝑒𝑟𝑎𝑔𝑒𝑅𝑎𝑡𝑖𝑜= 7,000
+189,000 =  3.70% 
+We note that in this case, the leverage ratio passes the US Leverage ratio limit.  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+Question 3: 
+ 
+ 
+ 
+ 
+ 
+ 
+a)   
+Given GBM, where we have the following: 
+𝑑𝑆𝑡
+𝑆𝑡
+= μ𝑑𝑡 + σ𝑑𝑊𝑡, 
+And that has the implication that over a small interval of Δ𝑡,  we have the following: 
+𝑙𝑜𝑔 (
+𝑆𝑡+Δ𝑡
+𝑆𝑡
+)~𝑁(μ −
+1
+2 σ2, σ2Δ𝑡) 
+Then from, here we let have the daily log returns be 𝑟𝑖, and then we have the following: 
+
+
+𝜎̂2 = Var (𝑟𝑖)
+Δ𝑡 , 𝜇̂= 𝔼[𝑟𝑖]
+Δ𝑡 + 1
+2 𝜎̂2 
+ 
+with Δ𝑡 = 1/252.  
+Then, we have following estimates from our modelled S&P: 
+ 
+As a result, we know that the current index level is:  
+𝑆0 = 2085.18, 
+ 
+and the portfolio is a $10,000,000 long position, so the number of index units held is 
+𝑁0 = 10,000,000
+2085.18 = 4795.75 
+ 
+Then, we know that of for 𝑧0.01 = −2.3263. We know then from this, the 1 percent stock-
+price quantile is therefore 
+𝑆0.01 = 𝑆0exp ((𝜇̂− 1
+2 𝜎̂2)h + 𝜎̂√ℎ 𝑧0.01)   = 1999.42 
+
+
+ 
+That means the 1 percent tail portfolio value is 
+𝑉0.01 = 𝑁0𝑆0.01 = 9,588,705.95, 
+ 
+so the current 99 percent 5-day VaR is 
+VaR0.99 = 10,000,000 − 9,588,705.95 = $ 411,294. 
+As a result, in this pure long portfolio, the VaR will entirely come from the left-tail move 
+in the index. As such over 5 trading days, the vol-term will matter much more than the 
+drift estimate. 
+ 
+b)    
+From here, it is stated that 1% of the stock portfolio is liquidated to purchase 1y ATM puts, 
+which means that:  
+α = 0.01, α𝑉0 = 100,000 
+And then, we know that: 
+(1 − 𝛼)𝑉0 = 9,900,000 
+We know to avoid the implied volatility, and assume a flat IV surface. So now, the put is 
+repriced under the tail stock scenario, with the same IV with stock and time to maturity 
+changed.  
+At the date of 04/11/2016, we have:  
+σ𝑖𝑚𝑝 = 17.67 
+And the risk-free rate is r = 0.5%, and since it is ATM at inception, we know:  
+
+
+𝐾 = 𝑆0 = 2085.18 
+Therefore, from here, we know the BSM put formula is: 
+𝑃(𝑆, 𝐾, 𝑟, 𝜎, 𝑇) = 𝐾𝑒−𝑟𝑇𝑁(−𝑑2)− 𝑆𝑁(−𝑑1), 
+ 
+With the following: 
+𝑑1 =
+ln (𝑆/𝐾)+ (𝑟 + 1
+2 𝜎2)𝑇
+𝜎√𝑇
+, 𝑑2 = 𝑑1 − 𝜎√𝑇, 
+ 
+the initial put premium (market price) is 
+𝑃0 = 141.292245. 
+ 
+So the number of puts purchased is 
+𝑁𝑃 = 100,000
+141.292245 = 707.7529. 
+ 
+Rounding down. Notably the remaining stock unites as a result will be the following:  
+𝑁𝑆 = 9,900,000
+2085.18 = 4747.791558. 
+ 
+Now move to the same 1 percent tail stock scenario from part (a), so 𝑆 = 𝑆0.01 =
+1999.417788, and reduce maturity by 5 trading days of the following: 
+𝑇rem = 1 − 5
+252 
+ 
+Then, if we keep the IV fixed, the put is worth 
+𝑃0.01 = 182.952279 
+ 
+in that downside scenario. Therefore, the tail value of the hedged portfolio is 
+𝑉0.01
+hedged = 𝑁𝑆𝑆0.01 + 𝑁𝑃𝑃0.01 = 9,622,303.90 
+ 
+So the hedged VaR is 
+
+VaR0.99
+hedged = 10,000,000 − 9,622,303.90 =  $377,696.10 
+ 
+ 
+This is lower than the unhedged VaR because the put appreciates in the downside scenario. 
+The reduction in VaR is 
+411,294.05 − 377,696.10 = 33,597.95, 
+ 
+And when we consider it in % terms, we get the following: 
+33,597.95
+411,294.05 = 8.17% (2 d. p)  
+ 
+So liquidating 1 percent into puts helps, but not enough to reach the required 20 percent VaR 
+reduction. So, we can consider potentially some optimisation.  
+ 
+ 
+c)    
+Here, we can let α denote the fraction liquidated from stock and reallocated into puts. Then 
+the stock units held become 
+𝑁𝑆(𝛼) = (1 − 𝛼)𝑉0
+𝑆0
+, 
+the number of puts purchased becomes 
+𝑁𝑃(𝛼) = 𝛼𝑉0
+𝑃0
+, 
+and the tail portfolio value is 
+
+
+𝑉0.01(𝛼) = 𝑁𝑆(𝛼)𝑆0.01 + 𝑁𝑃(𝛼)𝑃0.01. 
+ 
+Hence the hedged VaR as a function of 𝛼is 
+VaR(𝛼) = 𝑉0 − 𝑉0.01(𝛼). 
+ 
+The target is a 20 percent reduction in the original VaR, so the required target level is 
+0.8 × 411,294.05 = 329,035.24. 
+ 
+The notebook solves 
+VaR(𝛼) = 329,035.24 
+ 
+numerically by bisection (root-finding) and finds 
+𝛼∗ = 0.02448328  
+ 
+This becomes an otpimisation question, and bisection was used, although Newton, or 
+Brent from SciPy could have been used. 
+So the required liquidation percentage is about 2.45%, rounded of to 2d.p. We can conclude 
+from this that the 1% hedge in insufficient, and we need to put about 2.45% of net assets in to 
+ATM 1y puts to cut the 99% VaR by 20%. 
+ 
+d)   
+From the previous parts, the put is repriced in a downside scenario with stock and time 
+changed, the the IV remains fixed, so the tail put value becomes: 
+
+
+𝑃0.01 = 𝑃(𝑆0.01, 𝐾, 𝑟, 𝜎imp, 𝑇rem). 
+ 
+If volatility risk is allowed, then instead the put value is 
+𝑃0.01 = 𝑃(𝑆0.01, 𝐾, 𝑟, 𝜎0.01, 𝑇rem), 
+ 
+where 𝜎0.01 can move with the market. So the risk will now materially differ, since we may 
+either be under or over-hedged, and the error term is driven by vega. This is because the put 
+value now depend on the second state variable σ, in addition to 𝑆. Gamma is still important, 
+for the stock-direction nonlinearity of the put, but the incremental error from allowing IV to 
+move is mainly a volatility-sensitivity effect rather than a pure gamma effect. 
+This means that the VaR calculation is changed in a material fashion, sicne the option hedge 
+is now exposed to both the downside stock move and the associated vol move. Since we 
+know that a long put has positive vega, an increase in IV will raise the put value and improve 
+the hedge, whenever the stock portfolio is losing money. In equity markets, downside stock 
+moves tend to be associated with higher IV, so allowing σ to rise in the left tail, will naturally 
+make the hedge more effective that fixing the volatility. The Fixed IV calculation ,as a result, 
+is likely more conservative w.r.t to the protective value of the put in stressed downside 
+scenarios. 
+ 
+ 
+We built a sensitivity table, where we note that with no vol bump, the tail implied volatility 
+remains 0.1767, the tail put value is 182.95, and the hedged VaR with 1 percent liquidation is 
+$377,696.10.  
+Wherein, if the tail implied probability volatility is bumped upward by 1 vol point (1 bp) the 
+tail put value rises to 190.80, and the hedged VaR falls to about $372,144.74. For a 5 vol 
+bump, the VaR falls to $349K-ish. Hence the directional idea showcases that a higher tail 
+implied volatility increases the value of the protective put and lowers the portfolio’s hedged 
+VaR. 
+ 
+
+
+ 
+Noting it in this diagram above, it shows that it scales almost linearly over the small bump 
+range, although, in a fuller model, the relationship is probably not exactly linear, as under 
+BSM, option values are non-linear in volatility, and neither would it be in other models like 
+Heston.  
+So resultingly, we know that once volatility risk is incorporated, the hedge gains an additional 
+source of protection via Vega. As a result, the VaR computed in previous parts will generally 
+be overstated relative to a more realistic joint stock volatility model. Conclusively if 
+downside equity moves, are accompanied by a vol spike (which it does, usually – consider 
+VIX during Covid cash), then fewer puts will be needed to achieve the same target VaR 
+reduction.  
+ 
+
+
+HW10 Q3
+import math
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from statistics import NormalDist
+pd.set_option("display.float_format", lambda x: f"{x:,.6f}")
+# Load and clean data
+csv_path = "data/hw10.csv"
+raw = pd.read_csv(csv_path)
+df = raw.rename(columns={
+    raw.columns[0]: "Date",
+    raw.columns[1]: "PX_LAST",
+    raw.columns[2]: "IMP_VOL"
+}).iloc[1:].copy()
+df["Date"] = pd.to_datetime(df["Date"])
+df["PX_LAST"] = pd.to_numeric(df["PX_LAST"])
+df["IMP_VOL"] = pd.to_numeric(df["IMP_VOL"]) / 100.0
+# Inputs
+end_date = pd.Timestamp("2016-11-04")
+start_date = end_date - pd.DateOffset(years=5)
+V0 = 10_000_000
+r = 0.005
+T = 1.0
+dt = 1 / 252
+h = 5 / 252
+alpha_1pct = 0.01
+z01 = NormalDist().inv_cdf(0.01)
+# Calibration window
+window = df[(df["Date"] >= start_date) & (df["Date"] <= end_date)].copy()
+window["logret"] = np.log(window["PX_LAST"] / window["PX_LAST"].shift(1))
+rets = window["logret"].dropna()
+mu_hat = rets.mean() / dt + 0.5 * rets.var(ddof=0) / dt
+sigma_hat = math.sqrt(rets.var(ddof=0) / dt)
+S0 = float(df.loc[df["Date"] == end_date, "PX_LAST"].iloc[0])
+iv0 = float(df.loc[df["Date"] == end_date, "IMP_VOL"].iloc[0])
+K = S0
+N0 = V0 / S0
+def bs_put(S, K, r, sigma, T):
+    N = NormalDist()
+    d1 = (math.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * math.sqr
+    d2 = d1 - sigma * math.sqrt(T)
+    return K * math.exp(-r * T) * N.cdf(-d2) - S * N.cdf(-d1)
+S_q = S0 * math.exp((mu_hat - 0.5 * sigma_hat**2) * h + sigma_hat * math.
+V_q_unhedged = N0 * S_q
+In [4]:
+19/04/2026, 22:21 hw10_Q3
+ﬁle:///Users/nigelli/Desktop/Columbia MAFN/26Spring/MATH5320/HMWK10/hw10_Q3.html 1/8
+
+var_unhedged = V0 - V_q_unhedged
+P0 = bs_put(S0, K, r, iv0, T)
+T_rem = T - h
+P_q_constvol = bs_put(S_q, K, r, iv0, T_rem)
+N_stock_1pct = (1 - alpha_1pct) * V0 / S0
+N_put_1pct = alpha_1pct * V0 / P0
+V_q_hedged_1pct = N_stock_1pct * S_q + N_put_1pct * P_q_constvol
+var_hedged_1pct = V0 - V_q_hedged_1pct
+def hedged_var(alpha, sigma_tail=iv0):
+    N_stock = (1 - alpha) * V0 / S0
+    N_put = alpha * V0 / P0
+    P_tail = bs_put(S_q, K, r, sigma_tail, T_rem)
+    V_tail = N_stock * S_q + N_put * P_tail
+    return V0 - V_tail
+target_var = 0.8 * var_unhedged
+lo, hi = 0.0, 0.20
+for _ in range(200):
+    mid = 0.5 * (lo + hi)
+    if hedged_var(mid) > target_var:
+        lo = mid
+    else:
+        hi = mid
+alpha_star = 0.5 * (lo + hi)
+var_at_alpha_star = hedged_var(alpha_star)
+print("Loaded and calibrated.")
+Loaded and calibrated.
+summary = pd.DataFrame({
+    "Quantity": [
+        "Calibration window start",
+        "Calibration window end",
+        "Observations in 5-year window",
+        "Current SPX level S0",
+        "Current ATM 1Y implied vol",
+        "Annualized mu hat",
+        "Annualized sigma hat",
+        "Portfolio value V0",
+        "5-day horizon h",
+        "1% normal quantile z0.01"
+    ],
+    "Value": [
+        start_date.date(),
+        end_date.date(),
+        len(rets),
+        S0,
+        iv0,
+        mu_hat,
+        sigma_hat,
+        V0,
+        h,
+        z01
+    ]
+In [5]:
+19/04/2026, 22:21 hw10_Q3
+ﬁle:///Users/nigelli/Desktop/Columbia MAFN/26Spring/MATH5320/HMWK10/hw10_Q3.html 2/8
+
+})
+summary
+Quantity Value
+0 Calibration window start 2011-11-04
+1 Calibration window end 2016-11-04
+2Observations in 5-year window 1258
+3 Current SPX level S02,085.180000
+4Current ATM 1Y implied vol 0.176700
+5 Annualized mu hat 0.111012
+6 Annualized sigma hat 0.134344
+7 Portfolio value V010000000
+8 5-day horizon h 0.019841
+9 1% normal quantile z0.01-2.326348
+plt.figure(figsize=(10, 5))
+plt.plot(window["Date"], window["PX_LAST"])
+plt.axvline(end_date, linestyle="--")
+plt.title("S&P level over the 5-year calibration window")
+plt.xlabel("Date")
+plt.ylabel("Index level")
+plt.tight_layout()
+plt.show()
+plt.figure(figsize=(10, 5))
+plt.plot(window["Date"], 100 * window["IMP_VOL"])
+plt.axvline(end_date, linestyle="--")
+plt.title("ATM 1Y implied volatility over the 5-year window")
+plt.xlabel("Date")
+plt.ylabel("Implied vol (%)")
+plt.tight_layout()
+plt.show()
+Out[5]:
+In [6]:
+In [7]:
+19/04/2026, 22:21 hw10_Q3
+ﬁle:///Users/nigelli/Desktop/Columbia MAFN/26Spring/MATH5320/HMWK10/hw10_Q3.html 3/8
+
+q01_ret = np.quantile(rets, 0.01)
+plt.figure(figsize=(10, 5))
+plt.hist(rets, bins=35)
+plt.axvline(q01_ret, linestyle="--")
+plt.title("Daily log-return distribution over the calibration window")
+plt.xlabel("Daily log return")
+plt.ylabel("Frequency")
+plt.tight_layout()
+plt.show()
+part_a = pd.DataFrame({
+    "Item": [
+        "Index units held N0 = V0 / S0",
+        "1% tail stock price after 5 days",
+        "Tail portfolio value (unhedged)",
+        "99% 5-day VaR"
+    ],
+    "Value": [
+        N0,
+        S_q,
+        V_q_unhedged,
+        var_unhedged
+    ]
+})
+part_a
+In [8]:
+19/04/2026, 22:21 hw10_Q3
+ﬁle:///Users/nigelli/Desktop/Columbia MAFN/26Spring/MATH5320/HMWK10/hw10_Q3.html 4/8
+
+Item Value
+0Index units held N0 = V0 / S04,795.749048
+11% tail stock price after 5 days 1,999.417788
+2Tail portfolio value (unhedged)9,588,705.951645
+3 99% 5-day VaR 411,294.048355
+part_b = pd.DataFrame({
+    "Item": [
+        "Fraction liquidated",
+        "Dollars moved into puts",
+        "Initial ATM put price P0",
+        "Stock units remaining",
+        "Put units purchased",
+        "Put value at tail stock level",
+        "Tail portfolio value with 1% hedge",
+        "99% 5-day VaR with 1% hedge",
+        "Dollar VaR reduction",
+        "Percentage VaR reduction"
+    ],
+    "Value": [
+        alpha_1pct,
+        alpha_1pct * V0,
+        P0,
+        N_stock_1pct,
+        N_put_1pct,
+        P_q_constvol,
+        V_q_hedged_1pct,
+        var_hedged_1pct,
+        var_unhedged - var_hedged_1pct,
+        (var_unhedged - var_hedged_1pct) / var_unhedged
+    ]
+})
+part_b
+Out[8]:
+In [9]:
+19/04/2026, 22:21 hw10_Q3
+ﬁle:///Users/nigelli/Desktop/Columbia MAFN/26Spring/MATH5320/HMWK10/hw10_Q3.html 5/8
+
+Item Value
+0 Fraction liquidated 0.010000
+1 Dollars moved into puts 100,000.000000
+2 Initial ATM put price P0 141.292245
+3 Stock units remaining 4,747.791558
+4 Put units purchased 707.752928
+5 Put value at tail stock level 182.952279
+6Tail portfolio value with 1% hedge9,622,303.903060
+799% 5-day VaR with 1% hedge 377,696.096940
+8 Dollar VaR reduction 33,597.951415
+9 Percentage VaR reduction 0.081688
+stock_grid = np.linspace(0.75 * S0, 1.05 * S0, 300)
+put_grid = np.array([bs_put(s, K, r, iv0, T_rem) for s in stock_grid])
+unhedged_grid = N0 * stock_grid
+hedged_grid = N_stock_1pct * stock_grid + N_put_1pct * put_grid
+plt.figure(figsize=(10, 5))
+plt.plot(stock_grid, unhedged_grid, label="Unhedged stock portfolio")
+plt.plot(stock_grid, hedged_grid, label="1% stock-to-put hedge")
+plt.axvline(S_q, linestyle="--")
+plt.axhline(V_q_unhedged, linestyle="--")
+plt.axhline(V_q_hedged_1pct, linestyle="--")
+plt.title("Portfolio value after 5 days as a function of stock level")
+plt.xlabel("Stock level after 5 days")
+plt.ylabel("Portfolio value")
+plt.legend()
+plt.tight_layout()
+plt.show()
+part_c = pd.DataFrame({
+    "Item": [
+Out[9]:
+In [10]:
+In [11]:
+19/04/2026, 22:21 hw10_Q3
+ﬁle:///Users/nigelli/Desktop/Columbia MAFN/26Spring/MATH5320/HMWK10/hw10_Q3.html 6/8
+
+        "Unhedged VaR",
+        "Target VaR = 80% of unhedged VaR",
+        "Required liquidation fraction alpha*",
+        "Required liquidation percentage",
+        "VaR at alpha*"
+    ],
+    "Value": [
+        var_unhedged,
+        target_var,
+        alpha_star,
+        100 * alpha_star,
+        var_at_alpha_star
+    ]
+})
+part_c
+Item Value
+0 Unhedged VaR411,294.048355
+1Target VaR = 80% of unhedged VaR329,035.238684
+2Required liquidation fraction alpha* 0.024483
+3Required liquidation percentage 2.448328
+4 VaR at alpha*329,035.238684
+alphas = np.linspace(0, 0.08, 200)
+var_curve = np.array([hedged_var(a) for a in alphas])
+plt.figure(figsize=(10, 5))
+plt.plot(100 * alphas, var_curve)
+plt.axhline(target_var, linestyle="--")
+plt.axvline(100 * alpha_star, linestyle="--")
+plt.title("99% 5-day VaR vs liquidation fraction into ATM puts")
+plt.xlabel("Liquidation fraction (%)")
+plt.ylabel("VaR")
+plt.tight_layout()
+plt.show()
+Out[11]:
+In [12]:
+19/04/2026, 22:21 hw10_Q3
+ﬁle:///Users/nigelli/Desktop/Columbia MAFN/26Spring/MATH5320/HMWK10/hw10_Q3.html 7/8
+
+vol_sensitivity = []
+for bump in [0.00, 0.01, 0.02, 0.03, 0.05]:
+    sigma_tail = iv0 + bump
+    P_tail = bs_put(S_q, K, r, sigma_tail, T_rem)
+    var_tail = hedged_var(0.01, sigma_tail=sigma_tail)
+    vol_sensitivity.append({
+        "Tail implied vol": sigma_tail,
+        "Vol bump": bump,
+        "Tail put value": P_tail,
+        "Hedged VaR with 1% liquidation": var_tail
+    })
+vol_sensitivity_df = pd.DataFrame(vol_sensitivity)
+vol_sensitivity_df
+Tail implied volVol bumpTail put valueHedged VaR with 1% liquidation
+0 0.1767000.000000182.952279 377,696.096940
+1 0.1867000.010000190.795927 372,144.731984
+2 0.1967000.020000198.652970 366,583.886589
+3 0.2067000.030000206.520767 361,015.430046
+4 0.2267000.050000222.280191 349,861.652094
+plt.figure(figsize=(10, 5))
+plt.plot(100 * vol_sensitivity_df["Vol bump"], vol_sensitivity_df["Hedged
+plt.title("Part (d) sensitivity: higher tail vol lowers hedged VaR")
+plt.xlabel("Tail vol bump (percentage points)")
+plt.ylabel("Hedged VaR")
+plt.tight_layout()
+plt.show()
+In [13]:
+Out[13]:
+In [15]:
+19/04/2026, 22:21 hw10_Q3
+ﬁle:///Users/nigelli/Desktop/Columbia MAFN/26Spring/MATH5320/HMWK10/hw10_Q3.html 8/8

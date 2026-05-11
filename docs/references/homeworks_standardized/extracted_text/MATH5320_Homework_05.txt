@@ -1,0 +1,344 @@
+MATH5320 – Assignment 5  
+Question 1: 
+ 
+We estimated parameters the N-day Moving window of equal weights and an Exponential 
+decaying weight, where, we have: 
+𝑤𝑘 = (1 − 𝜆) 𝜆𝐾, 𝑓𝑜𝑟 0 <  𝜆 < 1, 𝑘 = 0, 1, 2 … 
+The average lag or the “centre of mass is:  
+𝑘𝐸𝑊𝑀𝐴̅̅̅̅̅̅̅̅̅ = ∑ 𝑘𝑤𝑘
+∞
+𝑘 = 0
+= (1 − 𝜆) ∑ 𝑘𝜆𝑘
+∞
+𝑘 = 0
+ 
+And then, using the equation that approximates the sum of Ams: 
+∑ 𝑘𝜆𝑘
+∞
+𝑘 = 0
+= 𝜆
+(1 − 𝜆)2, 
+𝑘𝐸𝑊𝑀𝐴̅̅̅̅̅̅̅̅̅ = 𝜆
+(1 − 𝜆) 
+For an N-day window, the weights are 1/N days on lags k, from 0 ≤ k ≤ N -1, therefore the 
+mean lag will be: 
+𝑘𝑊𝐼𝑁̅̅̅̅̅̅̅ = 1
+𝑁 ∑ 𝑘 
+𝑁 − 1
+𝑘 = 0
+= 1
+𝑁
+(𝑁 − 1)𝑁
+2 = 𝑁 − 1
+2  
+Then, we match the two averages such that: 
+ 
+𝑘 =  𝑁 − 1
+2 = 𝜆
+(1 − 𝜆) → 𝜆 = 1 − 2
+𝑁 + 1 = 𝑵 − 𝟏
+𝑵 + 𝟏 
+ 
+
+
+ 
+ 
+We get the following: 
+Window Length 
+(Years) Window Length (Days, N) Equivalent 
+Lambda (λ) 
+1y 252 0.992094862 
+2y 504 0.996039604 
+5y 1260 0.998413957 
+10y 2520 0.999206664 
+ 
+And we note that it matches: 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+Question 2: 
+ 
+ 
+We calculated the mean, variance, and volatility for both AAPL and CAT returns using the 
+simple window method, and the exponentials: 
+  
+ 
+It is notable, that despite using the overhead same mean, the exponential and window 
+estimates will diverge during regime shifts as EWMA re-weights recent data more 
+aggressively, so that the outputs are more responsive, but potentially noisier. Note the 
+example of CAT 2y, where window vol is about 0.019, whereas EWMA vol is 0.02, which is 
+a noticeable jump. Noticeably, the differences are generally bigger at shorter horizons, and 
+shrink for longer horizons, as shorter windows or faster decays, means higher sensitivity to 
+recent regimes. 
+As seen in HW04, the lambda-weighted charts are more noisy, but more responsive, whereas 
+the simple window gives equal weight to all data points within the window. The lambda-
+weight does give progressively less weight to older data points, like “memory”. 
+This showcases the stability and robustness issue, where small changes in market conditions 
+should not produce wild swings in parameters, unless it is intended. In this case, even with 
+the matched lambda, the window and EWMA aren’t identical, as the weighing shapes differ. 
+This is the definition of model risk, as downstream numbers for VaR/ES inherit these 
+differences.  
+ 
+ 
+ 
+ 
+ 
+
+
+Looking further into the visualisations:  
+ 
+ 
+This figure illustrates the structural difference between the window estimator and the 
+exponentially weighted moving average (EWMA), even when λ is calibrated to match the 
+equivalent window length. The window assigns equal weight 1 / 𝑁 to each observation within 
+the horizon and zero weight beyond it, producing a flat weighting profile, whereas otoh, the 
+EWMA is geometrically decaying. For longer horizons, both kernels are far more flat.  
+ 
+Here, for the cumulative weights, it provides the “Effective memory” interpretation o the 
+estimators, and sjows that the window accumulates linearly, whereas the EWMA accumulates 
+rapidly in the first segment, and then occurs slowly. It does, also show why EWMA tends to 
+adapt faster during market stress. 
+ 
+ 
+
+
+Here, we see that the rolling mean plots compared across the two types, with largest 
+divergence for the 2y. This is normal, as estimator choice matters more for shorter horizons. 
+ 
+ 
+Rolling vol, shows more proncounced differences, especially during peridos of stresss. 
+ 
+ 
+V ol, as a whole, shows prounounced differences, compared to the mean plots. During periods 
+of elevated vol, EWMA rises faster, and it does appear that thw window estimator remains 
+elevated until high vol observations exit the rolling window.  
+
+
+ 
+As we can see here, there is a large divergence in the lower levels of horizons, getting lesser 
+as “time increases” for the time horizon. 
+ 
+Question 3: 
+ 
+We are asked to computed 5-day risk measure (1 trading week),  by looking at the 0.99 VaR 
+& 0.975 ES, with a normalised $10,000 position each day, such that the results are 
+comparable over time.  
+In this case, we estimate the drift and vol, through the windowed lookbacks for 2y/5y/10y, 
+and then looking at the corresponding weights above.  
+Like before, the daily log returns were used to model, and assuming iid returns, we have the 
+scale the mean return by T, and the volatility by √T, as is custom. 
+ 
+Notably, we have a Loss, such that it is normal, as a % based of the $10,000 given. Then we 
+have the VaR, and ES, which is based off the CDF, at the corresponding p values. Note that 
+ES should always be larger than the VaR. 
+
+
+ 
+ 
+Note: The above looks extremely similar, so minor sanity checks was made, such that we 
+have:  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Notably, we can see that like before, shorter window lengths, result in more volatility risk 
+estimates that react far more quickly to changing market conditions. We can see that 2y is 
+most reactive, and 10y the smoothest. We note that ES is always above VaR at the same time, 
+with a more conservative tail average. In the plots, that can be seen, and that is to be 
+expected. 
+
+
+Furthermore, it is evident that the EWMA reacts slightly earlier than the same length window 
+around regime shifts, given that it places a more heavy weight on recent returns, and the 
+dashed vs solid lines above showcases these differences.  
+We can see that in periods of stress like 2008-09, and COVID, there was a large spike in both 
+VaR and ES, especially CAT in the bottom columns, being extremely volatile driven.  
+The equivalent lambda does show that across the horizon, even if it is matched, the weighting 
+shape differs, so the risk estimates differ. We can see that the EWMA lines are usually close 
+to the window lines in level, but the EWMA responds a bit faster when vol rises or falls.  
+Differences are generally most visible around the turning points in recovery or crisis. This 
+does demonstrate model risk to an extent, because despite two “same” estimators, both are on 
+different paths.  
+ 
+ 
+ 
+ 
+ 
+ 
+Question 4:  
+ 
+ 
+In this question, we are approximating the derivative of a function, using the central 
+difference method. Then, we compare it to the true derivative via the derivative error. We 
+intend to replicate the image below from slide 49 from the lecture: 
+
+
+ 
+ 
+The error was defined as:  
+𝐷𝐸𝑟𝑟(𝛷, 𝜙, 𝑥, ℎ) = 𝜙(𝑥) − 𝐷(𝛷, 𝑥, ℎ) 
+We plot the Derr, versus  x within [-3,3], for h for 10−6, 10−5, 10−4, for larger h, that the 
+error curve is smoothly and highly structured, and we can see that it is dominated by the 
+truncation error, from the central-difference approximation, considering the taylor expansion 
+around x, we have: 
+Φ(𝑥 + ℎ) = Φ(𝑥) + ℎ𝜙(𝑥) + ℎ2
+2 𝜙′(𝑥) + ℎ3
+6 𝜙′′(𝑥) + 𝑂(ℎ4), 
+Φ(𝑥 − ℎ) = Φ(𝑥) − ℎ𝜙(𝑥) + ℎ2
+2 𝜙′(𝑥) − ℎ3
+6 𝜙′′(𝑥) + 𝑂(ℎ4) 
+If we consider both here, subtracting it, and then dividing by 2h, gives the central difference, 
+shown as follow: 
+𝐷(𝛷, 𝑥, ℎ) = Φ(𝑥 + ℎ) − Φ(𝑥 −  ℎ)
+2ℎ = 𝜙(𝑥) + ℎ2
+6 𝜙′′(𝑥) + 𝑂(ℎ4)(𝑠𝑖𝑛𝑐𝑒𝛷′(𝑥) = 𝜙(𝑥)) 
+Then, the derivative error is:  
+𝐷𝐸𝑟𝑟(Φ, 𝜙, 𝑥, ℎ) = 𝜙(𝑥) − 𝐷(Φ, 𝑥, ℎ) = − ℎ2
+6 𝜙′′(𝑥) + 𝑂(ℎ4), 
+
+
+As such, we can ee that the leading-order error, will scale like ℎ2, will explain why ℎ =
+10−4, produces a visibly larger error curve than the other values, and shows why theoretically 
+the other values should provide a smaller truncation error. We can see that the large h for 
+10−4, the error is smooth and shows the truncation error from the Taylor approximation. On 
+the other hand, small h, it has much lower errors. But for 10−6, we can see that the truncation 
+error is minimised, and we start to see floating point roundoff or cancellation.  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Looking into this error, where we compare the truncation vs roundoff, and we use the Taylor 
+Expansion: 
+Φ(𝑥 + ℎ) = Φ(𝑥) + 𝜙(𝑥)ℎ + Φ3(𝑥)
+ℎ3 + ⋯ 
+(𝑥 −  ℎ) = Φ(𝑥) −  𝜙(𝑥)ℎ + Φ3(𝑥)
+ℎ3 + ⋯ 
+And then, we subtract and divide by 2h gives: 
+D(Φ, 𝑥, ℎ)  =  𝜙(𝑥) +  Φ3(𝑥)
+6 ℎ2  + 𝑂(ℎ4),  
+So then, here. we can see that truncation error scales pretty similar to 𝑂(ℎ2): 
+𝜙(𝑥) − 𝐷(Φ, 𝑥, ℎ) = −Φ3(𝑥)
+6 ℎ2 
+And the idea is that when h is extremely small, the subtraction of Φ(𝑥 + ℎ) − Φ(𝑥 + ℎ), 
+suffers from cancellation and floating-point noise. A simple model can be considered 
+something like: 
+Truncation error (scales with ℎ2), and the roundoff error, which is about 𝜖/ℎ, which is scaled 
+by machine epsilon. By inspection, we can estimate the ℎ∗ from about 10−5 to 10−6. And 
+then, as shown below the best choice is about:  
+ℎ∗ = 6.9 ∗ 10−6 
+
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Then, we then overlaid the two plots togethers, they are visually almost identical, as such the 
+error is too small to see at the function itself. Showing below, this is evident: 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+An alternative approach was taken, below where we took the log-difference, and shows that 
+the remaining error 10−12 to 10−10 across most of [-3, 3], which is pretty consistent with the 
+earlier plots: 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+As such, it can be shown that the second-order accurate derivative approximation, but this 
+precision creates a trade-off, where a decreasing h will reduce the truncation error, until the 
+round-off error dominates. The best step size was found to be ℎ∗ = 6.9 ∗ 10−6. 
+ 
+
+
+Question 5: 
+ 
+Noting the BSM model with the following parameters:  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+We compute  𝐶(𝑆𝑡, 𝑡), which is given by:  
+𝐶(𝑠) = 𝑆Φ(𝑑1) − 𝐾𝑒−𝑟𝑇Φ(𝑑2), 
+And then, we computed:  
+Δ𝑎𝑛𝑎𝑙𝑦𝑡𝑖𝑐(𝑆) =
+𝜕𝑆
+𝜕𝐶 = Φ(𝑑1), so then we run the same central difference operator as before: 
+Δ𝐶𝐷(𝑆; ℎ) = 𝐷(𝐶, 𝑆, ℎ) = 𝐶(𝑆 + ℎ) − 𝐶(𝑆 − ℎ)
+2ℎ  
+Following this we define, and then plot the delta-error as: 
+𝐸𝑟𝑟(𝑆; ℎ) = |Δ𝑎𝑛𝑎𝑙𝑦𝑡𝑖𝑐(𝑆) − Δ𝐶𝐷(𝑆;  ℎ)| 
+ 
+
+
+\In this case, we consider the BSM price, and as shown, the curve is increase and convex as a 
+call price should be. As shown, the vertical dashed line is at K = 85, which is the most visible.  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+The analytic delta is smooth, and naturally increases with S. Visibly, all the different h sits 
+basically on top of the analytic curve. In this case, we can see that the C(S), is smooth, and 
+the central difference is second-order accurate when h is reasonable 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Then, we can see that finally, the model risk part is predicated in the delta error. In this case, 
+we can see that at h=5, the error is the largest because of truncation error, and the finite 
+difference is far too course, and we are using points that are too far apart. For the moderately 
+smaller h, like h=1, h= 0.1, improves 
+substantively, where we are truer to the true 
+derivative. For blue, the smallest h = 0.01, it 
+gives the smallest error in this range, and in this 
+case, the error generally decreases as S increases, 
+and as S increases relative to K, the call becomes 
+deeply ITM, C(S) becomes linear in S, and the 
+delta becomes close to 1 (as shown in the first 
+plot), so it is far easier to approximate accurately. 
+ 
+ 
+
+
+As such, we replicated the central-difference idea for the BSM model, and we can see that it 
+is broadly validated. The price and delta plots, does validate the implementation, with a 
+monotone price, and strong changes around K. Noticeably, the error plot, shows the classic 
+numerical trade-off, with large h leading to truncation errors, and vice versa. In this case, h = 
+0.01, produces the lowest delta error across the S range.  

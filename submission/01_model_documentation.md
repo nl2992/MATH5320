@@ -4,7 +4,7 @@
 Course: MATH5320  
 Project: Financial Risk Management System  
 Repository: `MATH5320`  
-Observed workspace date: May 10, 2026
+Observed workspace date: May 11, 2026
 
 Team members named in the existing report notebook: Nigel Li, Michael Adegbite, Stella
 
@@ -14,13 +14,13 @@ Team members named in the existing report notebook: Nigel Li, Michael Adegbite, 
 
 This project implements a Python and Streamlit portfolio risk engine for the academic setting of Columbia MATH GR 5320. The core system supports portfolios of stocks and European options, values options with the Black-Scholes model, and computes Value at Risk (VaR) and Expected Shortfall (ES) under multiple methodologies. The required market-risk engine is clearly present in the repository and is exposed both through a Streamlit application and through reusable Python modules.
 
-From the code and README, the intended core workflow is: define a portfolio of stock and option positions, load historical market data from CSV or Yahoo Finance wrappers, set risk parameters such as lookback window, horizon, confidence levels, estimator choice, and Monte Carlo simulation count, and then run comparative risk analysis and VaR backtesting. The main user-facing outputs are method-by-method VaR and ES estimates, loss distributions, correlation visualizations, backtest exception summaries, and downloadable JSON and CSV files.
+From the code and README, the intended core workflow is: define a portfolio of stock and option positions, load historical market data from CSV or Yahoo Finance wrappers, choose historical or manual calibration for the parametric and Monte Carlo engines, set risk parameters such as lookback window, horizon, confidence levels, estimator choice, Monte Carlo simulation count, and option-volatility shock mode, and then run comparative risk analysis and VaR backtesting. The main user-facing outputs are method-by-method VaR and ES estimates, loss distributions, correlation visualizations, backtest exception summaries, and downloadable JSON and CSV files.
 
-The core market-risk methodologies implemented are historical simulation, parametric delta-normal VaR/ES, and Monte Carlo VaR/ES. Historical and Monte Carlo methods use full portfolio repricing under shocked market states. The parametric method uses a delta-normal approximation based on estimated mean and covariance of log returns together with an exposure vector built from equity holdings and option deltas. VaR backtesting is implemented through walk-forward forecasting and Kupiec unconditional coverage testing, with additional Christoffersen independence and conditional-coverage diagnostics available in the codebase.
+The core market-risk methodologies implemented are historical simulation, parametric delta-normal VaR/ES, and Monte Carlo VaR/ES. Historical and Monte Carlo methods use full portfolio repricing under shocked market states and now support a simplified option-volatility scenario mode in addition to fixed implied vol. The parametric method uses a delta-normal approximation based on estimated or manually supplied mean and covariance of log returns together with an exposure vector built from equity holdings and corrected option delta-dollar exposures. VaR backtesting is implemented through walk-forward forecasting and Kupiec unconditional coverage testing, with additional Christoffersen independence and conditional-coverage diagnostics available in the codebase.
 
 Beyond the required stock-and-option risk engine, the repository also contains a second layer of course-formula validation modules. These extensions cover exact GBM/lognormal VaR and ES, reduced-form hazard models, the Merton structural default model, CDS pricing, CVA, counterparty mitigation mechanics, and illustrative regulatory capital and DFAST-style calculations. The notebook structure and module layout strongly suggest that the project evolved in two phases: first, a required market-risk application; second, a broader formula-sheet and validation toolkit for the course.
 
-Validation is a major strength of the repository. On May 10, 2026, the local no-network test suite was run from this workspace with:
+Validation is a major strength of the repository. On May 11, 2026, the local no-network test suite was run from this workspace with:
 
 ```bash
 python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py -q
@@ -29,19 +29,22 @@ python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integr
 The observed result was:
 
 ```text
-569 passed in 13.40s
+576 passed, 242 warnings in 14.95s
 ```
 
 An additional observed coverage run used:
 
 ```bash
 python -m pytest tests/ --cov=src --cov-report=term-missing \
+  --cov-report=html:submission/coverage_report \
+  --cov-report=xml:submission/coverage_report/coverage.xml \
+  --cov-fail-under=100 \
   --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py
 ```
 
-The observed result was `569 passed` with `92%` total statement coverage across `src/`. This is strong academic evidence, although it does not meet the aspirational 100% target stated in the README.
+The observed strict coverage-gate run reported `576 passed` with `91.22%` total statement coverage across `src/`, so the tests passed but the README’s `100%` statement-coverage target is still not met. The two live-data integration scripts were then run separately and both passed after being aligned with the repository’s separate VaR and ES confidence design.
 
-The main conclusion is that the system is suitable for the intended academic use: computing and comparing VaR and ES for portfolios of stocks and European options, validating formula modules against course-derived fixtures, and demonstrating model-risk governance through documentation, test evidence, and explicit discussion of limitations. The principal limitations are the use of historical log-return shocks, delta-normal approximation for the parametric engine, Black-Scholes repricing with user-supplied volatility rather than a dynamically shocked volatility surface, multivariate normal return simulation for Monte Carlo, and the illustrative rather than production nature of the credit and regulatory extensions.
+The main conclusion is that the system is suitable for the intended academic use: computing and comparing VaR and ES for portfolios of stocks and European options, validating formula modules against course-derived fixtures, and demonstrating model-risk governance through documentation, test evidence, and explicit discussion of limitations. The principal limitations are the use of historical log-return shocks, delta-normal approximation for the parametric engine, simplified rather than full-surface option-volatility shocks, multivariate normal return simulation for Monte Carlo, and the illustrative rather than production nature of the credit and regulatory extensions.
 
 ---
 
@@ -156,7 +159,7 @@ The user workflow for the required market-risk engine is:
 
 1. Enter stock and option positions.
 2. Load aligned historical prices by CSV upload or Yahoo Finance download.
-3. Configure risk settings such as lookback window, horizon, VaR confidence, ES confidence, estimator type, EWMA parameter, and Monte Carlo path count.
+3. Configure risk settings such as lookback window, horizon, VaR confidence, ES confidence, estimator type, calibration mode, optional manual mean/vol/correlation inputs, Monte Carlo path count, and option-volatility shock mode.
 4. Run risk analysis to obtain historical, parametric, and Monte Carlo results.
 5. Review summary tables, charts, and downloadable output.
 6. Run backtesting and review coverage diagnostics.
@@ -198,11 +201,14 @@ For the core market-risk engine, the required market data is an aligned wide pri
 | Input | Source | Used by | Validation check |
 |---|---|---|---|
 | Price history | CSV upload or Yahoo Finance wrapper | All risk methods | Datetime index, non-empty, no all-NaN columns, positive prices |
-| Portfolio positions | Streamlit UI and dataclasses | Valuation and risk modules | Ticker existence, numeric quantities, option field validation |
-| Volatility | User input for options; estimated returns for VaR engines | Option pricing, parametric VaR, Monte Carlo VaR | Positive numeric |
-| Risk-free rate | User input for options; helper lookup in selected panels | Black-Scholes and selected extension modules | Numeric, sanity-checked when fetched |
-| Horizon | User input | Historical, parametric, Monte Carlo, backtesting | Positive integer |
-| Confidence levels | User input | VaR and ES | Between 0 and 1 |
+| Portfolio positions | Streamlit UI and dataclasses | Valuation and risk modules | Ticker existence is checked explicitly; many other field rules are enforced through UI expectations and pricing-domain checks rather than one central schema validator |
+| Volatility | User input for options; estimated returns for VaR engines | Option pricing, parametric VaR, Monte Carlo VaR | Expected positive numeric; non-positive values surface through pricing-domain checks |
+| Risk-free rate | User input for options; helper lookup in selected panels | Black-Scholes and selected extension modules | Numeric input expected; helper fetches are sanity-checked by range and fallback behavior |
+| Horizon | User input | Historical, parametric, Monte Carlo, backtesting | Positive integer expected; backtests return an explicit empty reason when history is too short |
+| Confidence levels | User input | VaR and ES | Values in `(0,1)` are expected; separate VaR and ES confidence behavior is covered in tests |
+| Calibration mode | User input | Parametric and Monte Carlo engines | UI constrains to `historical` or `manual`; manual mode is covered in backend and UI tests |
+| Manual daily mean / covariance | User input in manual mode | Parametric and Monte Carlo engines | Manual builder rejects missing underlyings, non-finite values, asymmetry, and non-PSD covariance |
+| Option-volatility shock mode | User input | Historical, Monte Carlo, and backtesting repricing | UI constrains to `fixed` or `underlying_beta`; unknown modes raise explicitly |
 
 ### Outputs
 
@@ -220,17 +226,41 @@ The main outputs are:
 - Backtest CSV download
 - Kupiec-results JSON download
 
-### Figures to Include
+### Representative Application Figures
 
-The following figures should be captured from a local Streamlit run and inserted into the final submission version:
+The packaged submission now includes representative screenshots from the live Streamlit application. These figures illustrate the user workflow and UI surface of the core risk engine and extension panels.
 
-- Figure 1. Portfolio Input tab
-- Figure 2. Market Data tab
-- Figure 3. Risk Settings tab
-- Figure 4. VaR/ES comparison table and bar chart
-- Figure 5. Historical loss histogram
-- Figure 6. Monte Carlo loss histogram
-- Figure 7. Backtesting output and exception chart
+#### Figure 1. Portfolio Input
+
+![Portfolio Input](../docs/screenshots/01_portfolio_input.png)
+
+#### Figure 2. Market Data
+
+![Market Data](../docs/screenshots/02_market_data.png)
+
+#### Figure 3. Risk Settings
+
+![Risk Settings](../docs/screenshots/03_risk_settings.png)
+
+#### Figure 4. Run Analysis
+
+![Run Analysis](../docs/screenshots/04_run_analysis.png)
+
+#### Figure 5. Backtesting
+
+![Backtesting](../docs/screenshots/05_backtesting.png)
+
+#### Figure 6. Credit Risk Extension
+
+![Credit Risk](../docs/screenshots/06_credit_risk.png)
+
+#### Figure 7. CDS / CVA Extension
+
+![CDS / CVA](../docs/screenshots/07_cds_cva.png)
+
+#### Figure 8. Capital & Stress Extension
+
+![Capital & Stress](../docs/screenshots/08_capital_stress.png)
 
 ### Risk Engine Workflow
 
@@ -338,7 +368,7 @@ Required inputs are:
 - Dividend yield `q`
 - Option type
 
-Observed design choice: options are repriced under shocked spot prices, but the volatility surface itself is not dynamically shocked in the core VaR engines. This is a real limitation and should be documented explicitly, especially because the course project specification warns against poor volatility modeling choices for options.
+Observed design choice: the core full-repricing engines now support two volatility modes. `fixed` keeps the option's input implied volatility unchanged, while `underlying_beta` applies a simple leverage-style scenario shock `sigma' = max(floor, sigma * (1 - beta * R))`. This is better than a spot-only repricing approach, but it is still a simplified course-level approximation rather than a full implied-volatility surface model.
 
 ### 5.4 Historical VaR and ES
 
@@ -394,18 +424,25 @@ where `alpha_es` is the ES confidence level and `z_alpha` is the normal quantile
 
 Important implementation note: the code allows ES confidence to differ from VaR confidence. This should be documented because some simplified treatments silently assume a single common confidence level.
 
+The current implementation uses corrected delta-dollar option exposure:
+
+```text
+x_option = quantity × multiplier × BS_delta × spot
+```
+
+so the parametric engine now matches its own stated exposure convention.
+
 Key limitations are:
 
 - Approximately normal PnL assumption
 - Sensitivity to covariance estimation
 - First-order approximation for option risk
 - Potential loss of accuracy for strongly nonlinear option portfolios
-
-Observed implementation-review recommendation: the option exposure convention in `src/portfolio/positions.py` and `src/portfolio/portfolio.py` should be reviewed to confirm full unit consistency of option delta contributions in the parametric engine. The docstrings describe dollar-delta exposure, so it is important that implementation and documentation remain aligned.
+- Remaining dependence on covariance quality and linearization assumptions
 
 ### 5.6 Monte Carlo VaR and ES
 
-The Monte Carlo engine in `src/risk/monte_carlo.py` estimates `mu` and `Sigma` from log returns, scales them to horizon, and simulates:
+The Monte Carlo engine in `src/risk/monte_carlo.py` either estimates `mu` and `Sigma` from log returns or accepts them from the manual calibration path, scales them to horizon, and simulates:
 
 ```text
 R_h ~ N(mu_h, Sigma_h)
@@ -424,6 +461,8 @@ Observed design choices from the code:
 
 - Default Monte Carlo path count is `10,000`
 - The default random seed is `42`, which helps reproducibility in tests and notebooks
+- Manual calibration mode can override the estimated daily mean/covariance
+- Full repricing can use `fixed` or simplified `underlying_beta` option-volatility shock mode
 - In backtesting, Monte Carlo paths are capped at `2,000` for speed and the seed is not fixed
 
 Limitations:
@@ -714,21 +753,25 @@ python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integr
 Observed result:
 
 ```text
-569 passed in 13.40s
+576 passed, 242 warnings in 14.95s
 ```
 
 Observed coverage run:
 
 ```bash
 python -m pytest tests/ --cov=src --cov-report=term-missing \
+  --cov-report=html:submission/coverage_report \
+  --cov-report=xml:submission/coverage_report/coverage.xml \
+  --cov-fail-under=100 \
   --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py
 ```
 
 Observed result summary:
 
 ```text
-569 passed, 242 warnings in 26.72s
-TOTAL 1917 statements, 144 missed, 92% coverage
+576 passed, 242 warnings in 30.53s
+TOTAL 2073 statements, 182 missed, 91% coverage
+FAIL Required test coverage of 100% not reached. Total coverage: 91.22%
 ```
 
 Interpretation:
@@ -736,6 +779,7 @@ Interpretation:
 - The observed local suite passed completely.
 - No skips were reported in this no-network run.
 - The two network integration scripts were deliberately excluded from the counted result.
+- When run separately, those network integration scripts now pass under the current separate-confidence VaR and ES design.
 - Environment warnings were present, but they were dependency warnings rather than test failures.
 
 ### 8.2 Selected Analytical Validation Cases
@@ -823,7 +867,7 @@ Interpretation:
 
 ### 8.5 Coverage Discussion
 
-Observed total coverage was 92%, which is strong but not complete. Lower-coverage modules in the observed report include:
+Observed total coverage was `91.22%`, which is strong but not complete. Lower-coverage modules in the observed report include:
 
 | Module | Coverage |
 |---|---:|
@@ -831,7 +875,8 @@ Observed total coverage was 92%, which is strong but not complete. Lower-coverag
 | `src/credit/cds.py` | 62% |
 | `src/credit/hazard.py` | 71% |
 | `src/services/regulatory_service.py` | 73% |
-| `src/risk/historical.py` | 77% |
+| `src/risk/historical.py` | 74% |
+| `src/ui/risk_settings.py` | 75% |
 | `src/risk/returns.py` | 77% |
 | `src/ui/capital_panel.py` | 82% |
 
@@ -849,13 +894,14 @@ This does not invalidate the project, but it means the documentation should not 
 | Parametric VaR | Delta-normal approximation | Can understate nonlinear option tail risk | Use historical and Monte Carlo as comparison points |
 | Monte Carlo VaR | Multivariate normal simulated shocks | Weak tail behavior under non-normal markets | Increase paths; compare against historical tails |
 | Covariance estimation | Estimation error in `Sigma` | Misstates diversification and risk concentration | Compare rolling-window and EWMA estimators |
-| Options | Black-Scholes assumes constant volatility and European exercise | Misses smile, skew, stochastic vol, and early exercise | Document as limitation; keep intended use academic |
-| Option shock model | Core VaR engines do not dynamically shock implied volatility | Understates option risk under vol stress | Explicit limitation and future work item |
+| Options | Black-Scholes assumes European exercise and a simplified volatility treatment | Misses smile, skew, stochastic vol, and early exercise | Document as limitation; keep intended use academic |
+| Option shock model | `underlying_beta` is only a simplified volatility-shock approximation | Can understate or mis-shape option risk under richer vol moves | Treat as course-level approximation and extend only if needed |
+| Parameter-driven market-risk mode | Manual daily mean/covariance entry is available only for parametric and Monte Carlo methods; historical simulation still requires price history by construction | Direct-input support is method-dependent | Document clearly as an inherent historical-simulation constraint |
 | Backtesting | Kupiec alone is incomplete | May miss exception clustering | Christoffersen diagnostics already added in code |
 | Data | CSV and Yahoo Finance inputs can be stale, missing, or inconsistent | Distorted returns and estimates | Validation checks and user review |
 | Credit modules | Simplified course models | Not suitable for production credit risk management | Label clearly as extensions |
 | Regulatory modules | Illustrative DFAST and RWA logic | Not an official supervisory model | Explicit non-intended use statement |
-| Validation coverage | Coverage is 92%, not 100% | Some branches remain less exercised | Extend tests before stronger claims |
+| Validation coverage | Coverage is 91.22%, not 100% | Some branches remain less exercised | Extend tests before stronger claims |
 
 ### Known Weaknesses and Implementation Caveats
 
@@ -864,7 +910,8 @@ The main model risk is that the required equity/option risk engine combines full
 Two additional repo-specific caveats should be documented honestly:
 
 1. The README still mentions roughly 10% relative tolerance for course validation goldens, while the current code uses 1% relative tolerance in `tests/test_course_validation.py`. Documentation should be aligned to the code.
-2. The option exposure convention in the parametric layer should be reviewed to confirm that implementation and docstrings use consistent units for delta-based exposure aggregation.
+2. The current option-volatility shock logic is deliberately simplified and should not be described as a full implied-volatility surface model.
+3. The live integration scripts now pass, but the README’s `100%` coverage target still overstates the achieved test coverage.
 
 ---
 
@@ -881,9 +928,9 @@ The system should not be presented as a production platform, a regulatory-capita
 The most valuable next steps would be:
 
 1. Align documentation with implementation, especially around validation tolerances and the broader backtesting toolkit already present in code.
-2. Review the option delta-exposure convention in the parametric layer and document it more explicitly.
-3. Add explicit volatility-shock logic for options if the project is extended beyond the current academic scope.
-4. Increase coverage in lower-tested extension modules such as CDS, hazard, and selected regulatory/UI paths.
+2. Preserve the corrected delta-dollar exposure convention in the parametric layer and document it explicitly in any final Word/PDF version.
+3. Extend the simplified option-volatility shock logic only if the project is pushed beyond current coursework scope.
+4. Increase coverage in lower-tested extension modules such as CDS, hazard, selected historical-risk branches, and selected regulatory/UI paths.
 5. Preserve the current layered design, because it materially supports testing and lowers model-integration risk.
 
 ---
@@ -986,13 +1033,16 @@ Observed tail of output:
 
 ```text
 ........................................................................ [100%]
-569 passed, 242 warnings in 13.40s
+576 passed, 242 warnings in 14.95s
 ```
 
 Observed coverage command:
 
 ```bash
 python -m pytest tests/ --cov=src --cov-report=term-missing \
+  --cov-report=html:submission/coverage_report \
+  --cov-report=xml:submission/coverage_report/coverage.xml \
+  --cov-fail-under=100 \
   --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py
 ```
 
@@ -1000,8 +1050,9 @@ Observed tail of output:
 
 ```text
 ================================ tests coverage ================================
-TOTAL                                  1917    144    92%
-====================== 569 passed, 242 warnings in 26.72s ======================
+TOTAL                                  2073    182    91%
+FAIL Required test coverage of 100% not reached. Total coverage: 91.22%
+====================== 576 passed, 242 warnings in 30.53s ======================
 ```
 
 ### Appendix D. Notebooks and Supporting Evidence
@@ -1045,6 +1096,9 @@ Run coverage:
 
 ```bash
 python -m pytest tests/ --cov=src --cov-report=term-missing \
+  --cov-report=html:submission/coverage_report \
+  --cov-report=xml:submission/coverage_report/coverage.xml \
+  --cov-fail-under=100 \
   --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py
 ```
 
@@ -1078,5 +1132,5 @@ python tests/integration_test_formula_sheet.py
 | Recommendations included | Yes |
 | Bibliography included | Yes |
 | Appendix contains formula and test details | Yes |
-| Screenshots inserted | Not yet; placeholders identified |
+| Screenshots inserted | Yes |
 | Local test pass evidence included | Yes |

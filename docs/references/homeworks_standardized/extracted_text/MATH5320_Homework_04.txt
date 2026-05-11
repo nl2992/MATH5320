@@ -1,0 +1,311 @@
+MATH5320 – Homework IV  
+ 
+1)   
+ 
+We assume the stock, follows a GBM, given as  
+𝑑𝑆𝑡 = 𝜇𝑆𝑡𝑑𝑡 + 𝜎𝑆𝑡𝑑𝑊𝑡 
+And then, under the GBM, a one-day log return, is such that 𝑟 = 𝑙𝑜𝑔(𝑆𝑡+1/𝑆𝑡), and it is 
+normal such that:  
+𝐸[𝑟] = (𝜇 − ½𝜎2)Δ𝑡,    𝑉𝑎𝑟(𝑟) = 𝜎2Δ𝑡 
+a)    
+We are given that the log-return mean is 0.015% or 0.00015 and stdev is 3.50%, 0.035, and 
+then Δ𝑡 = 1 day.  From the slides:  
+ 
+From the variance relation, we know that: 
+σ = 0.035 ∗ Δ√(1)  =  0.035 
+From the mean-relation: 
+μ − 1
+2 σ2 = 0.00015 → μ = 0.00015+ 1
+2 σ2   →  μ = 0.00015+ 1
+2 0.0352  
+ μ = 0.00015+ 0.0006125 =  0.0007625 per day 
+ 
+As a result, on a daily basis: 
+σ̂= 0.035, μ̂= 0.0007625 
+
+
+If we want the estimated terms on an annual basis, we scale accordingly, where vol scaled 
+with sqrt(T), and mean returns scale with T, suc h that:  
+σannual̂ = 0.035 ∗ √252 =  0.5556 =  55.56%,   
+μ_annual̂ = 0.0007625 ∗  252 =  0.19215 =  19.215% 
+ 
+b)    
+We want to get the T = 5-day, 99% VaR, so p = 0.99 of 1,400 shares, 
+ 
+   
+Here, we note that the  
+Φ−1(0.01) ≈ −2.3263, where we will use this later.  
+ 
+We then, continue to solve for the other parts in the exponent, where we have: 
+σ√𝑇 = 0.035√5 = 0.07826 
+0.07826 ∗ (−2.3263) = −0.18210 
+(μ − 1
+2 σ2) 𝑇 = 0.00015∗ 5 =  0.00075 
+Then, the exponent yields: 
+−0.18210 +  0.00075  =  −0.18135 
+ 
+Then, the following this, 1% price quantile yields: 
+𝑆1% = 82𝑒−0.18135 = 68.40. 
+On a per-share basis: 
+82 −  82𝑒−0.18135 = 82 −  68.40 =  13.60 
+For 1,400 shares, we get a 5day VaR of: 
+
+
+𝑉𝑎𝑅5𝑑,99% =  1400 ∗  13.60 =  $19,040 
+Resultingly, the 5-day 99% VaR yields, $19,040. 
+ 
+On the other hand, we can choose to use annualised numbers, T = 5/252, and arrive at 
+similar numbers. Note that rounding might be a bit different.  
+ 
+ 
+ 
+2)   
+ 
+Parametric VaR is utilised to make simplifying assumptions to get a VaR formula from 
+approximate mean and variance. We are given: 
+• 400 shares of Stock 1, P = 102 → 𝑉1 = 400 ∗ 102 = 40,800 
+• 600 shares of Stock 2, P = 81 → 𝑉2 = 600 ∗ 81 = 48,600 
+As a result, the total 𝑉0 = 89,400. From this, the approximate PnL, can be computed by 
+considering: 
+Δ𝑉𝑡 = 𝑉1R𝑡
+(1) + 𝑉2R𝑡
+(2), 𝑓𝑜𝑟 0 ≤  𝑡 ≤  𝑇 
+ 
+This is true from linearity of expectations. 
+It is also given, in the question that:  
+• Stock 1,  μ1 = 3.5%      σ1 = 33% 
+• Stock 2,  μ2 = 2.3%    σ2 = 22% 
+• Given correlation of ρ =  0.31 
+ 
+ 
+From here, we are given that we have two weeks, such that T = 10/252 years. And we want 
+the 99% VaR, or the 1% left tail such that we have:  
+Φ−1(0.01) = −2.32 
+
+
+Moving on, we, consider the expectation of the portfolio based off the drifts such that we 
+have: 
+𝐸[Δ𝑉] = 𝑉1𝑅1𝑇 + 𝑉2𝑅2𝑇, 𝑤ℎ𝑒𝑟𝑒 𝑤𝑒 ℎ𝑎𝑣𝑒: 
+• 𝑉1𝜇1 = 40,800 ∗  0.035 = 1,428 
+• 𝑉2𝜇2 = 48,600 ∗  0.023 = 1,117.8  
+Then, the total of 2,545.8, we take the two-week basis of T = 10/252 
+𝐸[Δ𝑉] = 2,545.8 ∗ ( 10
+252)  =  101.02380952380952 
+ 
+Now, the variance needs to be computed, and for two random mvariables,  
+For any two random variables, we know that:  
+Var(𝑎𝑋 + 𝑏𝑌) = 𝑎2Var(𝑋) + 𝑏2Var(𝑌) + 2𝑎𝑏 Cov(𝑋, 𝑌). 
+ 
+Then, we have the following:  
+Var(Δ𝑉) = 𝑉1
+2Var(𝑅1) + 𝑉2
+2Var(𝑅2) + 2𝑉1𝑉2Cov(𝑅1, 𝑅2). 
+ 
+Note that we are emulating this calculation from slide 25:  
+ 
+And because, we know the following for a GBM, which is normal, over T, we have: 
+• Var(𝑅𝑖) ≈ 𝜎𝑖
+2𝑇 
+• Cov(𝑅1, 𝑅2) = 𝜌𝜎1𝜎2𝑇 
+• Var(ΔV) = T(V1
+2σ2
+2 + V2
+2σ2
+2 + 2V1V2ρσ1σ2). 
+Then, plugging in the values that were given, ie:  
+V1 = 40,800, V2 = 48,600, σ1 = 0.33, σ2 = 0.22, ρ = 0.31, T = 10
+252. 
+Ergo, the first term will be:  
+𝑉1
+2σ1
+2 = (40,800)2(0.33)2 = 181,679,296 
+𝑉2
+2𝜎2
+2 = (48,600)2(0.22)2 = 114,518,864 
+  
+
+
+ 
+2𝑉1𝑉2ρσ1σ2 = 2(40,800)(48,600)(0.31)(0.33)(0.22) = 89,253,394.56 
+As as result, 
+Var(Δ𝑉) = 10
+252(181,679,296 + 114,518,864 + 89,253,394.56) = 10
+252(385,079,556)  
+=  15,271,887.0857 
+ 
+Resultantly, the std, gets: 
+𝑠𝑑(Δ𝑉) = √𝑉𝑎𝑟(Δ𝑉) = √15,281,727 = 3,907.926187 (𝑛𝑒𝑎𝑟𝑒𝑠𝑡𝑖𝑛𝑡𝑒𝑔𝑒𝑟) 
+Then, assuming a normal distribution, which is the key idea of a parametric VaR, and 
+assuming linear payoffs, we have: 
+Δ𝑉~𝑁(𝑚, 𝑠2), with 
+𝑚 = 𝐸[Δ𝑉] = 101.02(2𝑑𝑝),    𝑠 = 𝑠𝑑(Δ𝑉) = 3,907.93 
+As such, the 1% quantile is:  
+𝑚 + Φ−1(0.01)𝑠 = 101.02 + (−2.3263)(3,908) = −8,990.172 
+As a result, the 2-week 99% VaR, is: 
+𝑉𝑎𝑅0.99 = 8,990.172 
+ 
+Note that this is methodologically similar to Slide 24 - 30 claculations, accounting for 𝑉0, and 
+expectations of the 𝑉𝑡, but it it much cleaner to look purely at PnLs. 
+Using the same way as the slides, we have once again, that the:  
+𝐸[𝑉𝑇] = 𝑉0 + 𝐸[Δ𝑉] ≈ 89,400 + 101.02 = 89,501.02 
+sd(𝑉𝑇) = 3,908 
+From here, we use the following rule: 
+ 
+Therefore,  
+VT,1% = E[VT] − 2.326sd(VT) 
+
+
+𝑉𝑎𝑅99% = 𝑉0 − 𝑉𝑇,1% = 8,990 (𝑎𝑝𝑝𝑟𝑜𝑥) 
+ 
+3)   
+We have used matplotlib to generate the following plots, which are rolling parameter 
+estimates of the mean and vol terms of both stocks for {2, 5, 10} year windows, generated 
+using PX_LAST. 
+For the given two stocks, the parameters of mean and vol, are estimated using a rolling 
+window of 2, 5, 10 years, of trading days, which we assume to be 252. The assumption that 
+mu and vol are constant as stated in the Q, means that within the window of [t – l, t], we 
+treated the GBM drift and vol terms as a constant, and “fit” the two values. Unweighted 
+fitting, means that every daily return, received equal importance, which is not as methodically 
+sound, as previous value importance decays. We computed daily log returns from PX_last, 
+and we sample the mean and stdev and annualised using the 252-trading day conventions.  
+Notably, the computed parameters are comparably, because we are purely estimating the 
+return parameters from the log returns, which are scale free. It doesn’t not matter for the price 
+level or dollars invested. So even if AAPL and CAT prices, and by extension, the dollar value 
+of a certain position can change immensely across 20 years, the estimated drift and volatility 
+are still comparable across the time, because it articulates the distribution of % changes, not 
+the distribution of dollar terms.  
+On an overall basis, the volatility term looks reasonably stable in the long-term but is clearly 
+dependent on regimes. Drift is much less stable. The general trend, as expected is that the 
+shorter windows, especially 2 years, are far less stable, whereas 10 years is the most stable. 
+ 
+
+
+ 
+For instance, looking at the volatility terms across the two equities, we can see that the 2Y 
+window is extremely jumpy at stress periods, like during the GFC, and during the beginning 
+stages of COVID, before quickly mean-reverting. 5Y tends to be a bit smoother. 10Y 
+window, in this case, does seem to move slowly, and does capture long-run volatility. 
+Pronounced spikes around major stress events, as mentioned prior, and followed by 
+normalisation, does indicate generic volatility clustering. 
+ 
+ 
+ 
+ 
+ 
+
+
+ 
+ 
+On the other hand, the drift term is extremely noisy, and fluctuates widely, indicating that 
+overall, the short-horizon drift estimation is not reliable. The 5Y drift is also quite variable, 
+but the 10Y drift is the only one that looks somewhat stable, and differs across the different 
+market regimes, like the recovery from 2008, but is probably extremely noisy, and has many 
+confoundment factors, since it also covers the dotcom bubble burst. 
+Interestingly enough, volatility is stable enough for some interpretation, especially 5Y/10Y , 
+but clearly affected by regimes. Drift is extremely noisy at the 2y marks, so for unweighted 
+windows, it is worth comparing different l sizes. 
+ 
+4)  
+ 
+ 
+In the Q3 with unweighted fitting, each date t and window length l, GBM was estimated 
+using the last l  years, with each observation equal weight, but in Q4, the same rolling 
+estimation is completed.  
+Notably, with the trailing window ending at weight are assigned such that decay is 
+geometrically backward in time, such that the most recent returns has the largest weight, and 
+a return k days old, has the weight proportional to (1 − λ)λ𝑘. Notably, a smaller λ decays 
+
+
+faster, so it places more emphasis on the last few weeks, and as such, it means that it is 
+noisier. Vice versa for larger λ. 
+As volatility is driven by squared returns, if the market has a recent shock, exponential 
+weighing makes those recent weightings dominate the returns. This means there are faster vol 
+spikes in periods of stresses, and faster rise & decay. We expect this to be the case, for λ =  
+0.94 to swing more sharply than 0.97.  
+ 
+In addressing the parts, the estimated parameters are comparable over time because they are 
+computed from log-returns, which are scale-free % returns. Drift and vol describe the 
+distribution of proportional returns, not dollar levels. So, even if the AAPL and CAT prices 
+differ substantively in the time, the estimated parameters remain directly comparable. 
+Exponential doesn’t change anything. In terms of stability, exponential weighting is 
+materially changed, because recent observations, receive larger weights, vol responds more 
+quickly to shocks and also decays more rapidly once the shock passes, with sharper spikes. 
+However, this responsiveness, is at the cost of higher variability, with vol becoming more 
+reactive, with drift becoming even noisier under exponential weighting, as such there is a 
+trade-off.  
+ 
+ 
+Reacts, far faster for 
+volatility, and decays much 
+faster, but is not too 
+meaningful for AAPL drift 
+term, as seen. More useful for 
+Vol. 
+
+
+ 
+Likewise, more useful for 
+volatility term.  
+ 
+Now the 10Y volatility, is far 
+more valuable, as it actually 
+registers a volatility change in 
+2008 and 2020, whereas for 
+unweighted, this barely 
+registered. Drift term is now 
+slightly more meaningful than 
+before, as it is a little less 
+noisy. 
+
+
+ 
+Like before, Vol more 
+meaningful.  
+ 
+Like before, Vol more 
+meaningful.  
+
+
+ 
+Like before, Vol more 
+meaningful. But now, we can 
+see that CAT drift term does 
+have some interpretive 
+meaning. 
+ 
+On the other hand, plotting each lambda, with its associated equity, showing the differences 
+across each tenure, we have:  
+ 
+ 
+ 
+ 
+
+
+ 
+ 
+  
+ 
+Notably, with exponential weighting, the effective lookback is set by λ, not by the window 
+length, and the idea is that with lambda, anything older than the last few days is effectively 
+redundant. 
+ 
+ 
+ 
+
+
+As a primer, there is a fundamental trade-off for more timely parameter estimates, but trades 
+off for more variability or noise, especially in the drift term, as we can see above. Sometimes, 
+that also applies to volatility. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
