@@ -1,17 +1,35 @@
 # Submission Package
 
-This folder groups the current markdown deliverables and supporting evidence for the MATH GR 5320 project.
+This folder contains all deliverables and supporting evidence for the MATH GR 5320 project.
 
 ## Contents
 
-- `00_combined_final_report.md`: integrated one-document version that merges the segmented deliverables and relevant material carried over from `FINAL_REPORT.md`.
-- `01_model_documentation.md`: repo-specific model documentation draft for the stock/option risk engine and course extension modules.
-- `02_software_design_documentation.md`: software design documentation report.
-- `03_test_plan.md`: formal test plan.
-- `04_test_results.md`: formal test results report.
-- `05_guide_gap_review.md`: working memo comparing the repo and reports against the coursework guide, highlighting the remaining non-blocking gaps and priorities.
-- `06_prompt_coverage_matrix.md`: precise prompt-to-implementation coverage matrix with current status, evidence, and remaining actions.
-- `coverage_report/`: HTML and XML coverage outputs.
-- `test_artifacts/`: raw pytest output, coverage output, environment snapshots, benchmark summaries, and backtest artifacts.
+| File | Description |
+|---|---|
+| `00_combined_final_report.md` | **Primary submission document.** Integrates all five deliverables into one consistent report with full formula-sheet demonstration evidence. |
+| `01_model_documentation.md` | Deliverable 1 — Model documentation (30 pts) |
+| `02_software_design_documentation.md` | Deliverable 2 — Software design documentation (15 pts) |
+| `03_test_plan.md` | Deliverable 3 — Test plan (20 pts) |
+| `04_test_results.md` | Deliverable 4/5 — Test results (10 pts) |
+| `05_guide_gap_review.md` | Working gap review memo |
+| `06_prompt_coverage_matrix.md` | Requirement coverage matrix |
+| `demo.ipynb` | **Formula-sheet demonstration notebook.** All 15 course sections (§1–§15) fully executed with outputs and assertions. |
+| `demo.md` | **Front-end trace companion.** Screenshots of each Streamlit tab side-by-side with matching notebook outputs. |
+| `coverage_report/` | HTML and XML coverage reports from the local pytest run |
+| `test_artifacts/` | Captured artifacts: git hash, pytest output, coverage, environment, backtest results |
 
-The source markdown files remain at the repository root as working copies. The files in this folder are packaged copies intended for submission assembly and later Word/PDF conversion.
+## Quick start
+
+```bash
+# Run all no-network unit tests (576 pass)
+python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py
+
+# Execute the formula-sheet demo notebook
+python -m jupyter nbconvert --to notebook --execute --inplace \
+  --ExecutePreprocessor.timeout=180 \
+  --ExecutePreprocessor.kernel_name=python3 \
+  submission/demo.ipynb
+
+# Launch the Streamlit application
+streamlit run app.py
+```

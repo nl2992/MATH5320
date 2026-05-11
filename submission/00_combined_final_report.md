@@ -3,7 +3,7 @@
 
 **Course:** MATH GR 5320 Financial Risk Management  
 **Project title:** Portfolio Risk Management System  
-**Submission package version:** Combined report assembled from segmented deliverables and relevant material from `FINAL_REPORT.md`  
+**Submission package version:** Final combined report — integrates all five segmented deliverables with complete formula-sheet demonstration evidence  
 **Repository:** `MATH5320`  
 **Reference commit reviewed in this pass:** `5841589e3f3d2dbd3c1e38b08642eccce201a6a2`  
 
@@ -32,6 +32,12 @@ For intended academic use, the system is suitable as a teaching-quality risk and
 7. Software Design and Implementation  
 8. Validation Methodology, Test Plan, and Scope  
 9. Validation Results  
+   - 9.1 No-Network Test Suite  
+   - 9.2 Coverage Run  
+   - 9.3 Selected Analytical and Fixture Evidence  
+   - 9.4 Representative Backtesting Evidence  
+   - 9.5 Live Integration Status  
+   - 9.6 Formula-Sheet Demonstration Evidence  
 10. Limitations and Model Risk  
 11. Conclusions and Recommendations  
 12. Bibliography / References  
@@ -612,19 +618,22 @@ flowchart TD
 
 One useful section from `FINAL_REPORT.md` that was worth carrying over is the explicit notebook map:
 
-| Notebook | Topic |
-|---|---|
-| `01_market_risk_var_es_goldens.ipynb` | Market-risk goldens and exact checks |
-| `02_aapl_cat_var_es_methods.ipynb` | AAPL/CAT comparison across VaR/ES methods |
-| `03_historical_shock_methodology.ipynb` | Historical-shock construction |
-| `04_estimation_rolling_vs_ewma.ipynb` | Estimator comparison |
-| `05_credit_hazard_risky_bond_spread.ipynb` | Hazard-rate and risky-bond extension |
-| `06_credit_merton_structural_default.ipynb` | Merton structural extension |
-| `07_cds_pricing_validation.ipynb` | CDS validation |
-| `08_cva_counterparty_mitigation.ipynb` | CVA and mitigation |
-| `09_regulatory_rwa_dfast_pathing.ipynb` | Capital and DFAST pathing |
-| `10_backtesting_validation_dashboard.ipynb` | Backtest diagnostics |
-| `11_end_to_end_demo.ipynb` | End-to-end demonstration |
+| Notebook | Location | Topic |
+|---|---|---|
+| `01_market_risk_var_es_goldens.ipynb` | `notebooks/` | Market-risk goldens and exact checks |
+| `02_aapl_cat_var_es_methods.ipynb` | `notebooks/` | AAPL/CAT comparison across VaR/ES methods |
+| `03_historical_shock_methodology.ipynb` | `notebooks/` | Historical-shock construction |
+| `04_estimation_rolling_vs_ewma.ipynb` | `notebooks/` | Estimator comparison |
+| `05_credit_hazard_risky_bond_spread.ipynb` | `notebooks/` | Hazard-rate and risky-bond extension |
+| `06_credit_merton_structural_default.ipynb` | `notebooks/` | Merton structural extension |
+| `07_cds_pricing_validation.ipynb` | `notebooks/` | CDS validation |
+| `08_cva_counterparty_mitigation.ipynb` | `notebooks/` | CVA and mitigation |
+| `09_regulatory_rwa_dfast_pathing.ipynb` | `notebooks/` | Capital and DFAST pathing |
+| `10_backtesting_validation_dashboard.ipynb` | `notebooks/` | Backtest diagnostics |
+| `11_end_to_end_demo.ipynb` | `notebooks/` | End-to-end demonstration |
+| **`demo.ipynb`** | **`submission/`** | **Formula-sheet walkthrough covering all 15 course sections (§1–§15), executed with outputs** |
+
+The submission notebook `demo.ipynb` is the primary formula-sheet demonstration artifact. It covers every course section from risk-measure axioms through regulatory capital, with each section following a six-cell pattern: question → formulas → code → expected vs actual comparison table → assertion → interpretation. All 15 sections execute cleanly. The companion document `submission/demo.md` provides the front-end trace with screenshots for every Streamlit tab alongside matching notebook output tables.
 
 ---
 
@@ -751,17 +760,28 @@ The repo includes strong deterministic and homework-style evidence through:
 
 ### 9.4 Representative Backtesting Evidence
 
-The codebase and artifact bundle demonstrate:
+A representative historical-model backtest was run on `1,500` aligned AAPL/CAT Bloomberg observations spanning `2020-02-25` to `2026-02-11` with lookback `504` days, horizon `5` days, and VaR confidence `99%`.
 
-- walk-forward backtesting,
-- exception counts,
-- Kupiec unconditional coverage,
-- Christoffersen independence,
-- conditional coverage,
-- Basel traffic-light status,
-- exception severity summaries.
+| Metric | Value |
+|---|---:|
+| Price rows used | 1,500 |
+| Backtest observations | 990 |
+| Expected exceptions at 99% | 9.90 |
+| Actual exceptions | 15 |
+| Observed exception rate | 1.52% |
+| Kupiec LR statistic | 2.2920 |
+| Kupiec p-value | 0.1300 |
+| Reject unconditional coverage (5%)? | No |
+| Christoffersen independence LR | 62.2015 |
+| Christoffersen independence p-value | 3.10 × 10⁻¹⁵ |
+| Conditional coverage LR | 64.4936 |
+| Conditional coverage p-value | 9.89 × 10⁻¹⁵ |
+| Basel traffic-light zone | RED |
+| Basel capital multiplier | 4.00 |
+| Average exception gap | $205,833 |
+| Maximum exception loss | $1,262,637 |
 
-This is stronger than a minimal “just count exceptions” academic implementation.
+Interpretation: unconditional coverage is not rejected on this sample, but independence is strongly rejected — exceptions cluster in time. This illustrates why the repo includes Christoffersen diagnostics beyond the minimum Kupiec test.
 
 ### 9.5 Live Integration Status
 
@@ -776,6 +796,30 @@ This means:
 
 1. live-data download and orchestration work end to end,
 2. the scripts are aligned with the current separate-confidence VaR/ES design.
+
+### 9.6 Formula-Sheet Demonstration Evidence
+
+The submission notebook `submission/demo.ipynb` provides a systematic walkthrough of all fifteen course formula-sheet sections. Each section documents the question, mathematical formulas, Python code calling `src/` modules directly, an expected-vs-actual comparison table, an executable assertion, and a brief interpretation. All fifteen sections execute cleanly with matching outputs.
+
+| § | Section | Key numerical target | Status |
+|---|---|---|---|
+| 1 | Risk-measure theory (VaR sub-additivity, ES coherence) | VaR violates axiom 4; ES satisfies all four Artzner axioms | ✓ |
+| 2 | European option pricing and delta | Call price 17.6246, Δ 0.6643 | ✓ |
+| 3 | Delta-hedge intuition | N_calls = 1,873 | ✓ |
+| 4 | Historical scenario VaR/ES (HW03) | VaR₉₀ = 3,931, ES₈₀ = 3,429 | ✓ |
+| 5 | Single-stock GBM VaR (HW04 Q1) | 5d-99% VaR ≈ 19,037 | ✓ |
+| 6 | Two-stock parametric VaR (HW04 Q2) | 2wk-99% VaR ≈ 9,007 | ✓ |
+| 7 | Rolling vs EWMA (HW05) | λ(2y) = 0.9968 | ✓ |
+| 8 | Historical AAPL/CAT VaR/ES | Portfolio VaR < sum of individual VaRs | ✓ |
+| 9 | Monte Carlo VaR/ES | ES/VaR ratio ≈ 1.25 | ✓ |
+| 10 | Backtesting Kupiec (HW11) | Expected exceptions = 12.6 | ✓ |
+| 11 | Hazard/reduced-form credit (HW06) | P(τ≤5) = 3.63% | ✓ |
+| 12 | Merton structural credit (HW07/09) | PD_Q = 29.53%, PD_P = 38.88% | ✓ |
+| 13 | CDS pricing (HW08) | Spread ≈ 180 bps / 184.55 bps | ✓ |
+| 14 | CVA and counterparty mitigation (HW08/09) | CVA ≈ 5.21 | ✓ |
+| 15 | Regulatory capital/RWA (HW10) | Capital ratio = 8.77%, PASS | ✓ |
+
+The companion document `submission/demo.md` provides a front-end trace with screenshots of each relevant Streamlit tab and a side-by-side comparison confirming that the application and notebook produce identical outputs for every section.
 
 ---
 
@@ -875,36 +919,67 @@ MATH5320/
 ### Appendix C. Reproducibility Commands
 
 ```bash
+# Install dependencies
 pip install -r requirements.txt
+
+# Run the Streamlit application (all 8 tabs)
 streamlit run app.py
+
+# Run the no-network unit suite
 python -m pytest tests/ --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py
-python -m pytest tests/ --cov=src --cov-report=term-missing --cov-report=html:submission/coverage_report --cov-report=xml:submission/coverage_report/coverage.xml --cov-fail-under=100 --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py
+
+# Run with coverage reporting
+python -m pytest tests/ --cov=src --cov-report=term-missing \
+  --cov-report=html:submission/coverage_report \
+  --cov-report=xml:submission/coverage_report/coverage.xml \
+  --cov-fail-under=100 \
+  --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py
+
+# Run live-data integration scripts
 python tests/integration_test.py
 python tests/integration_test_formula_sheet.py
+
+# Execute the formula-sheet demonstration notebook (submission/demo.ipynb)
+python -m jupyter nbconvert --to notebook --execute --inplace \
+  --ExecutePreprocessor.timeout=180 \
+  --ExecutePreprocessor.kernel_name=python3 \
+  submission/demo.ipynb
 ```
 
 ### Appendix D. Submission Package Contents
 
-- `00_combined_final_report.md`
-- `01_model_documentation.md`
-- `02_software_design_documentation.md`
-- `03_test_plan.md`
-- `04_test_results.md`
-- `05_guide_gap_review.md`
-- `06_prompt_coverage_matrix.md`
-- `coverage_report/`
-- `test_artifacts/`
+| File | Description |
+|---|---|
+| `00_combined_final_report.md` | This integrated combined report |
+| `01_model_documentation.md` | Deliverable 1 — full model documentation (30 pts) |
+| `02_software_design_documentation.md` | Deliverable 2 — software design documentation (15 pts) |
+| `03_test_plan.md` | Deliverable 3 — test plan (20 pts) |
+| `04_test_results.md` | Deliverable 4/5 — test results (10 pts) |
+| `05_guide_gap_review.md` | Working gap review memo |
+| `06_prompt_coverage_matrix.md` | Requirement coverage matrix memo |
+| `demo.ipynb` | Formula-sheet demonstration notebook — 15 sections, fully executed |
+| `demo.md` | Front-end trace with screenshots — 15 sections mapped to Streamlit tabs |
+| `coverage_report/` | HTML and XML coverage reports from the local pytest run |
+| `test_artifacts/` | Captured environment and test artifacts (git hash, pytest output, etc.) |
 
 ### Appendix E. Checklist
 
 | Item | Included in this combined report? |
 |---|---|
-| Purpose, intended use, and non-intended use | Yes |
-| Requirement coverage matrix | Yes |
-| Core model description | Yes |
-| Software architecture and orchestration | Yes |
-| Test-plan summary | Yes |
-| Test-results summary | Yes |
-| Screenshots and workflow | Yes |
-| Limitations and recommendations | Yes |
-| References and appendices | Yes |
+| Purpose, intended use, and non-intended use | Yes — Section 2 |
+| Requirement coverage matrix | Yes — Section 1 |
+| Model-risk management framework | Yes — Section 3 |
+| Core model description (BS, historical, parametric, MC, backtest) | Yes — Section 6 |
+| Software architecture and orchestration | Yes — Section 7 |
+| Representative application screenshots | Yes — Section 4 |
+| Test-plan summary | Yes — Section 8 |
+| Test-results summary with numeric evidence | Yes — Section 9 |
+| Actual backtest result table (Kupiec + Christoffersen) | Yes — Section 9.4 |
+| Formula-sheet demo coverage matrix (§1–§15) | Yes — Section 9.6 |
+| Limitations and model risk table | Yes — Section 10 |
+| Conclusions and recommendations | Yes — Section 11 |
+| References and bibliography | Yes — Section 12 |
+| Formula summary appendix | Yes — Appendix A |
+| Repository file tree | Yes — Appendix B |
+| Reproducibility commands incl. demo execution | Yes — Appendix C |
+| Submission package contents | Yes — Appendix D |
