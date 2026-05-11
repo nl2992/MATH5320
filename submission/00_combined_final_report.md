@@ -5,7 +5,7 @@
 **Project title:** Portfolio Risk Management System  
 **Submission package version:** Final submission report  
 **Repository:** `MATH5320`  
-**Reference commit reviewed in this pass:** `5841589e3f3d2dbd3c1e38b08642eccce201a6a2`  
+**Reference commit reviewed in this pass:** `a9dba89a130c5cab6c4cc6d5d6c08cdc3f95297e`  
 
 ---
 
@@ -869,7 +869,9 @@ It should not be presented as a production risk platform or production regulator
 3. Black, F., and Scholes, M. (1973). *The Pricing of Options and Corporate Liabilities*.
 4. Kupiec, P. (1995). *Techniques for Verifying the Accuracy of Risk Measurement Models*.
 5. Christoffersen, P. (1998). *Evaluating Interval Forecasts*.
-6. Stein, H. J. (2014). *Model Validation for Municipal Bonds*. Bloomberg Portfolio Risk Analytics. Local reference cited in `docs/references/`.
+6. Merton, R. C. (1974). *On the Pricing of Corporate Debt: The Risk Structure of Interest Rates*. Journal of Finance, 29(2), 449–470.
+7. McNeil, A. J., Frey, R., and Embrechts, P. (2015). *Quantitative Risk Management: Concepts, Techniques and Tools* (Revised Edition). Princeton University Press.
+8. Stein, H. J. (2014). *Model Validation for Municipal Bonds*. Bloomberg Portfolio Risk Analytics. Local reference cited in `docs/references/`.
 
 ---
 
@@ -958,6 +960,8 @@ python -m jupyter nbconvert --to notebook --execute --inplace \
 | `04_test_results.md` | Deliverable 4/5 — test results (10 pts) |
 | `demo.ipynb` | Formula-sheet demonstration notebook — 15 sections, fully executed |
 | `demo.md` | Front-end trace with screenshots — 15 sections mapped to Streamlit tabs |
+| `advanced_demo.ipynb` | Advanced demo notebook — equal-weight Magnificent Seven portfolio, §1–§7 |
+| `advanced_demo.md` | M7 portfolio front-end trace with screenshots — Tabs 1–6 |
 | `coverage_report/` | HTML and XML coverage reports from the local pytest run |
 | `test_artifacts/` | Captured environment and test artifacts (git hash, pytest output, etc.) |
 
