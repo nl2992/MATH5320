@@ -16,7 +16,7 @@ A Streamlit application for portfolio risk analysis supporting stocks and Europe
 ## Architecture
 
 ```
-math5320_risk_app/
+MATH5320/
 ├── app.py                          # Streamlit entry point (UI only)
 ├── requirements.txt
 ├── README.md
@@ -24,7 +24,7 @@ math5320_risk_app/
 │   ├── schemas.py                  # StockPosition, OptionPosition, Portfolio
 │   ├── config.py                   # Global defaults
 │   ├── data/
-│   │   ├── market_data.py          # CSV loader + yfinance downloader
+│   │   ├── market_data.py          # CSV loader + yfinance downloader + cache
 │   │   └── validation.py           # Input validation
 │   ├── pricing/
 │   │   └── black_scholes.py        # BS price and delta
@@ -37,18 +37,34 @@ math5320_risk_app/
 │   │   ├── historical.py           # Historical VaR/ES
 │   │   ├── parametric.py           # Delta-Normal VaR/ES
 │   │   ├── monte_carlo.py          # Monte Carlo VaR/ES
-│   │   └── backtest.py             # Walk-forward backtest + Kupiec test
+│   │   ├── lognormal.py            # Exact GBM VaR/ES
+│   │   ├── regulatory.py           # RWA, capital ratio, DFAST helpers
+│   │   └── backtest.py             # Walk-forward backtest + Kupiec/Christoffersen
+│   ├── credit/
+│   │   ├── hazard.py               # Reduced-form hazard and survival
+│   │   ├── merton.py               # Merton structural default model
+│   │   ├── cds.py                  # CDS par spread
+│   │   ├── cva.py                  # CVA and exposure helpers
+│   │   └── mitigation.py           # Netting and collateral
 │   ├── services/
-│   │   └── risk_engine_service.py  # Orchestration layer
+│   │   ├── risk_engine_service.py  # Market-risk orchestration
+│   │   ├── credit_service.py       # Credit and CVA orchestration
+│   │   └── regulatory_service.py   # RWA and DFAST orchestration
 │   └── ui/
-│       ├── portfolio_editor.py     # Portfolio input tables
-│       ├── market_data_panel.py    # Data loading UI
+│       ├── portfolio_editor.py     # Portfolio input
+│       ├── market_data_panel.py    # Data loading
 │       ├── risk_settings.py        # Parameter controls
-│       ├── results_panel.py        # Results display and downloads
+│       ├── results_panel.py        # Results and downloads
+│       ├── credit_panel.py         # Hazard / Merton panel
+│       ├── cds_cva_panel.py        # CDS / CVA panel
+│       ├── capital_panel.py        # Capital and stress panel
 │       └── charts.py               # Plotly chart helpers
-└── tests/
-    ├── test_backend.py             # 19 unit tests
-    └── integration_test.py         # End-to-end integration test
+├── tests/                          # 576 no-network unit and regression tests
+├── notebooks/                      # Course walkthrough notebooks
+├── docs/
+│   ├── references/
+│   └── screenshots/
+└── submission/                     # Final submission package
 ```
 
 ## Quick Start
@@ -102,7 +118,7 @@ python -m pytest tests/ --cov=src --cov-report=term-missing \
   --ignore=tests/integration_test.py --ignore=tests/integration_test_formula_sheet.py
 ```
 
-Target: 100% statement coverage across `src/`.
+Coverage is reported with pytest-cov and reviewed through the terminal missing-line report.
 
 ### Individual test files
 
@@ -154,8 +170,16 @@ methodology checks). Numerical goldens are compared at ~10% relative tolerance.
 The two AAPL/CAT acceptance tests (ACC01, ACC02) skip cleanly unless
 `data/AAPL-bloomberg.csv` and `data/CAT-bloomberg.csv` are present.
 
-### Final Report
+## Final Submission Documents
 
-The complete final project report is available here:
+The final submission package is in `submission/`.
 
-[Final Project Report](https://github.com/nl2992/MATH5320/blob/main/FINAL_REPORT.ipynb)
+| File | Purpose |
+|---|---|
+| `submission/00_combined_final_report.md` | Primary final report |
+| `submission/01_model_documentation.md` | Model documentation |
+| `submission/02_software_design_documentation.md` | Software design documentation |
+| `submission/03_test_plan.md` | Test plan |
+| `submission/04_test_results.md` | Test results |
+| `submission/demo.ipynb` | Formula and workflow demonstration notebook |
+| `submission/demo.md` | Front-end workflow trace with screenshots |

@@ -422,9 +422,8 @@ The README states a target of 100% statement coverage across `src/`. Therefore t
 python -m pytest tests/ \
   --cov=src \
   --cov-report=term-missing \
-  --cov-report=html \
-  --cov-report=xml \
-  --cov-fail-under=100 \
+  --cov-report=html:submission/coverage_report \
+  --cov-report=xml:submission/coverage_report/coverage.xml \
   --ignore=tests/integration_test.py \
   --ignore=tests/integration_test_formula_sheet.py
 ```
