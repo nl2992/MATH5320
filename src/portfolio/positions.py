@@ -21,7 +21,12 @@ def stock_value(pos: StockPosition, spot: float) -> float:
     return pos.quantity * spot
 
 
-def option_value(pos: OptionPosition, spot: float, pricing_date: date) -> float:
+def option_value(
+    pos: OptionPosition,
+    spot: float,
+    pricing_date: date,
+    volatility_override: float | None = None,
+) -> float:
     """
     Compute the market value of an option position using Black-Scholes.
 
@@ -42,10 +47,40 @@ def option_value(pos: OptionPosition, spot: float, pricing_date: date) -> float:
         T=T,
         r=pos.risk_free_rate,
         q=pos.dividend_yield,
-        sigma=pos.volatility,
+        sigma=pos.volatility if volatility_override is None else volatility_override,
         option_type=pos.option_type,
     )
     return pos.quantity * pos.contract_multiplier * price
+
+
+def shocked_option_volatility(
+    pos: OptionPosition,
+    underlying_return: float | None,
+    mode: str = "fixed",
+    beta: float = 1.0,
+    floor: float = 0.05,
+) -> float:
+    """
+    Compute a scenario-specific option volatility.
+
+    Modes
+    -----
+    fixed
+        Keep the option's input implied volatility unchanged.
+    underlying_beta
+        Apply a simple leverage-style shock:
+
+            sigma' = max(floor, sigma0 * (1 - beta * R))
+
+        so negative returns increase volatility when beta > 0.
+    """
+    if underlying_return is None or mode == "fixed":
+        return pos.volatility
+
+    if mode == "underlying_beta":
+        return max(floor, pos.volatility * (1.0 - beta * underlying_return))
+
+    raise ValueError(f"Unknown option volatility shock mode: '{mode}'")
 
 
 def option_delta_exposure(
@@ -72,7 +107,7 @@ def option_delta_exposure(
         sigma=pos.volatility,
         option_type=pos.option_type,
     )
-    return pos.quantity * pos.contract_multiplier * delta
+    return pos.quantity * pos.contract_multiplier * delta * spot
 
 
 def _time_to_maturity(pricing_date: date, maturity_date: date) -> float:

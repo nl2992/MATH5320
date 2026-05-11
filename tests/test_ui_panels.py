@@ -90,6 +90,8 @@ def test_risk_settings_renders():
     assert set(at.session_state["_out"].keys()) == {
         "lookback_days", "horizon_days", "var_confidence",
         "es_confidence", "estimator", "ewma_N", "n_simulations",
+        "calibration_mode", "manual_market_params", "option_vol_shock_mode",
+        "option_vol_shock_beta", "option_vol_shock_floor",
     }
 
 
@@ -106,6 +108,24 @@ def test_risk_settings_ewma():
     at = AppTest.from_function(_app_risk_settings_ewma)
     at.run()
     assert not at.exception
+
+
+def _app_risk_settings_manual():
+    import sys, os
+    sys.path.insert(0, os.getcwd())
+    import streamlit as st
+    st.session_state["calibration_mode"] = "manual"
+    from src.ui.risk_settings import render_risk_settings
+    st.session_state["_out"] = render_risk_settings(["AAPL", "MSFT"])
+
+
+def test_risk_settings_manual_mode():
+    at = AppTest.from_function(_app_risk_settings_manual)
+    at.run()
+    assert not at.exception
+    out = at.session_state["_out"]
+    assert out["calibration_mode"] == "manual"
+    assert out["manual_market_params"] is not None
 
 
 # ──────────────────────────────────────────────────────────────────────────────

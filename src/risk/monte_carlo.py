@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 
 from src.portfolio.portfolio import reprice_portfolio
-from src.risk.estimators import get_mean_cov
+from src.risk.estimators import get_mean_cov, manual_mean_cov
 from src.risk.returns import compute_log_returns
 from src.schemas import Portfolio
 
@@ -35,6 +35,11 @@ def monte_carlo_var_es(
     estimator: str = "window",
     ewma_N: int = 60,
     random_seed: int | None = 42,
+    calibration_mode: str = "historical",
+    manual_market_params: dict | None = None,
+    option_vol_shock_mode: str = "fixed",
+    option_vol_shock_beta: float = 1.0,
+    option_vol_shock_floor: float = 0.05,
 ) -> dict:
     """
     Compute Monte Carlo VaR and ES.
@@ -60,8 +65,11 @@ def monte_carlo_var_es(
     underlyings = [u for u in underlyings if u in prices.columns]
 
     # Estimate daily mean and covariance
-    log_ret = compute_log_returns(prices[underlyings])
-    mu_daily, cov_daily = get_mean_cov(log_ret, lookback_days, estimator, ewma_N)
+    if calibration_mode == "manual":
+        mu_daily, cov_daily = manual_mean_cov(manual_market_params or {}, underlyings)
+    else:
+        log_ret = compute_log_returns(prices[underlyings])
+        mu_daily, cov_daily = get_mean_cov(log_ret, lookback_days, estimator, ewma_N)
 
     # Horizon scaling
     mu_h = mu_daily.values * horizon_days          # shape (k,)
@@ -85,7 +93,16 @@ def monte_carlo_var_es(
         full_shocked = spots_0.copy()
         for u, v in shocked.items():
             full_shocked[u] = v
-        V_sim = reprice_portfolio(portfolio, full_shocked, pricing_date)
+        simulated_returns = pd.Series(R_sim[i], index=underlyings)
+        V_sim = reprice_portfolio(
+            portfolio,
+            full_shocked,
+            pricing_date,
+            underlying_returns=simulated_returns,
+            option_vol_shock_mode=option_vol_shock_mode,
+            option_vol_shock_beta=option_vol_shock_beta,
+            option_vol_shock_floor=option_vol_shock_floor,
+        )
         losses[i] = V0 - V_sim
 
     var = float(np.quantile(losses, var_confidence))
@@ -100,6 +117,8 @@ def monte_carlo_var_es(
         "es_confidence": es_confidence,
         "losses": losses,
         "n_simulations": n_simulations,
+        "calibration_mode": calibration_mode,
+        "option_vol_shock_mode": option_vol_shock_mode,
     }
 
 

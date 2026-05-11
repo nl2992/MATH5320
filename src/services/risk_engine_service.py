@@ -35,6 +35,11 @@ class RiskEngineService:
         estimator: str = "window",
         ewma_N: int = 60,
         n_simulations: int = 10_000,
+        calibration_mode: str = "historical",
+        manual_market_params: dict | None = None,
+        option_vol_shock_mode: str = "fixed",
+        option_vol_shock_beta: float = 1.0,
+        option_vol_shock_floor: float = 0.05,
     ):
         self.portfolio = portfolio
         self.prices = prices
@@ -46,6 +51,11 @@ class RiskEngineService:
         self.estimator = estimator
         self.ewma_N = ewma_N
         self.n_simulations = n_simulations
+        self.calibration_mode = calibration_mode
+        self.manual_market_params = manual_market_params
+        self.option_vol_shock_mode = option_vol_shock_mode
+        self.option_vol_shock_beta = option_vol_shock_beta
+        self.option_vol_shock_floor = option_vol_shock_floor
 
     # ── Current portfolio value ────────────────────────────────────────────────
 
@@ -75,6 +85,9 @@ class RiskEngineService:
             horizon_days=self.horizon_days,
             var_confidence=self.var_confidence,
             es_confidence=self.es_confidence,
+            option_vol_shock_mode=self.option_vol_shock_mode,
+            option_vol_shock_beta=self.option_vol_shock_beta,
+            option_vol_shock_floor=self.option_vol_shock_floor,
         )
 
         param = parametric_var_es(
@@ -87,6 +100,8 @@ class RiskEngineService:
             es_confidence=self.es_confidence,
             estimator=self.estimator,
             ewma_N=self.ewma_N,
+            calibration_mode=self.calibration_mode,
+            manual_market_params=self.manual_market_params,
         )
 
         mc = monte_carlo_var_es(
@@ -100,6 +115,11 @@ class RiskEngineService:
             n_simulations=self.n_simulations,
             estimator=self.estimator,
             ewma_N=self.ewma_N,
+            calibration_mode=self.calibration_mode,
+            manual_market_params=self.manual_market_params,
+            option_vol_shock_mode=self.option_vol_shock_mode,
+            option_vol_shock_beta=self.option_vol_shock_beta,
+            option_vol_shock_floor=self.option_vol_shock_floor,
         )
 
         return {
@@ -137,6 +157,11 @@ class RiskEngineService:
             estimator=self.estimator,
             ewma_N=self.ewma_N,
             n_simulations=min(self.n_simulations, 2_000),  # faster for backtest
+            calibration_mode=self.calibration_mode,
+            manual_market_params=self.manual_market_params,
+            option_vol_shock_mode=self.option_vol_shock_mode,
+            option_vol_shock_beta=self.option_vol_shock_beta,
+            option_vol_shock_floor=self.option_vol_shock_floor,
         )
 
         if bt_df.empty:

@@ -12,6 +12,10 @@ DEFAULT_ES_CONFIDENCE: float = 0.975     # 97.5% ES
 DEFAULT_ESTIMATOR: str = "window"        # "window" | "ewma"
 DEFAULT_EWMA_N: int = 60                 # EWMA half-life parameter N
 DEFAULT_MC_SIMULATIONS: int = 10_000    # Monte Carlo paths
+DEFAULT_CALIBRATION_MODE: str = "historical"   # "historical" | "manual"
+DEFAULT_OPTION_VOL_SHOCK_MODE: str = "fixed"   # "fixed" | "underlying_beta"
+DEFAULT_OPTION_VOL_SHOCK_BETA: float = 1.0
+DEFAULT_OPTION_VOL_SHOCK_FLOOR: float = 0.05
 
 # ── Market data defaults ───────────────────────────────────────────────────────
 DEFAULT_YFINANCE_PERIOD: str = "5y"      # yfinance download period

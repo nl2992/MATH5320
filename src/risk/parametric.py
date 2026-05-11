@@ -19,7 +19,7 @@ import pandas as pd
 from scipy.stats import norm
 
 from src.portfolio.portfolio import portfolio_exposure
-from src.risk.estimators import get_mean_cov
+from src.risk.estimators import get_mean_cov, manual_mean_cov
 from src.risk.returns import compute_log_returns
 from src.schemas import Portfolio
 
@@ -34,6 +34,8 @@ def parametric_var_es(
     es_confidence: float,
     estimator: str = "window",
     ewma_N: int = 60,
+    calibration_mode: str = "historical",
+    manual_market_params: dict | None = None,
 ) -> dict:
     """
     Compute Parametric (Delta-Normal) VaR and ES.
@@ -58,8 +60,11 @@ def parametric_var_es(
     exposure = exposure[underlyings]
 
     # Estimate daily mean and covariance from log returns
-    log_ret = compute_log_returns(prices[underlyings])
-    mu_daily, cov_daily = get_mean_cov(log_ret, lookback_days, estimator, ewma_N)
+    if calibration_mode == "manual":
+        mu_daily, cov_daily = manual_mean_cov(manual_market_params or {}, underlyings)
+    else:
+        log_ret = compute_log_returns(prices[underlyings])
+        mu_daily, cov_daily = get_mean_cov(log_ret, lookback_days, estimator, ewma_N)
 
     # Horizon scaling
     mu_h = mu_daily * horizon_days
@@ -91,4 +96,5 @@ def parametric_var_es(
         "portfolio_mean": m,
         "portfolio_vol": s,
         "exposure": exposure,
+        "calibration_mode": calibration_mode,
     }

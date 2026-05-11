@@ -97,7 +97,22 @@ for model in ("historical", "parametric", "monte_carlo"):
     e = res[model]["es"]
     print(f"    {model:<12} VaR={v:,.2f}  ES={e:,.2f}")
     assert v > 0, f"{model} VaR non-positive"
-    assert e >= v - 1e-6, f"{model} ES < VaR"
+    assert e > 0, f"{model} ES non-positive"
+
+equal_conf_service = RiskEngineService(
+    portfolio=portfolio,
+    prices=eq_prices,
+    pricing_date=date.today(),
+    lookback_days=252,
+    horizon_days=1,
+    var_confidence=0.99,
+    es_confidence=0.99,
+    estimator="window",
+    n_simulations=2_000,
+)
+equal_conf_res = equal_conf_service.run_all()
+for model in ("historical", "parametric", "monte_carlo"):
+    assert equal_conf_res[model]["es"] >= equal_conf_res[model]["var"] - 1e-6
 
 # ── 4. Kupiec on historical backtest ──────────────────────────────────────────
 print("\n[4] run_backtest('historical') → Kupiec")

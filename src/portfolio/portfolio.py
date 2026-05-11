@@ -11,6 +11,7 @@ import pandas as pd
 
 from src.portfolio.positions import (
     option_delta_exposure,
+    shocked_option_volatility,
     option_value,
     stock_value,
 )
@@ -23,6 +24,10 @@ def portfolio_value(
     portfolio: Portfolio,
     spots: pd.Series,
     pricing_date: date,
+    underlying_returns: pd.Series | dict[str, float] | None = None,
+    option_vol_shock_mode: str = "fixed",
+    option_vol_shock_beta: float = 1.0,
+    option_vol_shock_floor: float = 0.05,
 ) -> float:
     """
     Compute total portfolio market value.
@@ -48,7 +53,23 @@ def portfolio_value(
         total += stock_value(pos, float(spots[pos.ticker]))
 
     for pos in portfolio.options:
-        total += option_value(pos, float(spots[pos.underlying_ticker]), pricing_date)
+        u = pos.underlying_ticker
+        underlying_return = None
+        if underlying_returns is not None and u in underlying_returns:
+            underlying_return = float(underlying_returns[u])
+        vol_override = shocked_option_volatility(
+            pos,
+            underlying_return=underlying_return,
+            mode=option_vol_shock_mode,
+            beta=option_vol_shock_beta,
+            floor=option_vol_shock_floor,
+        )
+        total += option_value(
+            pos,
+            float(spots[u]),
+            pricing_date,
+            volatility_override=vol_override,
+        )
 
     return total
 
@@ -57,12 +78,24 @@ def reprice_portfolio(
     portfolio: Portfolio,
     shocked_spots: pd.Series,
     pricing_date: date,
+    underlying_returns: pd.Series | dict[str, float] | None = None,
+    option_vol_shock_mode: str = "fixed",
+    option_vol_shock_beta: float = 1.0,
+    option_vol_shock_floor: float = 0.05,
 ) -> float:
     """
     Re-value the portfolio under a shocked spot price vector.
     Identical to portfolio_value but named separately for clarity in risk loops.
     """
-    return portfolio_value(portfolio, shocked_spots, pricing_date)
+    return portfolio_value(
+        portfolio,
+        shocked_spots,
+        pricing_date,
+        underlying_returns=underlying_returns,
+        option_vol_shock_mode=option_vol_shock_mode,
+        option_vol_shock_beta=option_vol_shock_beta,
+        option_vol_shock_floor=option_vol_shock_floor,
+    )
 
 
 # ── Exposure ───────────────────────────────────────────────────────────────────

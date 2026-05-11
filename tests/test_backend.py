@@ -14,6 +14,7 @@ from datetime import date, timedelta
 from src.schemas import StockPosition, OptionPosition, Portfolio
 from src.pricing.black_scholes import bs_price, bs_delta
 from src.portfolio.portfolio import portfolio_value, portfolio_exposure
+from src.portfolio.positions import option_delta_exposure
 from src.risk.returns import compute_log_returns, build_overlapping_horizon_log_returns
 from src.risk.estimators import estimate_window_mean_cov, estimate_ewma_mean_cov
 from src.risk.historical import historical_var_es
@@ -107,6 +108,97 @@ def test_portfolio_exposure_stocks_only(sample_prices, simple_portfolio):
     exp = portfolio_exposure(simple_portfolio, spots, date.today())
     assert abs(exp["AAPL"] - 100 * spots["AAPL"]) < 1e-6
     assert abs(exp["MSFT"] - 50 * spots["MSFT"]) < 1e-6
+
+def test_option_delta_exposure_is_delta_dollar(option_portfolio, sample_prices):
+    spots = sample_prices.iloc[-1]
+    spot = float(spots["AAPL"])
+    opt = option_portfolio.options[0]
+    exposure = option_delta_exposure(opt, spot, date.today())
+    delta = bs_delta(
+        S=spot,
+        K=opt.strike,
+        T=(opt.maturity_date - date.today()).days / 365.0,
+        r=opt.risk_free_rate,
+        q=opt.dividend_yield,
+        sigma=opt.volatility,
+        option_type=opt.option_type,
+    )
+    expected = opt.quantity * opt.contract_multiplier * delta * spot
+    assert exposure == pytest.approx(expected)
+
+def test_manual_parametric_mode_uses_manual_mean_cov(sample_prices, simple_portfolio):
+    mu_daily = pd.Series({"AAPL": 0.0010, "MSFT": 0.0005})
+    vols = pd.Series({"AAPL": 0.02, "MSFT": 0.015})
+    corr = pd.DataFrame(
+        [[1.0, 0.25], [0.25, 1.0]],
+        index=["AAPL", "MSFT"],
+        columns=["AAPL", "MSFT"],
+    )
+    cov_daily = pd.DataFrame(
+        np.outer(vols.values, vols.values) * corr.values,
+        index=vols.index,
+        columns=vols.index,
+    )
+    result = parametric_var_es(
+        portfolio=simple_portfolio,
+        prices=sample_prices,
+        pricing_date=date.today(),
+        lookback_days=252,
+        horizon_days=1,
+        var_confidence=0.99,
+        es_confidence=0.975,
+        calibration_mode="manual",
+        manual_market_params={"mu_daily": mu_daily, "cov_daily": cov_daily},
+    )
+    assert result["var"] > 0
+    assert result["calibration_mode"] == "manual"
+
+def test_mc_manual_mode_uses_manual_mean_cov(sample_prices, simple_portfolio):
+    mu_daily = pd.Series({"AAPL": 0.0002, "MSFT": 0.0001})
+    cov_daily = pd.DataFrame(
+        [[0.0004, 0.00005], [0.00005, 0.0003]],
+        index=["AAPL", "MSFT"],
+        columns=["AAPL", "MSFT"],
+    )
+    result = monte_carlo_var_es(
+        portfolio=simple_portfolio,
+        prices=sample_prices,
+        pricing_date=date.today(),
+        lookback_days=252,
+        horizon_days=1,
+        var_confidence=0.99,
+        es_confidence=0.975,
+        n_simulations=500,
+        calibration_mode="manual",
+        manual_market_params={"mu_daily": mu_daily, "cov_daily": cov_daily},
+    )
+    assert result["var"] > 0
+    assert result["calibration_mode"] == "manual"
+
+def test_historical_option_vol_shock_changes_result(sample_prices, option_portfolio):
+    fixed = historical_var_es(
+        portfolio=option_portfolio,
+        prices=sample_prices,
+        pricing_date=date.today(),
+        lookback_days=252,
+        horizon_days=1,
+        var_confidence=0.99,
+        es_confidence=0.975,
+        option_vol_shock_mode="fixed",
+    )
+    shocked = historical_var_es(
+        portfolio=option_portfolio,
+        prices=sample_prices,
+        pricing_date=date.today(),
+        lookback_days=252,
+        horizon_days=1,
+        var_confidence=0.99,
+        es_confidence=0.975,
+        option_vol_shock_mode="underlying_beta",
+        option_vol_shock_beta=2.0,
+        option_vol_shock_floor=0.05,
+    )
+    assert shocked["var"] != pytest.approx(fixed["var"])
 
 
 # ── Returns tests ──────────────────────────────────────────────────────────────

@@ -27,6 +27,10 @@ class TestConfig:
         assert cfg.DEFAULT_ESTIMATOR == "window"
         assert cfg.DEFAULT_EWMA_N == 60
         assert cfg.DEFAULT_MC_SIMULATIONS == 10_000
+        assert cfg.DEFAULT_CALIBRATION_MODE == "historical"
+        assert cfg.DEFAULT_OPTION_VOL_SHOCK_MODE == "fixed"
+        assert cfg.DEFAULT_OPTION_VOL_SHOCK_BETA == 1.0
+        assert cfg.DEFAULT_OPTION_VOL_SHOCK_FLOOR == 0.05
         assert cfg.DEFAULT_YFINANCE_PERIOD == "5y"
         assert cfg.TRADING_DAYS_PER_YEAR == 252
         assert cfg.DEFAULT_BACKTEST_MODEL == "historical"
