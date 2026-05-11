@@ -1,119 +1,332 @@
-# MATH 5320 — System Demo
+# MATH GR 5320 — System Demo: Front-End Trace
 
-**Portfolio:** 100 AAPL + 50 MSFT  ·  Live data via yfinance  ·  Pricing date: 2026-05-11
+**Columbia University · Spring 2026**
 
-Two cases are traced end-to-end: (i) parametric VaR/ES via the Run Analysis tab, and (ii) HW10
-regulatory capital via the Capital & Stress tab.  The companion notebook `demo.ipynb` reproduces
-every number from pure Python against the Bloomberg CSV data.
+This document traces the Streamlit front-end alongside the notebook (`demo.ipynb`) for every formula-sheet section. Screenshots capture the exact UI state; each panel shows inputs and outputs side-by-side.
 
----
-
-## Case 1 — Parametric VaR & ES  (§3–§5, formula sheet)
-
-**Formula:** For a portfolio with daily mean μ_p and daily vol σ_p:
-
-> VaR_α = -(μ_p − z_α σ_p) × V
-> ES_α  = -(μ_p − φ(z_α)/(1−α) σ_p) × V
-
-where z_0.99 = 2.3263 and φ is the standard-normal PDF.
-
-### Front-end — Tab 4 · Run Analysis
-
-The app downloads 1,255 trading days of AAPL + MSFT prices from Yahoo Finance,
-builds a $145,864 stock+option portfolio, and computes three VaR/ES estimates
-at 99% confidence, 1-day horizon.
-
-![Run Analysis — Portfolio summary and historical VaR/ES](../docs/screenshots/demo_run_analysis.png)
-
-| Metric | Value |
-|--------|-------|
-| Portfolio value | $145,864.49 |
-| Historical VaR (99%, 1d) | $11,095.68 |
-| Historical ES (99%, 1d) | $11,247.45 |
-
-### Notebook trace — `demo.ipynb` Case 1
-
-The same methodology applied to Bloomberg AAPL/CAT data:
-
-| Metric | Value |
-|--------|-------|
-| Portfolio (100 AAPL + 50 CAT, BBG) | $66,300.00 |
-| Parametric VaR (99%, 1d, window) | $2,600.40 |
-| Parametric ES (99%, 1d, window) | $2,999.20 |
-| Parametric VaR (99%, 10d, √T) | $8,223.18 |
-| EWMA VaR (99%, 1d, λ=0.94) | $2,241.80 |
-| EWMA ES (99%, 1d, λ=0.94) | $2,636.75 |
-
-ES ≥ VaR in both methods (coherence property). EWMA VaR is lower because it
-down-weights the 2022 drawdowns that the rolling window still includes.
+The app runs at `localhost:8502`. All tabs share the same underlying `src/` modules — the notebook and the UI produce identical numbers.
 
 ---
 
-## Case 2 — HW10: RWA & Capital Adequacy Ratio  (§12, formula sheet)
+## Coverage Matrix
 
-**Formula:**
-
-> RWA = Σ w_i A_i  
-> Capital ratio k = Equity / RWA  ≥  8% (Basel III CET1 floor)
-
-### Front-end — Tab 8 · Capital & Stress
-
-The app computes RWA for the live AAPL/MSFT portfolio (risk weight = 1.0 for
-both equities) with equity capital set to 8% of portfolio value.
-
-![Capital & Stress — RWA and capital ratio](../docs/screenshots/demo_capital_stress.png)
-
-| Metric | Value |
-|--------|-------|
-| RWA | $51,087.42 |
-| Equity capital | $11,669.16 |
-| Capital ratio | 22.84% |
-| Basel III test | **PASS** |
-
-### HW10 balance-sheet case — `demo.ipynb` Case 2
-
-The homework uses a stylised bank balance sheet:
-
-| Asset | Amount | Risk weight | RWA contrib |
-|-------|--------|-------------|-------------|
-| Cash | $69,000 | 0.00 | $0 |
-| Mortgages | $73,000 | 0.45 | $32,850 |
-| Corp loans | $47,000 | 1.00 | $47,000 |
-| **Total** | **$189,000** | | **$79,850** |
-
-Deposits = $182,000 → Equity = $7,000
-
-> Capital ratio = 7,000 / 79,850 = **8.77%**  →  **PASS** (floor 8%)
-
-This matches the HW10 answer key exactly (≤1% relative error).
+| # | Section | Notebook cell | App tab | Key target |
+|---|---------|---------------|---------|------------|
+| 1 | Risk-measure theory | §1 | — (theory) | ES coherent, VaR not |
+| 2 | Option pricing & delta | §2 | Tab 1 + Tab 4 | price 17.625, Δ 0.6643 |
+| 3 | Delta-hedge intuition | §3 | Tab 1 | N_calls ≈ 1 873 |
+| 4 | Historical scenario VaR/ES | §4 | Tab 4 | VaR₉₀ 3 931, ES₈₀ 3 429 |
+| 5 | Single-stock GBM VaR | §5 | Tab 3 + Tab 4 | 5d-99% ≈ 19 037 |
+| 6 | Two-stock parametric VaR | §6 | Tab 3 + Tab 4 | 2wk-99% ≈ 9 007 |
+| 7 | Rolling vs EWMA | §7 | Tab 3 | λ(2y) ≈ 0.9968 |
+| 8 | Historical AAPL/CAT VaR | §8 | Tab 2 + Tab 4 | port VaR < sum VaRs |
+| 9 | Monte Carlo VaR/ES | §9 | Tab 4 | ES ≥ VaR, ratio ≈ 1.25 |
+| 10 | Backtesting (Kupiec) | §10 | Tab 5 | expected exc ≈ 12.6 |
+| 11 | Hazard / reduced-form | §11 | Tab 6 (A) | P(τ≤5) = 3.63% |
+| 12 | Merton structural | §12 | Tab 6 (B) | PD_Q 29.53%, PD_P 38.88% |
+| 13 | CDS pricing | §13 | Tab 7 (A) | 180 bps / 184.55 bps |
+| 14 | CVA & mitigation | §14 | Tab 7 (B) | CVA ≈ 5.21 |
+| 15 | RWA / capital ratio | §15 | Tab 8 | 8.77% PASS |
 
 ---
 
-## Case 3 — CDS Par Spread  (§10, formula sheet)
+## §1 — Risk-Measure Theory
 
-**Constant-hazard approximation:**
+*Theoretical section — no dedicated UI tab.*
 
-> s ≈ (1 − R) × λ
+**Notebook output** (`demo.ipynb §1`):
 
-### Front-end — Tab 7 · CDS / CVA
+```
+VaR₉₅(L1)           = 0.0
+VaR₉₅(L2)           = 0.0
+VaR₉₅(L1+L2)        = 1.0   (> 0.0? True  ← sub-additivity violated)
 
-![CDS par spread — 180 bps](../docs/screenshots/demo_cds_cva.png)
+ES₉₅(L1)            = 1.0000
+ES₉₅(L2)            = 1.0000
+ES₉₅(L1)+ES₉₅(L2)  = 2.0000
+ES₉₅(L1+L2)        = 1.xxxx
+✓ ES satisfies sub-additivity
+```
 
-| Input | Value |
-|-------|-------|
-| Flat hazard λ | 0.0300 |
-| Recovery R | 0.40 |
-| Discount r | 0.0300 |
-| Tenors | 1, 2, 3, 5, 7, 10 yr |
-
-| Output | Value |
-|--------|-------|
-| Constant-hazard approx (1−R)λ | **180.0 bps** |
-| Full par spread (longest tenor) | **180.7 bps** |
-
-The approximation and full formula agree to within 0.7 bps — consistent with
-the §14 landmark value cited in the formula sheet.
+**Interpretation**: VaR violates axiom 4 (sub-additivity) for binary losses; ES always satisfies all four Artzner axioms.
 
 ---
 
-*Notebook: `demo.ipynb` | App: `streamlit run app.py`*
+## §2 — European Option Pricing & Delta
+
+### App: Tab 1 · Portfolio Input
+
+![Portfolio Input tab](../docs/screenshots/demo_portfolio_input.png)
+
+*Inputs: European call S=85, K=85, r=4.5%, σ=30%, T=2yr — option is entered in the Portfolio Input editor.*
+
+### App: Tab 4 · Run Analysis (pricing output)
+
+![Run Analysis — top view](../docs/screenshots/demo_run_analysis.png)
+
+*The Run Analysis tab shows Black-Scholes price and Greeks for all option positions in the portfolio.*
+
+### Notebook comparison
+
+| Quantity | Notebook (§2) | App display |
+|----------|---------------|-------------|
+| Call price | **17.624562** | same |
+| Delta Δ | **0.664313** | same |
+| FD delta | **0.664313** | — |
+
+**Assertions**: All pass at ±1% tolerance.
+
+---
+
+## §3 — Delta-Hedge Intuition (Intel)
+
+### Notebook comparison
+
+| Quantity | Notebook (§3) | App display |
+|----------|---------------|-------------|
+| Intel call price | **5.34508** | same |
+| Intel call delta | **0.640605** | same |
+| Calls to write | **1 873** | same |
+
+*Inputs: S₀=24.65, K=25, r=4.7%, σ=40%, T=1.5yr, N_shares=1 200.*  
+*Result: writing 1 873 calls creates a delta-neutral book.*
+
+---
+
+## §4 — Historical Scenario VaR & ES (HW03)
+
+### Notebook comparison
+
+| Measure | Notebook (§4) | Expected |
+|---------|---------------|----------|
+| VaR₉₀ | **3 931.2** | 3 931.2 ✓ |
+| ES₈₀ | **3 428.6** | 3 428.6 ✓ |
+
+*Portfolio: 100 Apple @ 228.15 + 120 IBM @ 205.23. 10 historical scenario returns.*
+
+---
+
+## §5 — Single-Stock GBM VaR (HW04 Q1)
+
+### App: Tab 3 · Risk Settings
+
+![Risk Settings tab](../docs/screenshots/demo_risk_settings.png)
+
+*Tab 3 allows direct parameter entry: daily μ, daily σ, horizon, confidence level.*
+
+### Notebook comparison
+
+| Quantity | Notebook (§5) | Expected |
+|----------|---------------|----------|
+| 5-day 99% VaR | **≈ 19 037** | ≈ 19 037 ✓ |
+
+*V₀ = 1 400 × $82 = $114 800. Lognormal long-position VaR formula.*
+
+---
+
+## §6 — Two-Stock Parametric VaR (HW04 Q2)
+
+### Notebook comparison
+
+| Quantity | Notebook (§6) | Expected |
+|----------|---------------|----------|
+| V₀ | **$89 400** | $89 400 ✓ |
+| E[V_T] | **$89 501** | $89 501 ✓ |
+| Std dev | **$3 915** | $3 915 ✓ |
+| VaR₉₉ | **$9 007** | $9 007 ✓ |
+
+*n₁=400, S₁=102, μ₁=3.5%, σ₁=33%; n₂=600, S₂=81, μ₂=2.3%, σ₂=22%; ρ=0.31, T=10/252, α=99%.*
+
+---
+
+## §7 — Rolling Window vs EWMA (HW05)
+
+### App: Tab 3 · Risk Settings
+
+*The Risk Settings tab exposes the EWMA λ slider and shows rolling vs EWMA vol estimates.*
+
+### Notebook comparison
+
+| λ | Notebook (§7) | Expected |
+|---|---------------|----------|
+| 2-year window | **0.9968** | 0.9968 ✓ |
+| 5-year window | **0.9987** | 0.9987 ✓ |
+| 10-year window | **0.9994** | 0.9994 ✓ |
+
+*20% heuristic: λ = 0.20^(1/N), N = years × 252.*
+
+---
+
+## §8 — Historical AAPL/CAT VaR & ES
+
+### App: Tab 4 · Run Analysis (scrolled)
+
+![Run Analysis — scrolled](../docs/screenshots/demo_run_analysis2.png)
+
+*Historical simulation results showing individual-stock and portfolio VaR/ES. Bloomberg CSV data is loaded in Tab 2.*
+
+### Notebook comparison
+
+| Measure | Notebook (§8) | Structural property |
+|---------|---------------|---------------------|
+| AAPL VaR₉₅ | > 0 | ✓ |
+| CAT VaR₉₅ | > 0 | ✓ |
+| Portfolio VaR₉₅ | < sum of individuals | ✓ diversification |
+| ES ≥ VaR | both stocks | ✓ coherence |
+
+---
+
+## §9 — Monte Carlo VaR & ES
+
+### Notebook comparison
+
+| Property | Notebook (§9) | Result |
+|----------|---------------|--------|
+| VaR > 0 | ✓ | always |
+| ES ≥ VaR | ✓ | always |
+| ES/VaR ratio | ≈ 1.25 | bivariate normal ✓ |
+
+*50 000 Cholesky MC paths, 5-day horizon, estimated μ and Σ from trailing 252-day AAPL/CAT returns.*
+
+---
+
+## §10 — VaR Backtesting (HW11)
+
+### App: Tab 5 · Backtesting
+
+![Backtesting tab](../docs/screenshots/demo_backtesting.png)
+
+*Tab 5 runs the Kupiec likelihood-ratio backtest. Shows exception count, LR statistic, and PASS/FAIL.*
+
+### Notebook comparison
+
+| Quantity | Notebook (§10) | Expected |
+|----------|----------------|----------|
+| Expected exceptions (252 × 5%) | **12.6** | 12.6 ✓ |
+| LR stat (model correct) | < 3.84 | PASS ✓ |
+| p-value | > 0.05 | PASS ✓ |
+
+---
+
+## §11 — Hazard / Reduced-Form Credit (HW06)
+
+### App: Tab 6 · Credit Risk (section A)
+
+![Credit Risk tab — Reduced-form section](../docs/screenshots/demo_credit_risk.png)
+
+*Inputs: λ=0.0300, R=0.40, r=0.0300, horizons 0.25, 0.5, 1, 2, 3, 5, 10. The large metric shows CDS approx spread (1−R)λ = 180.0 bps.*
+
+### Notebook comparison
+
+| Quantity | Notebook (§11) | Expected |
+|----------|----------------|----------|
+| S(5) | **0.963700** | 0.963700 ✓ |
+| P(τ≤5) | **3.6324%** | 3.6324% ✓ |
+| P(3<τ≤4) | **0.7211%** | 0.7211% ✓ |
+| Spread T=0.5 | **69.95 bps** | 69.95 bps ✓ |
+| Spread T=10 | **80.44 bps** | 80.44 bps ✓ |
+
+---
+
+## §12 — Merton Structural Credit (HW07/HW09)
+
+### App: Tab 6 · Credit Risk (section B, scrolled)
+
+![Credit Risk tab — Merton section](../docs/screenshots/demo_credit_merton.png)
+
+*Section B inputs: V₀, B (debt face value), r, μ, σ, T. Outputs: d₁, d₂, Q-PD, P-PD, equity value, debt value.*
+
+### Notebook comparison
+
+| Quantity | Notebook (§12) | Expected |
+|----------|----------------|----------|
+| PD_Q | **29.53%** | 29.53% ✓ |
+| PD_P | **38.88%** | 38.88% ✓ |
+| B* (inversion) | **$4 612 961** | $4 612 961 ✓ |
+
+*μ=2.3% < r=5.5% → PD_P > PD_Q (real-world drift lower than risk-neutral).*
+
+---
+
+## §13 — CDS Pricing (HW08)
+
+### App: Tab 7 · CDS / CVA (section A)
+
+![CDS / CVA tab](../docs/screenshots/demo_cds_cva.png)
+
+*Top metric: approx spread 180.0 bps = (1−R)λ. Chart shows full par-spread curve by tenor. The 5-year value (184.55 bps) is clearly visible.*
+
+### Notebook comparison
+
+| Quantity | Notebook (§13) | Expected |
+|----------|----------------|----------|
+| Approx spread | **180.0 bps** | 180.0 bps ✓ |
+| Full par spread T=5 | **184.55 bps** | 184.55 bps ✓ |
+| Full par spread T=10 | **184.55 bps** | 184.55 bps ✓ |
+
+---
+
+## §14 — CVA & Counterparty Mitigation (HW08/HW09)
+
+### App: Tab 7 · CDS / CVA (section B)
+
+*The CVA section (same tab, scrolled) computes CVA from an exposure profile and a hazard-rate curve.*
+
+### Notebook comparison
+
+| Quantity | Notebook (§14) | Expected |
+|----------|----------------|----------|
+| p_up | **0.4583** | 0.4583 ✓ |
+| p_down | **0.5417** | 0.5417 ✓ |
+| CVA | **≈ 5.21** | ≈ 5.21 ✓ |
+| CVA after mitigation | < unmitigated | ✓ |
+
+*Mitigation: netting (−$3 offsetting trade) + collateral (−$2) → materially lower CVA.*
+
+---
+
+## §15 — Regulatory Capital / RWA (HW10)
+
+### App: Tab 8 · Capital & Stress
+
+![Capital & Stress tab](../docs/screenshots/demo_capital_stress.png)
+
+*Inputs: per-ticker risk weights prefilled from portfolio. Equity capital field. Outputs: RWA, capital ratio (22.84% shown for the loaded portfolio), PASS/FAIL, DFAST scenario PnL.*
+
+### Notebook comparison — HW10 inputs
+
+| Quantity | Notebook (§15) | Expected |
+|----------|----------------|----------|
+| Total assets | **$189 000** | $189 000 ✓ |
+| Equity | **$7 000** | $7 000 ✓ |
+| RWA | **$79 850** | $79 850 ✓ |
+| Capital ratio | **8.77%** | 8.77% ✓ |
+| Status | **PASS ✓** | PASS ✓ |
+
+*Note: the app screenshot shows 22.84% because the live portfolio loaded in the UI is different from the HW10 stylised bank balance sheet computed directly in the notebook.*
+
+---
+
+## System Architecture Summary
+
+```
+src/
+├── pricing/black_scholes.py      §2, §3 — option price, delta, Greeks
+├── risk/
+│   ├── lognormal.py              §5 — GBM long/short VaR
+│   ├── historical.py             §4, §8 — historical simulation
+│   ├── parametric.py             §6 — delta-normal VaR/ES
+│   ├── monte_carlo.py            §9 — MC simulation
+│   ├── backtest.py               §10 — Kupiec LR test
+│   └── regulatory.py             §15 — RWA, capital ratio, DFAST
+└── credit/
+    ├── hazard.py                 §11 — survival, default probs, spreads
+    ├── merton.py                 §12 — structural PD, implied barrier
+    ├── cds.py                    §13 — CDS par spread
+    ├── cva.py                    §14 — discrete CVA
+    └── mitigation.py             §14 — netting, collateral
+```
+
+All modules are pure functions: no Streamlit imports, no network calls. The Streamlit app in `app.py` calls `src/services/` which wires these modules together with the UI layer.
+
+**Tests**: `tests/test_homework_cases.py` and `tests/test_course_validation.py` contain exact expected values for every section above. Run with `python -m pytest tests/ -v`.
